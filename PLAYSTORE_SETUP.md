@@ -1,10 +1,10 @@
-# Marcenaria Pro — configuração de produção da Google Play
+# Orçamentos & Gestão — configuração de produção da Google Play
 
 Este repositório contém somente a versão Android destinada à Google Play.
 
 ## Arquitetura
 
-- **Local-first:** clientes, produtos, orçamentos, vendas e configurações ficam no aparelho.
+- **Local-first:** clientes, produtos, serviços, orçamentos, vendas e configurações ficam no aparelho.
 - **Sem conta obrigatória:** o plano Gratuito funciona sem login e sem internet.
 - **Backup local:** exportação e restauração de arquivo pelo seletor nativo do Android.
 - **PDF offline:** jsPDF é empacotado no APK/AAB.
@@ -119,7 +119,8 @@ O workflow `.github/workflows/build-playstore.yml` pode validar builds sem chave
 
 ## Aplicativo
 
-- Package name: `com.cavazani.orcamentos.playstore`
+- Nome provisório: `Orçamentos & Gestão`
+- Package name atual (provisório até definirmos a marca): `com.cavazani.orcamentos.playstore`
 - targetSdk: 36
 - versionCode: 1
 - versionName: 1.0.0
