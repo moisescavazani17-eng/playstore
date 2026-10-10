@@ -4,7 +4,7 @@ Este arquivo descreve o comportamento implementado no código atual. Use como re
 
 ## Funcionamento sem conta
 
-O aplicativo pode ser usado sem conta. Nesse modo, dados como clientes, produtos, orçamentos, vendas, recibos, configurações e identidade visual permanecem somente no aparelho e não são enviados ao backend do Marcenaria Pro.
+O aplicativo pode ser usado sem conta. Nesse modo, dados como clientes, produtos, serviços, orçamentos, vendas, recibos, configurações e identidade visual permanecem somente no aparelho e não são enviados ao backend do o aplicativo.
 
 ## Dados coletados quando o usuário opta pela nuvem
 
