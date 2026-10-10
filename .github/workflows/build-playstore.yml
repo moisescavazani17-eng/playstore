@@ -37,6 +37,7 @@ jobs:
       PLAYSTORE_KEYSTORE_PASSWORD: ${{ secrets.PLAYSTORE_KEYSTORE_PASSWORD }}
       PLAYSTORE_KEY_ALIAS: ${{ secrets.PLAYSTORE_KEY_ALIAS }}
       PLAYSTORE_KEY_PASSWORD: ${{ secrets.PLAYSTORE_KEY_PASSWORD }}
+      PLAYSTORE_BUILD_NUMBER: ${{ github.run_number }}
 
     steps:
       - name: Baixar projeto
@@ -52,6 +53,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
+
+      - name: Manter assinatura do APK de teste
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: playstore-test-debug-keystore-v1
 
       - name: Preparar chave de upload
         shell: bash
