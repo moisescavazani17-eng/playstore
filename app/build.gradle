@@ -1,0 +1,31 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.cavazani.orcamentos'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.cavazani.orcamentos.playstore'
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0-PLAYSTORE'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.android.billingclient:billing:9.1.0'
+}
+
+configurations.configureEach {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
