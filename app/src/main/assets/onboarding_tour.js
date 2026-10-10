@@ -88,7 +88,7 @@ function criarPassos(){
     {
       titulo:'Tudo pronto',
       texto:'Você já conhece o básico. Comece criando um orçamento. Se quiser ver este guia novamente, use o botão “Refazer tour do aplicativo” em Configurações.',
-      alvo:'#sideNav button[data-view="novo"]',
+      alvo:'#view-novo',
       view:'novo'
     }
   ];
@@ -217,7 +217,9 @@ function iniciar(forcar=false){
 function podeIniciar(){
   const auth=q('#internalAuthOverlay');
   const bloqueado=auth&&auth.classList.contains('show');
-  return !bloqueado&&q('#sideNav')&&q('#view-novo');
+  let usuarioOk=false;
+  try{usuarioOk=typeof usuarioInternoAtual!=='undefined'&&!!usuarioInternoAtual}catch(_){}
+  return usuarioOk&&!bloqueado&&q('#sideNav')&&q('#view-novo');
 }
 
 function iniciarQuandoPronto(){
