@@ -8,6 +8,11 @@ on:
         required: false
         default: false
         type: boolean
+      require_signing:
+        description: "Exigir assinatura de produção"
+        required: false
+        default: false
+        type: boolean
   push:
     branches: [ "main" ]
     paths:
@@ -27,6 +32,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PLAYSTORE_KEYSTORE_B64: ${{ secrets.PLAYSTORE_KEYSTORE_B64 }}
+      PLAYSTORE_KEYSTORE_PASSWORD: ${{ secrets.PLAYSTORE_KEYSTORE_PASSWORD }}
+      PLAYSTORE_KEY_ALIAS: ${{ secrets.PLAYSTORE_KEY_ALIAS }}
+      PLAYSTORE_KEY_PASSWORD: ${{ secrets.PLAYSTORE_KEY_PASSWORD }}
+
     steps:
       - name: Baixar projeto
         uses: actions/checkout@v4
@@ -42,10 +53,29 @@ jobs:
         with:
           gradle-version: '8.13'
 
+      - name: Preparar chave de upload
+        shell: bash
+        run: |
+          if [ -n "$PLAYSTORE_KEYSTORE_B64" ]; then
+            printf '%s' "$PLAYSTORE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/playstore-upload.jks"
+            echo "PLAYSTORE_KEYSTORE_PATH=$RUNNER_TEMP/playstore-upload.jks" >> "$GITHUB_ENV"
+          fi
+
+      - name: Validar assinatura obrigatória
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.require_signing }}
+        shell: bash
+        run: |
+          test -n "$PLAYSTORE_KEYSTORE_B64"
+          test -n "$PLAYSTORE_KEYSTORE_PASSWORD"
+          test -n "$PLAYSTORE_KEY_ALIAS"
+          test -n "$PLAYSTORE_KEY_PASSWORD"
+          test -f "$RUNNER_TEMP/playstore-upload.jks"
+
       - name: Compilar APK de teste e AAB
         run: gradle assembleDebug bundleRelease
 
       - name: Validar arquivos gerados
+        shell: bash
         run: |
           test -f app/build/outputs/apk/debug/app-debug.apk
           test -f app/build/outputs/bundle/release/app-release.aab
@@ -58,7 +88,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_artifacts }}
         uses: actions/upload-artifact@v4
         with:
-          name: Marcenaria-Pro-PlayStore-Debug
+          name: Marcenaria-Pro-Android-Debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 1
@@ -71,3 +101,8 @@ jobs:
           path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 1
+
+      - name: Apagar chave temporária
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/playstore-upload.jks"
