@@ -121,9 +121,9 @@ function renderPlans(){
     '<div class="ps-current">'+h(planDetail())+'</div>'+
     '<p class="muted">O aplicativo funciona sem conta e sem internet. Organize clientes, produtos, serviços, orçamentos e vendas em um só lugar. A Google Play processa a compra e os meios de pagamento disponíveis para sua conta. As assinaturas mensal e anual têm renovação automática até o cancelamento na Google Play.</p>'+
     '<div class="ps-grid">'+
-      '<div class="ps-box '+(t==='free'?'on':'')+'"><h3>Gratuito</h3><p>Dados no aparelho<br>Clientes, produtos e serviços<br>Orçamentos, vendas e documentos<br>Backup local<br>Sem conta obrigatória</p></div>'+
+      '<div class="ps-box '+(t==='free'?'on':'')+'"><h3>Gratuito</h3><p>Dados no aparelho<br>1 usuário local obrigatório<br>Acesso protegido por usuário e senha<br>Clientes, produtos e serviços<br>Orçamentos, vendas e documentos<br>Backup local</p></div>'+
       '<div class="ps-box '+(t==='professional'?'on':'')+'"><h3>Profissional</h3><p>Tudo do Gratuito<br>Logo própria no app<br>Identidade visual nos PDFs<br>Cores e slogan personalizados<br>Apresentação profissional</p><div class="ps-price-grid">'+priceBox('professional','mensal')+priceBox('professional','anual')+'</div></div>'+
-      '<div class="ps-box '+(t==='pro_cloud'?'on':'')+'"><h3>Pro + Nuvem</h3><p>Tudo do Profissional<br>Backup na nuvem<br>Restauração em aparelho novo<br>Sincronização entre dispositivos</p><div class="ps-price-grid">'+priceBox('pro_cloud','mensal')+priceBox('pro_cloud','anual')+'</div></div>'+
+      '<div class="ps-box '+(t==='pro_cloud'?'on':'')+'"><h3>Pro + Nuvem</h3><p>Tudo do Profissional<br>Conta principal por e-mail<br>Usuários adicionais com permissões<br>Histórico de ações dos usuários<br>Backup e sincronização na nuvem<br>Restauração em aparelho novo</p><div class="ps-price-grid">'+priceBox('pro_cloud','mensal')+priceBox('pro_cloud','anual')+'</div></div>'+
     '</div>'+
     '<div class="actions" style="margin-top:10px"><button class="btn" onclick="PlayStoreFeatures.restorePurchases()">Restaurar compras</button><button class="btn" onclick="PlayStoreFeatures.manage()">Gerenciar assinatura</button></div>'+
     '<div class="ps-billing-state">'+(PS.catalog.ready?'Preços carregados diretamente da Google Play.':'Os preços serão carregados quando a Google Play estiver disponível.')+'</div>';
@@ -155,12 +155,12 @@ function renderCloud(){
   var e=document.getElementById('cloudAccountCard');
   if(!e)return;
   if(!cloudPaid()){
-    e.innerHTML='<h2>Nuvem e sincronização 🔒</h2><p class="muted">Os dados permanecem neste aparelho. Backup online, restauração e sincronização entre dispositivos fazem parte do Pro + Nuvem.</p><button class="btn primary" onclick="PlayStoreFeatures.buy(\'pro_cloud\',\'mensal\')">Assinar Pro + Nuvem</button>';
+    e.innerHTML='<h2>Conta Pro, usuários e nuvem 🔒</h2><p class="muted">No Básico você usa um único usuário local protegido por senha. O Pro + Nuvem libera conta por e-mail, usuários adicionais, permissões, histórico de ações, backup online e sincronização.</p><button class="btn primary" onclick="PlayStoreFeatures.buy(\'pro_cloud\',\'mensal\')">Assinar Pro + Nuvem</button>';
     return;
   }
   e.innerHTML=
-    '<h2>Nuvem e sincronização</h2>'+
-    '<p class="muted">A conta é opcional para usar o app, mas é necessária para associar seu backup ao plano Pro + Nuvem. O armazenamento local continua sendo a fonte principal.</p>'+
+    '<h2>Conta Pro, usuários e nuvem</h2>'+
+    '<p class="muted">Adicione o e-mail da conta principal para liberar usuários adicionais, permissões e sincronização. O usuário principal local continua protegendo o acesso ao aplicativo.</p>'+
     '<div class="grid"><label>E-mail<input id="cloudEmail" type="email" value="'+h(localStorage.getItem('cav_cloud_email')||'')+'"></label><label>Senha<input id="cloudPass" type="password"></label></div>'+
     '<div class="actions"><button class="btn primary" onclick="entrar()">Entrar</button><button class="btn" onclick="criarConta()">Criar conta</button><button class="btn" onclick="sair()">Desconectar</button></div>'+
     '<div class="ps-actions"><button class="btn primary" onclick="PlayStoreFeatures.backup()">Enviar backup agora</button><button class="btn" onclick="PlayStoreFeatures.restoreCloud()">Restaurar da nuvem</button></div>'+
@@ -493,6 +493,7 @@ async function restoreAuth(){
     cloudReady=false;
     if(sess&&typeof salvarSessaoNativa==='function')await salvarSessaoNativa(sess);
     if(sess)await linkCloudEntitlement(sess);
+    if(PS.cloudConnected&&typeof migrarUsuarioPrincipalParaNuvem==='function')await migrarUsuarioPrincipalParaNuvem();
     cloudStatus();
     if(PS.cloudConnected)await reconcile();
   }catch(e){
@@ -512,6 +513,8 @@ async function signIn(){
     cloudUser=r.data.user;PS.cloudConnected=true;cloudReady=false;
     if(r.data.session&&typeof salvarSessaoNativa==='function')await salvarSessaoNativa(r.data.session);
     await linkCloudEntitlement(r.data.session);
+    if(typeof migrarUsuarioPrincipalParaNuvem==='function')await migrarUsuarioPrincipalParaNuvem();
+    if(typeof carregarUsuariosInternos==='function')await carregarUsuariosInternos(false);
     cloudStatus();renderPrivacy();
     await reconcile();
     if(typeof mostrarAviso==='function')mostrarAviso('Conta vinculada ao seu plano Pro + Nuvem.');
@@ -534,6 +537,8 @@ async function createAccount(){
       cloudUser=r.data.session.user;PS.cloudConnected=true;cloudReady=false;
       if(typeof salvarSessaoNativa==='function')await salvarSessaoNativa(r.data.session);
       await linkCloudEntitlement(r.data.session);
+      if(typeof migrarUsuarioPrincipalParaNuvem==='function')await migrarUsuarioPrincipalParaNuvem();
+      if(typeof carregarUsuariosInternos==='function')await carregarUsuariosInternos(false);
       await backup(true);cloudStatus();
       alert('Conta criada, vinculada à assinatura e conectada.');
     }else{
@@ -632,6 +637,7 @@ function planChanged(p){
   try{
     PS.plan=typeof p==='string'?JSON.parse(p):p;
     inject();applyBrand();
+    if(typeof aplicarLimiteUsuariosDoPlano==='function')aplicarLimiteUsuariosDoPlano();
     if(!cloudPaid()){
       PS.cloudConnected=false;cloudUser=null;cloudReady=false;
     }
@@ -657,6 +663,7 @@ async function start(){
   inject();applyBrand();
   if(typeof window.__legacyIniciarAplicativo==='function')await window.__legacyIniciarAplicativo();
   inject();applyBrand();cloudStatus();
+  if(typeof aplicarLimiteUsuariosDoPlano==='function')aplicarLimiteUsuariosDoPlano();
   if(!PS.catalog.ready)refreshCatalog();
 }
 
@@ -676,6 +683,8 @@ window.PlayStoreFeatures={
   openPrivacy:function(){openExternal(SUPABASE_URL+'/functions/v1/playstore-privacy')},
   openDeletionPage:function(){openExternal(SUPABASE_URL+'/functions/v1/playstore-account-delete')},
   deleteAccount:deleteAccount,
+  allowsAdditionalUsers:function(){return cloudPaid()},
+  isProAccountConnected:function(){return cloudPaid()&&PS.cloudConnected},
   onNativePlanChanged:planChanged,
   onCatalogChanged:catalogChanged
 };
