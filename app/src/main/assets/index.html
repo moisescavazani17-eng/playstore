@@ -1671,7 +1671,7 @@ async function garantirSupabaseSdk(){
   if(supabaseSdkPromise)return supabaseSdkPromise;
   supabaseSdkPromise=new Promise((resolve,reject)=>{
     let sc=document.createElement('script');
-    sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js';
+    sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js';
     sc.async=true;
     let timer=setTimeout(()=>reject(new Error('Tempo esgotado ao carregar o serviço de nuvem.')),15000);
     sc.onload=()=>{clearTimeout(timer);window.supabase?.createClient?resolve(window.supabase):reject(new Error('Biblioteca da nuvem indisponível.'))};
