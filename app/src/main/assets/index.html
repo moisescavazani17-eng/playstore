@@ -3,9 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Marcenaria Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<title>Orçamentos &amp; Gestão</title>
+<script src="vendor/jspdf.umd.min.js"></script>
 <style>
 :root{--bg:#071722;--panel:#0d2634;--panel2:#102d3d;--line:#29495a;--text:#f4f7f9;--muted:#a7bac6;--accent:#dce7ed;--safe-top:0px;--safe-bottom:0px}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#06141e,#0b2635);color:var(--text);font-family:Arial,sans-serif;min-height:100vh;-webkit-text-size-adjust:100%}body.android-app{--safe-top:max(env(safe-area-inset-top,0px),26px);--safe-bottom:max(env(safe-area-inset-bottom,0px),10px)}
@@ -209,11 +208,11 @@ body.colaborador-mode .colaborador-note{display:block}
 </head>
 <body>
 <header>
-  <div class="brand"><button class="menu-toggle" aria-label="Abrir menu" onclick="abrirMenu()">☰</button><img src="logo-app.svg" alt="Marcenaria Pro"><div><b>MARCENARIA PRO</b><small>Orçamentos e gestão</small></div><span id="syncTop" class="status" style="margin-left:auto">Local</span><span id="internalUserChip" class="internal-user-chip" style="display:none"></span><button id="trocarUsuarioBtn" class="btn" style="display:none;padding:6px 9px" onclick="trocarUsuarioInterno()">Trocar usuário</button></div>
+  <div class="brand"><button class="menu-toggle" aria-label="Abrir menu" onclick="abrirMenu()">☰</button><img src="logo-app.svg" alt="Orçamentos e Gestão"><div><b>ORÇAMENTOS &amp; GESTÃO</b><small>Clientes, vendas e serviços</small></div><span id="syncTop" class="status" style="margin-left:auto">Local</span><span id="internalUserChip" class="internal-user-chip" style="display:none"></span><button id="trocarUsuarioBtn" class="btn" style="display:none;padding:6px 9px" onclick="trocarUsuarioInterno()">Trocar usuário</button></div>
 </header>
 <div id="menuBackdrop" class="menu-backdrop" onclick="fecharMenu()"></div>
 <nav id="sideNav">
-  <div class="side-nav-head"><div><b>Menu</b><div class="muted">Cavazani Orçamentos</div></div><button class="side-nav-close" aria-label="Fechar menu" onclick="fecharMenu()">×</button></div>
+  <div class="side-nav-head"><div><b>Menu</b><div class="muted">Orçamentos & Gestão</div></div><button class="side-nav-close" aria-label="Fechar menu" onclick="fecharMenu()">×</button></div>
   <button class="active" data-view="novo">Novo orçamento</button>
   <button data-view="historico">Orçamentos</button>
   <button data-view="vendas">Vendas</button>
@@ -225,7 +224,6 @@ body.colaborador-mode .colaborador-note{display:block}
   <button data-view="cheques-destinados">Cheques destinados</button>
   <button data-view="cheques-proprios">Nossos cheques <span id="chequeProprioBadge" class="cheque-badge"></span></button>
   <button data-view="produtos">Produtos e serviços</button>
-  <button id="backupNav" data-view="backup" style="display:none">Backup</button>
   <button data-view="config">Configurações</button>
   <div id="menuUserBox" class="menu-user-box">
     <div id="menuUserName" class="menu-user-name"></div>
@@ -430,41 +428,11 @@ body.colaborador-mode .colaborador-note{display:block}
 <section id="view-produtos" class="view"><h1>Produtos e serviços</h1><div class="card">
 <div class="grid"><label>Descrição<input id="prodDesc"></label><label>Valor<input id="prodValor" inputmode="decimal"></label></div><button class="btn primary" style="margin-top:10px" onclick="addProduto()">Adicionar</button><div id="produtos" class="list" style="margin-top:12px"></div>
 </div></section>
-<section id="view-backup" class="view"><h1>Backup e segurança</h1>
-<div class="card">
-<h2>Backup automático no computador</h2>
-<p class="muted">Sempre que os dados do sistema são salvos, o Windows cria cópias automáticas em duas pastas diferentes. O backup contém orçamentos, cheques, produtos e configurações, mas não salva sua senha nem a sessão da conta.</p>
-<div class="backup-grid">
-<div><b>Documentos</b><span id="backupPath1" class="backup-path">Carregando...</span><button class="btn" style="margin-top:8px" onclick="abrirPastaBackup('documents')">Abrir pasta</button></div>
-<div><b>Downloads</b><span id="backupPath2" class="backup-path">Carregando...</span><button class="btn" style="margin-top:8px" onclick="abrirPastaBackup('downloads')">Abrir pasta</button></div>
-</div>
-<p id="backupLocalStatus" class="muted" style="margin-top:12px">Aguardando informações...</p>
-<button class="btn primary" onclick="fazerBackupLocalAgora()">Fazer backup local agora</button>
-</div>
-
-<div class="card">
-<h2>Pendrive / HD externo</h2>
-<p class="muted">Escolha um pendrive, HD externo ou outra pasta. O sistema criará uma pasta <b>Cavazani-Backups</b> no destino escolhido.</p>
-<span id="backupExternalPath" class="backup-path">Nenhum destino externo escolhido.</span>
-<div class="actions" style="margin-top:10px">
-<button class="btn" onclick="escolherBackupExterno()">Escolher destino</button>
-<button class="btn primary" onclick="fazerBackupExterno()">Fazer backup externo agora</button>
-</div>
-<p id="backupExternalStatus" class="muted"></p>
-</div>
-
-<div class="card">
-<h2>Restaurar um backup</h2>
-<p class="muted">Use esta opção apenas se precisar recuperar dados de um arquivo de backup. A restauração é feita primeiro no computador e não sobrescreve a nuvem automaticamente.</p>
-<button class="btn danger" onclick="restaurarBackupArquivo()">Escolher arquivo e restaurar</button>
-</div>
-</section>
-
 <section id="view-config" class="view"><h1>Configurações</h1>
-<div class="card" id="empresaConfigCard"><h2>Dados da empresa</h2><div class="grid"><label>Empresa<input id="cfgEmpresa" value="Minha Marcenaria"></label><label>Telefone<input id="cfgTelefone"></label><label>E-mail<input id="cfgEmail"></label><label>Instagram<input id="cfgInstagram"></label><label>Endereço<input id="cfgEndereco"></label><label>CNPJ<input id="cfgCnpj"></label><label>Inscrição estadual<input id="cfgIe" placeholder="Número da inscrição estadual ou Isento"></label></div><button class="btn primary" id="salvarConfigBtn" style="margin-top:10px" onclick="salvarConfig()">Salvar dados</button></div>
+<div class="card" id="empresaConfigCard"><h2>Dados da empresa</h2><div class="grid"><label>Empresa<input id="cfgEmpresa" value="Meu Negócio"></label><label>Telefone<input id="cfgTelefone"></label><label>E-mail<input id="cfgEmail"></label><label>Instagram<input id="cfgInstagram"></label><label>Endereço<input id="cfgEndereco"></label><label>CNPJ<input id="cfgCnpj"></label><label>Inscrição estadual<input id="cfgIe" placeholder="Número da inscrição estadual ou Isento"></label></div><button class="btn primary" id="salvarConfigBtn" style="margin-top:10px" onclick="salvarConfig()">Salvar dados</button></div>
 
-<div class="card" id="cloudAccountCard"><h2>Conta da Marcenaria</h2><p class="muted">Este é o acesso principal da empresa à nuvem. Os usuários internos abaixo não precisam conhecer esta senha.</p><div class="grid"><label>E-mail da conta<input id="cloudEmail" type="email" placeholder="empresa@email.com"></label><label>Senha<input id="cloudPass" type="password" placeholder="Sua senha"></label></div>
-<div class="actions" style="margin-top:10px"><button class="btn primary" onclick="entrar()">Entrar e sincronizar</button><button class="btn" onclick="criarConta()">Criar conta</button><button class="btn" onclick="sincronizar()">Sincronizar agora</button><button class="btn danger" onclick="sair()">Sair</button></div><p class="muted" id="cloudStatus">Nuvem pronta. Entre com a mesma conta no celular e no Windows.</p></div>
+<div class="card" id="cloudAccountCard"><h2>Conta do negócio</h2><p class="muted">Este é o acesso principal da empresa à nuvem. Os usuários internos abaixo não precisam conhecer esta senha.</p><div class="grid"><label>E-mail da conta<input id="cloudEmail" type="email" placeholder="empresa@email.com"></label><label>Senha<input id="cloudPass" type="password" placeholder="Sua senha"></label></div>
+<div class="actions" style="margin-top:10px"><button class="btn primary" onclick="entrar()">Entrar e sincronizar</button><button class="btn" onclick="criarConta()">Criar conta</button><button class="btn" onclick="sincronizar()">Sincronizar agora</button><button class="btn danger" onclick="sair()">Sair</button></div><p class="muted" id="cloudStatus">Nuvem pronta. Entre com a mesma conta em outro dispositivo para sincronizar.</p></div>
 
 <div class="card" id="usuariosAcessoCard" style="display:none"><h2>Usuários e acessos</h2>
 <p class="muted">O administrador principal pode criar usuários internos para a mesma conta da empresa e definir exatamente o que cada pessoa pode editar.</p>
@@ -737,7 +705,6 @@ function aplicarPermissoesUI(){
   if($('auditCard'))$('auditCard').style.display=users?'':'none';
   let colaborador=ehColaborador();
   document.querySelectorAll('#sideNav button[data-view]').forEach(btn=>{
-    if(btn.id==='backupNav'){btn.style.display=(!colaborador&&users&&window.WindowsApp)?'':'none';return}
     btn.style.display=colaborador&& !['novo','historico'].includes(btn.dataset.view)?'none':'';
   });
   document.body.classList.toggle('colaborador-mode',colaborador);renderContratos();
@@ -1323,7 +1290,7 @@ async function gerarExtratoMensalPDF(){
   p.setTextColor(170,178,183);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text(subtituloMarca(co).toUpperCase(),60,31);
   p.setTextColor(...az);p.setFontSize(9.2);
   let cx=196,cy=14;
-  [co.empresa||'Minha Marcenaria',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
+  [co.empresa||'Meu Negócio',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
   p.setDrawColor(...linha);p.line(12,44,198,44);
 
   p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(22);p.text('EXTRATO MENSAL DE VENDAS',12,61);
@@ -1562,9 +1529,9 @@ function carregarCfg(){let c=cfg();['Empresa','Telefone','Email','Instagram','En
 let backupTimer=null;
 function dadosBackup(){
   return{
-    formato:'cavazani-backup',
+    formato:'orcamentos-gestao-backup',
     versao:5,
-    aplicativo:'Cavazani Orçamentos',
+    aplicativo:'Orçamentos & Gestão',
     criadoEm:new Date().toISOString(),
     dados:{
       orcamentos:lista(),
@@ -1639,7 +1606,7 @@ async function restaurarBackupArquivo(){if(!pode('usuarios_gerenciar'))return ne
     let r=await window.WindowsApp.restoreBackup();
     if(!r)return;
     let b=r.data;
-    if(!b||b.formato!=='cavazani-backup'||!b.dados)throw new Error('O arquivo selecionado não é um backup válido do Cavazani.');
+    if(!b||b.formato!=='orcamentos-gestao-backup'||!b.dados)throw new Error('O arquivo selecionado não é um backup válido do aplicativo.');
     if(!(await confirmar('Restaurar este backup? Os dados locais atuais serão substituídos.')))return;
     localStorage.setItem('cav_orcs',JSON.stringify(b.dados.orcamentos||[]));
     localStorage.setItem('cav_cheques',JSON.stringify(b.dados.cheques||[]));
@@ -1654,15 +1621,10 @@ async function restaurarBackupArquivo(){if(!pode('usuarios_gerenciar'))return ne
     if(cloudReady)$('backupExternalStatus').textContent='Backup restaurado localmente. A nuvem não foi sobrescrita automaticamente.';
   }catch(e){alert('Erro ao restaurar backup: '+e.message)}
 }
-function inicializarBackupWindows(){
-  if(!window.WindowsApp)return;
-  let nav=$('backupNav');if(nav)nav.style.display='';
-  carregarInfoBackup();
-  agendarBackupAutomatico();
-}
+function inicializarBackupWindows(){}
 const SUPABASE_URL='https://vssbgmzkprhsbpxdtald.supabase.co';
 const SUPABASE_KEY='sb_publishable_ljcrxLGYHRkDCX9vH9_Byg_oYfU7Qo6';
-const SUPABASE_STORAGE_KEY='marcenaria-pro-auth-session-v1';
+const SUPABASE_STORAGE_KEY='orcamentos-gestao-auth-session-v1';
 let authListenerAtivo=false,syncRetryTimer=null;
 function carregarCloud(){}
 let supabaseSdkPromise=null;
@@ -1742,7 +1704,7 @@ async function initCloud(){
   cloudReady=!!cloudUser;
   status();
 }
-function status(){let ok=cloudReady;$('syncTop').textContent=ok?'Nuvem':'Local';$('syncTop').classList.toggle('ok',ok);$('cloudStatus').textContent=ok?'Sincronização ativa: '+cloudUser.email:'Nuvem pronta. Entre com a mesma conta no celular e no Windows.'}
+function status(){let ok=cloudReady;$('syncTop').textContent=ok?'Nuvem':'Local';$('syncTop').classList.toggle('ok',ok);$('cloudStatus').textContent=ok?'Sincronização ativa: '+cloudUser.email:'Nuvem pronta. Entre com a mesma conta em outro dispositivo para sincronizar.'}
 async function criarConta(){try{await initCloud();localStorage.setItem('cav_cloud_email',$('cloudEmail').value.trim());let{data,error}=await cloud.auth.signUp({email:$('cloudEmail').value.trim(),password:$('cloudPass').value});if(error)throw error;if(data.session)await salvarSessaoNativa(data.session);alert(data.session?'Conta criada e conectada.':'Conta criada. Confirme o e-mail e depois conecte.')}catch(e){alert(e.message)}}
 async function entrar(){try{await initCloud();localStorage.setItem('cav_cloud_email',$('cloudEmail').value.trim());let{data,error}=await cloud.auth.signInWithPassword({email:$('cloudEmail').value.trim(),password:$('cloudPass').value});if(error)throw error;cloudUser=data.user;cloudReady=true;if(data.session)await salvarSessaoNativa(data.session);status();novo();await sincronizarComTolerancia(0)}catch(e){alert(e.message)}}
 async function sair(){if(cloud)await cloud.auth.signOut();await limparSessaoNativa();cloudReady=false;cloudUser=null;usuarioInternoAtual=null;sessionStorage.removeItem('cav_active_internal_user');status();novo();if(usuariosInternosCache.length)mostrarLoginInterno()}
@@ -1847,7 +1809,7 @@ async function logoPng(){
       '<g transform="translate(47,-7) scale(0.80)">'+
       '<path d="M31.67,25.47 L24.03,34.98 L20.12,46.19 L20.97,60.96 L26.41,71.66 L21.65,81.85 L20.12,89.49 L24.88,89.32 L26.92,81.85 L29.97,76.75 L40.50,83.21 L52.05,85.92 L66.48,83.72 L78.20,76.75 L81.42,82.02 L83.46,89.49 L88.05,89.49 L86.01,80.32 L81.08,71.83 L75.65,66.40 L65.63,60.79 L56.63,58.92 L45.93,59.77 L29.63,67.92 L24.88,55.87 L25.05,46.19 L27.08,39.74 L35.58,28.70 L42.54,24.45 L50.18,22.42 L50.35,21.23 L48.31,18.00 L39.65,20.38 Z M33.88,72.00 L36.93,69.28 L42.37,66.06 L47.97,64.36 L53.58,63.68 L59.52,64.19 L62.92,65.04 L66.82,66.57 L72.08,69.79 L74.29,71.83 L74.46,72.68 L71.41,75.57 L65.29,78.96 L58.84,80.83 L53.41,81.17 L47.12,80.32 L40.67,77.94 L34.56,73.70 L33.88,72.85 Z" fill="#E8EAEC" fill-rule="evenodd"/>'+
       '</g>'+
-      '<text x="90" y="95" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="12" letter-spacing="1" fill="#E8EAEC">MARCENARIA PRO</text>'+
+      '<text x="90" y="95" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="12" letter-spacing="1" fill="#E8EAEC">ORÇAMENTOS</text>'+
       '</svg>';
     const src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
     return await new Promise(resolve=>{
@@ -1878,7 +1840,7 @@ async function gerarDeclaracaoReembolso(numero){
   p.setTextColor(170,178,183);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text(subtituloMarca(co).toUpperCase(),60,31);
   p.setTextColor(...az);p.setFontSize(9.5);
   let cx=196,cy=14;
-  [co.empresa||'Minha Marcenaria',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
+  [co.empresa||'Meu Negócio',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
   p.setDrawColor(...linha);p.line(12,44,198,44);
 
   p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(22);p.text('DECLARAÇÃO DE REEMBOLSO',12,61);
@@ -1911,7 +1873,7 @@ async function gerarDeclaracaoReembolso(numero){
 
   if(y>255){p.addPage();y=245}else y=Math.max(y+18,245);
   p.setDrawColor(120,137,146);p.line(12,y,82,y);p.line(128,y,198,y);
-  p.setFontSize(8.5);p.text(co.empresa||'Minha Marcenaria',47,y+6,{align:'center'});p.text(o.cliente?.nome||'Cliente',163,y+6,{align:'center'});
+  p.setFontSize(8.5);p.text(co.empresa||'Meu Negócio',47,y+6,{align:'center'});p.text(o.cliente?.nome||'Cliente',163,y+6,{align:'center'});
   p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
 
   let nome=(o.cliente?.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Declaracao_Reembolso_'+String(o.numero).padStart(4,'0')+'_'+nome+'.pdf';
@@ -1958,7 +1920,7 @@ function previewContrato(){
   if(!podeContratos())return;
   let c=montarContrato();if(!c){$('contratoPreview').innerHTML='<p class="muted">Selecione uma venda para visualizar o contrato.</p>';return}
   let o=c.venda,co=c.empresa;
-  $('contratoPreview').innerHTML=`<h2>Contrato de prestação de serviços ${esc(c.numero)}</h2><p><b>Contratante:</b> ${esc(o.cliente?.nome)} • CPF/CNPJ: ${esc(o.cliente?.doc||'-')}${c.rg?' • RG: '+esc(c.rg):''}<br>${esc(o.cliente?.endereco||'')} • ${esc(o.cliente?.cidade||'')}</p><p><b>Contratado:</b> ${esc(co.empresa||'Minha Marcenaria')} • CNPJ: ${esc(co.cnpj||'-')} • IE: ${esc(co.ie||'-')}<br>${esc(co.endereco||'')}</p><div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Cor</th><th>Qtd.</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${(o.itens||[]).map(i=>`<tr><td>${esc(i.d)}</td><td>${esc(i.cor||'-')}</td><td>${esc(i.q)}</td><td>${BRL.format(i.v)}</td><td>${BRL.format(i.q*i.v)}</td></tr>`).join('')}</tbody></table></div><p><b>Total:</b> ${BRL.format(Number(o.total)||0)}<br><b>Prazo de entrega:</b> ${esc(o.prazo||'-')}<br><b>Pagamento:</b> ${esc(metodoPagamentoNome(o.metodo))}<br>${esc(o.condicoes||'').replace(/\n/g,'<br>')}</p>${o.obs?'<p><b>Observações:</b> '+esc(o.obs).replace(/\n/g,'<br>')+'</p>':''}${textoClausulasContrato().map(([t,v])=>'<p><b>'+t+':</b><br>'+esc(v).replace(/\n/g,'<br>')+'</p>').join('')}<p>As partes elegem o foro de Morro Agudo - São Paulo, para dirimirem quaisquer dúvidas decorrentes do presente contrato.</p><p>Contratante e contratado concordam e estão ajustados com todas as normas e cláusulas estipuladas neste contrato e assim assinam o presente termo em 02 (duas) vias de igual teor, os quais passam a ter força legal entre as partes.</p><p>${esc(c.local)} • ${fmtDataBR(c.data)}</p>`;
+  $('contratoPreview').innerHTML=`<h2>Contrato de prestação de serviços ${esc(c.numero)}</h2><p><b>Contratante:</b> ${esc(o.cliente?.nome)} • CPF/CNPJ: ${esc(o.cliente?.doc||'-')}${c.rg?' • RG: '+esc(c.rg):''}<br>${esc(o.cliente?.endereco||'')} • ${esc(o.cliente?.cidade||'')}</p><p><b>Contratado:</b> ${esc(co.empresa||'Meu Negócio')} • CNPJ: ${esc(co.cnpj||'-')} • IE: ${esc(co.ie||'-')}<br>${esc(co.endereco||'')}</p><div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Cor</th><th>Qtd.</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${(o.itens||[]).map(i=>`<tr><td>${esc(i.d)}</td><td>${esc(i.cor||'-')}</td><td>${esc(i.q)}</td><td>${BRL.format(i.v)}</td><td>${BRL.format(i.q*i.v)}</td></tr>`).join('')}</tbody></table></div><p><b>Total:</b> ${BRL.format(Number(o.total)||0)}<br><b>Prazo de entrega:</b> ${esc(o.prazo||'-')}<br><b>Pagamento:</b> ${esc(metodoPagamentoNome(o.metodo))}<br>${esc(o.condicoes||'').replace(/\n/g,'<br>')}</p>${o.obs?'<p><b>Observações:</b> '+esc(o.obs).replace(/\n/g,'<br>')+'</p>':''}${textoClausulasContrato().map(([t,v])=>'<p><b>'+t+':</b><br>'+esc(v).replace(/\n/g,'<br>')+'</p>').join('')}<p>As partes elegem o foro de Morro Agudo - São Paulo, para dirimirem quaisquer dúvidas decorrentes do presente contrato.</p><p>Contratante e contratado concordam e estão ajustados com todas as normas e cláusulas estipuladas neste contrato e assim assinam o presente termo em 02 (duas) vias de igual teor, os quais passam a ter força legal entre as partes.</p><p>${esc(c.local)} • ${fmtDataBR(c.data)}</p>`;
 }
 async function alterarContratosVenda(numero,transformar){
   let a=lista(),i=a.findIndex(o=>String(o.numero)===String(numero));if(i<0)throw Error('Venda não encontrada.');
@@ -2005,7 +1967,7 @@ async function gerarPDFContrato(c){
   function titulo(t){espaco(18);p.setFont('helvetica','bold');p.setFontSize(10);p.setTextColor(...az);p.text(t,12,y);p.setDrawColor(...linha);p.line(12,y+3,198,y+3);y+=11}
   cabecalho();
   titulo('CONTRATANTE');texto(o.cliente?.nome,true);texto('CPF/CNPJ: '+(o.cliente?.doc||'-')+(c.rg?' • RG: '+c.rg:''));texto('Endereço: '+(o.cliente?.endereco||'-')+' • '+(o.cliente?.cidade||'-'));texto('Telefone: '+(o.cliente?.telefone||'-')+' • E-mail: '+(o.cliente?.email||'-'));
-  titulo('CONTRATADO');texto(co.empresa||'Minha Marcenaria',true);texto('CNPJ: '+(co.cnpj||'-')+' • Inscrição estadual: '+(co.ie||'-'));texto('Endereço: '+(co.endereco||'-'));texto([co.telefone,co.email,co.instagram].filter(Boolean).join(' • '));
+  titulo('CONTRATADO');texto(co.empresa||'Meu Negócio',true);texto('CNPJ: '+(co.cnpj||'-')+' • Inscrição estadual: '+(co.ie||'-'));texto('Endereço: '+(co.endereco||'-'));texto([co.telefone,co.email,co.instagram].filter(Boolean).join(' • '));
   texto('Decidem as partes, na melhor forma de direito, celebrar o presente CONTRATO DE PRESTAÇÃO DE SERVIÇOS, que reger-se-á mediante as cláusulas e condições adiante estipuladas.');
   let clausulas=c.clausulas||textoClausulasContrato();
   function clausula(t,v){let h=p.splitTextToSize(String(v),184).length*4.7+14;if(h<195)espaco(h);titulo(t);texto(v)}
@@ -2047,7 +2009,7 @@ async function gerarReciboVenda(numero){
 
   p.setTextColor(...az);p.setFontSize(9.5);
   let cx=196,cy=14;
-  [co.empresa||'Minha Marcenaria',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
+  [co.empresa||'Meu Negócio',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
   p.setDrawColor(...linha);p.line(12,44,198,44);
 
   p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(24);p.text('RECIBO DE VENDA',12,61);
@@ -2097,7 +2059,7 @@ async function gerarReciboVenda(numero){
 
   if(y>265){p.addPage();y=245}
   p.setDrawColor(120,137,146);p.line(12,y,82,y);p.line(128,y,198,y);
-  p.setFontSize(8.5);p.text(co.empresa||'Minha Marcenaria',47,y+6,{align:'center'});p.text('Cliente',163,y+6,{align:'center'});
+  p.setFontSize(8.5);p.text(co.empresa||'Meu Negócio',47,y+6,{align:'center'});p.text('Cliente',163,y+6,{align:'center'});
   p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
 
   let nome=(o.cliente?.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Recibo_Venda_'+String(o.numero).padStart(4,'0')+'_'+nome+'.pdf';
