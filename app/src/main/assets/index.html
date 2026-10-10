@@ -1662,10 +1662,26 @@ function inicializarBackupWindows(){
 }
 const SUPABASE_URL='https://vssbgmzkprhsbpxdtald.supabase.co';
 const SUPABASE_KEY='sb_publishable_ljcrxLGYHRkDCX9vH9_Byg_oYfU7Qo6';
-const SUPABASE_STORAGE_KEY='cavazani-auth-session-v1';
+const SUPABASE_STORAGE_KEY='marcenaria-pro-auth-session-v1';
 let authListenerAtivo=false,syncRetryTimer=null;
 function carregarCloud(){}
-function criarCloudClient(){
+let supabaseSdkPromise=null;
+async function garantirSupabaseSdk(){
+  if(window.supabase?.createClient)return window.supabase;
+  if(supabaseSdkPromise)return supabaseSdkPromise;
+  supabaseSdkPromise=new Promise((resolve,reject)=>{
+    let sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js';
+    sc.async=true;
+    let timer=setTimeout(()=>reject(new Error('Tempo esgotado ao carregar o serviço de nuvem.')),15000);
+    sc.onload=()=>{clearTimeout(timer);window.supabase?.createClient?resolve(window.supabase):reject(new Error('Biblioteca da nuvem indisponível.'))};
+    sc.onerror=()=>{clearTimeout(timer);reject(new Error('Sem conexão com o serviço de nuvem.'))};
+    document.head.appendChild(sc);
+  }).catch(e=>{supabaseSdkPromise=null;throw e});
+  return supabaseSdkPromise;
+}
+async function criarCloudClient(){
+  await garantirSupabaseSdk();
   return window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
     auth:{
       persistSession:true,
