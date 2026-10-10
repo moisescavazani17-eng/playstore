@@ -21,3 +21,7 @@ O workflow `.github/workflows/build-playstore.yml` compila:
 ## Importante
 
 Este repositório não contém a versão comercial/Windows nem os workflows e arquivos de assinatura do projeto antigo.
+
+## Repositório independente
+
+A versão Play Store é mantida integralmente neste repositório. Ela não depende de workflows, arquivos de assinatura ou código desktop do repositório Cavazani-Orcamentos.
