@@ -1,0 +1,73 @@
+name: Build Play Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_artifacts:
+        description: "Enviar APK/AAB para GitHub Artifacts"
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches: [ "main" ]
+    paths:
+      - "app/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle.properties"
+      - ".github/workflows/build-playstore.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-playstore-latest
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Gradle 8.13
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Compilar APK de teste e AAB
+        run: gradle assembleDebug bundleRelease
+
+      - name: Validar arquivos gerados
+        run: |
+          test -f app/build/outputs/apk/debug/app-debug.apk
+          test -f app/build/outputs/bundle/release/app-release.aab
+          ls -lh app/build/outputs/apk/debug/app-debug.apk
+          ls -lh app/build/outputs/bundle/release/app-release.aab
+          sha256sum app/build/outputs/apk/debug/app-debug.apk
+          sha256sum app/build/outputs/bundle/release/app-release.aab
+
+      - name: Guardar APK de teste
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_artifacts }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Marcenaria-Pro-PlayStore-Debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Guardar AAB da Play Store
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_artifacts }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Marcenaria-Pro-PlayStore-AAB
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 1
