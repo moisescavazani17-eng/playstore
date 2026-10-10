@@ -42,6 +42,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
+import java.util.Locale;
+import java.text.SimpleDateFormat;
+
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -58,6 +62,9 @@ public class MainActivity extends Activity {
     private String productCatalogJson = "{\"ready\":false,\"products\":[]}";
 
     private static final int STORAGE_PERMISSION_CODE = 71;
+    private static final int BACKUP_CREATE_CODE = 81;
+    private static final int BACKUP_OPEN_CODE = 82;
+    private String pendingBackupJson = null;
 
     private static final String SECURE_PREFS = "marcenaria_pro_secure_state";
     private static final String AUTH_PREF_KEY = "supabase_auth_session";
@@ -394,11 +401,26 @@ public class MainActivity extends Activity {
 
     private long parseIsoMillis(String value) {
         if (value == null || value.isEmpty()) return 0L;
-        try {
-            return java.time.Instant.parse(value).toEpochMilli();
-        } catch (Exception e) {
-            return 0L;
+        String[] patterns = new String[]{
+                "yyyy-MM-dd'T'HH:mm:ss.SSSSSSX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+                "yyyy-MM-dd'T'HH:mm:ssX"
+        };
+        for (String pattern : patterns) {
+            try {
+                SimpleDateFormat f = new SimpleDateFormat(pattern, Locale.US);
+                Date d = f.parse(value);
+                if (d != null) return d.getTime();
+            } catch (Exception ignored) {}
         }
+        return 0L;
+    }
+
+    private String formatIsoMillis(long value) {
+        if (value <= 0L) return "";
+        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        f.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return f.format(new Date(value));
     }
 
     private int tierRank(String tier) {
@@ -430,7 +452,7 @@ public class MainActivity extends Activity {
             j.put("source", "server_verified_cache");
             j.put("verifiedAt", getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getLong(PLAN_TIME_KEY, 0L));
             long expiry = getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getLong(PLAN_EXPIRY_KEY, 0L);
-            j.put("expiresAt", expiry > 0 ? java.time.Instant.ofEpochMilli(expiry).toString() : JSONObject.NULL);
+            j.put("expiresAt", expiry > 0 ? formatIsoMillis(expiry) : JSONObject.NULL);
             j.put("subscriptionState", getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getString(PLAN_STATE_KEY, ""));
             j.put("productId", getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getString(PLAN_PRODUCT_KEY, ""));
             j.put("basePlanId", getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getString(PLAN_BASE_KEY, ""));
@@ -692,6 +714,45 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void openExternalUrl(String url) {
+            runOnUiThread(() -> {
+                try {
+                    Uri uri = Uri.parse(url);
+                    if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                        showToast("Link inválido.");
+                        return;
+                    }
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                } catch (Exception e) {
+                    showToast("Não foi possível abrir o link.");
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void exportBackup(String json, String fileName) {
+            pendingBackupJson = json;
+            runOnUiThread(() -> {
+                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/json");
+                intent.putExtra(Intent.EXTRA_TITLE,
+                        (fileName == null || fileName.trim().isEmpty()) ? "MarcenariaPro_Backup.json" : fileName);
+                startActivityForResult(intent, BACKUP_CREATE_CODE);
+            });
+        }
+
+        @JavascriptInterface
+        public void importBackup() {
+            runOnUiThread(() -> {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/json");
+                startActivityForResult(intent, BACKUP_OPEN_CODE);
+            });
+        }
+
+        @JavascriptInterface
         public void savePdf(String dataUri, String fileName) {
             try {
                 String data = dataUri;
@@ -728,6 +789,39 @@ public class MainActivity extends Activity {
                 showToast("PDF salvo em Downloads/MarcenariaPro: " + savedName);
             } catch (Exception e) {
                 showToast("Erro ao salvar PDF: " + e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+
+        Uri uri = data.getData();
+        if (requestCode == BACKUP_CREATE_CODE) {
+            String json = pendingBackupJson;
+            pendingBackupJson = null;
+            if (json == null) return;
+            try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                if (out == null) throw new Exception("Não foi possível abrir o destino.");
+                out.write(json.getBytes(StandardCharsets.UTF_8));
+                out.flush();
+                showToast("Backup local salvo.");
+            } catch (Exception e) {
+                showToast("Erro ao salvar backup: " + e.getMessage());
+            }
+            return;
+        }
+
+        if (requestCode == BACKUP_OPEN_CODE) {
+            try (InputStream input = getContentResolver().openInputStream(uri)) {
+                String json = readStream(input);
+                final String quoted = JSONObject.quote(json);
+                runOnUiThread(() -> webView.evaluateJavascript(
+                        "window.PlayStoreFeatures&&PlayStoreFeatures.onBackupImported(" + quoted + ");", null));
+            } catch (Exception e) {
+                showToast("Erro ao abrir backup: " + e.getMessage());
             }
         }
     }
