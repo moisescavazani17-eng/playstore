@@ -1734,7 +1734,7 @@ function ouvirAuth(){
   });
 }
 async function initCloud(){
-  if(!cloud)cloud=criarCloudClient();
+  if(!cloud)cloud=await criarCloudClient();
   ouvirAuth();
   let{data,error}=await cloud.auth.getSession();
   if(error)throw error;
@@ -1796,7 +1796,7 @@ async function sincronizarComTolerancia(tentativa=0){
 async function restaurar(){
   try{
     if(!window.supabase)return;
-    if(!cloud)cloud=criarCloudClient();
+    if(!cloud)cloud=await criarCloudClient();
     ouvirAuth();
 
     let sessao=null;
