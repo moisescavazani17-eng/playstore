@@ -6,6 +6,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -55,6 +58,7 @@ import javax.crypto.spec.GCMParameterSpec;
 public class MainActivity extends Activity {
     private WebView webView;
     private BillingClient billingClient;
+    private AppDatabaseHelper appDb;
     private boolean billingReady = false;
 
     private final Map<String, ProductDetails> productDetailsMap = new HashMap<>();
@@ -95,6 +99,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(Color.rgb(6, 26, 39));
         getWindow().setNavigationBarColor(Color.rgb(6, 26, 39));
+
+        appDb = new AppDatabaseHelper(this);
 
         webView = new WebView(this);
         setContentView(webView);
@@ -669,6 +675,60 @@ public class MainActivity extends Activity {
         clearEncrypted(AUTH_PREF_KEY);
     }
 
+    private static class AppDatabaseHelper extends SQLiteOpenHelper {
+        private static final String DB_NAME = "marcenaria_pro_local.db";
+        private static final int DB_VERSION = 1;
+
+        AppDatabaseHelper(Context context) {
+            super(context, DB_NAME, null, DB_VERSION);
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS app_state (" +
+                    "state_key TEXT PRIMARY KEY NOT NULL," +
+                    "state_value TEXT NOT NULL," +
+                    "updated_at INTEGER NOT NULL)");
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // Migrações futuras serão adicionadas por versão sem apagar dados.
+        }
+
+        synchronized void put(String key, String value) {
+            if (key == null || value == null) return;
+            ContentValues values = new ContentValues();
+            values.put("state_key", key);
+            values.put("state_value", value);
+            values.put("updated_at", System.currentTimeMillis());
+            getWritableDatabase().insertWithOnConflict(
+                    "app_state", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        }
+
+        synchronized void remove(String key) {
+            if (key == null) return;
+            getWritableDatabase().delete("app_state", "state_key = ?", new String[]{key});
+        }
+
+        synchronized String allAsJson() {
+            JSONObject result = new JSONObject();
+            try (Cursor cursor = getReadableDatabase().query(
+                    "app_state",
+                    new String[]{"state_key", "state_value"},
+                    null, null, null, null, null)) {
+                int keyIndex = cursor.getColumnIndexOrThrow("state_key");
+                int valueIndex = cursor.getColumnIndexOrThrow("state_value");
+                while (cursor.moveToNext()) {
+                    result.put(cursor.getString(keyIndex), cursor.getString(valueIndex));
+                }
+            } catch (Exception e) {
+                return "{}";
+            }
+            return result.toString();
+        }
+    }
+
     public class AndroidBridge {
         private final Context context;
         AndroidBridge(Context context) { this.context = context; }
@@ -683,6 +743,21 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void clearAuthSession() { clearAuthSessionEncrypted(); }
+
+        @JavascriptInterface
+        public String loadLocalState() {
+            return appDb == null ? "{}" : appDb.allAsJson();
+        }
+
+        @JavascriptInterface
+        public void saveLocalValue(String key, String value) {
+            if (appDb != null) appDb.put(key, value);
+        }
+
+        @JavascriptInterface
+        public void removeLocalValue(String key) {
+            if (appDb != null) appDb.remove(key);
+        }
 
         @JavascriptInterface
         public String appVersion() { return getCurrentVersionName(); }
@@ -840,6 +915,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (billingClient != null) billingClient.endConnection();
+        if (appDb != null) {
+            appDb.close();
+            appDb = null;
+        }
         if (webView != null) {
             webView.removeJavascriptInterface("AndroidApp");
             webView.destroy();
