@@ -7,6 +7,7 @@ def releaseStorePassword = System.getenv('PLAYSTORE_KEYSTORE_PASSWORD')
 def releaseKeyAlias = System.getenv('PLAYSTORE_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('PLAYSTORE_KEY_PASSWORD')
 def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+def ciBuildNumber = (System.getenv('PLAYSTORE_BUILD_NUMBER') ?: '1').toInteger()
 
 android {
     namespace 'com.cavazani.orcamentos'
@@ -16,7 +17,7 @@ android {
         applicationId 'com.cavazani.orcamentos.playstore'
         minSdk 24
         targetSdk 36
-        versionCode 1
+        versionCode ciBuildNumber
         versionName '1.0.0'
     }
 
@@ -32,6 +33,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix '.test'
+            versionNameSuffix '-test'
+        }
+
         release {
             minifyEnabled false
             if (hasReleaseSigning) {
