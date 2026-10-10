@@ -21,7 +21,7 @@ function brandPaid(){return rank(PS.plan.tier)>=1}
 function cloudPaid(){return rank(PS.plan.tier)>=2}
 function h(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function co(){try{return cfg()}catch(e){try{return JSON.parse(localStorage.getItem('cav_cfg')||'{}')}catch(_){return{}}}}
-function company(c){c=c||co();return String(c.empresa||'Minha Marcenaria').trim()||'Minha Marcenaria'}
+function company(c){c=c||co();return String(c.empresa||'Meu Negócio').trim()||'Meu Negócio'}
 function shortName(c){var n=company(c);return n.length>28?n.slice(0,28):n}
 function subtitle(c){c=c||co();return String(c.slogan||'ORÇAMENTOS E GESTÃO').trim()||'ORÇAMENTOS E GESTÃO'}
 function footer(c){c=c||co();return company(c)+(c.slogan?' • '+c.slogan:'')}
@@ -119,11 +119,11 @@ function renderPlans(){
   e.innerHTML=
     '<h2>Planos e assinatura</h2>'+
     '<div class="ps-current">'+h(planDetail())+'</div>'+
-    '<p class="muted">O aplicativo funciona sem conta e sem internet. A Google Play processa a compra e os meios de pagamento disponíveis para sua conta. As assinaturas mensal e anual têm renovação automática até o cancelamento na Google Play.</p>'+
+    '<p class="muted">O aplicativo funciona sem conta e sem internet. Organize clientes, produtos, serviços, orçamentos e vendas em um só lugar. A Google Play processa a compra e os meios de pagamento disponíveis para sua conta. As assinaturas mensal e anual têm renovação automática até o cancelamento na Google Play.</p>'+
     '<div class="ps-grid">'+
-      '<div class="ps-box '+(t==='free'?'on':'')+'"><h3>Gratuito</h3><p>Dados no aparelho<br>Orçamentos, clientes, vendas e documentos<br>Backup local/manual<br>Sem conta obrigatória</p></div>'+
-      '<div class="ps-box '+(t==='professional'?'on':'')+'"><h3>Profissional</h3><p>Tudo do Gratuito<br>Logo própria no app<br>Logo e identidade nos PDFs<br>Cores e slogan personalizados</p><div class="ps-price-grid">'+priceBox('professional','mensal')+priceBox('professional','anual')+'</div></div>'+
-      '<div class="ps-box '+(t==='pro_cloud'?'on':'')+'"><h3>Pro + Nuvem</h3><p>Tudo do Profissional<br>Backup na nuvem<br>Restauração em aparelho novo<br>Sincronização entre aparelhos</p><div class="ps-price-grid">'+priceBox('pro_cloud','mensal')+priceBox('pro_cloud','anual')+'</div></div>'+
+      '<div class="ps-box '+(t==='free'?'on':'')+'"><h3>Gratuito</h3><p>Dados no aparelho<br>Clientes, produtos e serviços<br>Orçamentos, vendas e documentos<br>Backup local<br>Sem conta obrigatória</p></div>'+
+      '<div class="ps-box '+(t==='professional'?'on':'')+'"><h3>Profissional</h3><p>Tudo do Gratuito<br>Logo própria no app<br>Identidade visual nos PDFs<br>Cores e slogan personalizados<br>Apresentação profissional</p><div class="ps-price-grid">'+priceBox('professional','mensal')+priceBox('professional','anual')+'</div></div>'+
+      '<div class="ps-box '+(t==='pro_cloud'?'on':'')+'"><h3>Pro + Nuvem</h3><p>Tudo do Profissional<br>Backup na nuvem<br>Restauração em aparelho novo<br>Sincronização entre dispositivos</p><div class="ps-price-grid">'+priceBox('pro_cloud','mensal')+priceBox('pro_cloud','anual')+'</div></div>'+
     '</div>'+
     '<div class="actions" style="margin-top:10px"><button class="btn" onclick="PlayStoreFeatures.restorePurchases()">Restaurar compras</button><button class="btn" onclick="PlayStoreFeatures.manage()">Gerenciar assinatura</button></div>'+
     '<div class="ps-billing-state">'+(PS.catalog.ready?'Preços carregados diretamente da Google Play.':'Os preços serão carregados quando a Google Play estiver disponível.')+'</div>';
@@ -209,7 +209,7 @@ function applyBrand(){
   if(br){
     var im=br.querySelector('img'),bt=br.querySelector('b'),sm=br.querySelector('small');
     if(im)im.src=on&&c.logoDataUrl?c.logoDataUrl:'logo-app.svg';
-    if(bt)bt.textContent=on?company(c):'MARCENARIA PRO';
+    if(bt)bt.textContent=on?company(c):'ORÇAMENTOS & GESTÃO';
     if(sm)sm.textContent=on?subtitle(c):'Orçamentos e gestão';
   }
   if(on){
@@ -295,11 +295,11 @@ function localHasData(){
 function snapshot(){
   var st={};
   TRACK.forEach(function(k){var v=localStorage.getItem(k);if(v!==null)st[k]=v});
-  return {formato:'marcenaria-pro-cloud-v1',versao:2,updated_at:localStorage.getItem('playstore_local_updated_at')||new Date().toISOString(),storage:st};
+  return {formato:'orcamentos-gestao-cloud-v1',versao:2,updated_at:localStorage.getItem('playstore_local_updated_at')||new Date().toISOString(),storage:st};
 }
 
 function applySnapshot(p){
-  if(!p||p.formato!=='marcenaria-pro-cloud-v1'||!p.storage)throw new Error('Backup inválido');
+  if(!p||p.formato!=='orcamentos-gestao-cloud-v1'||!p.storage)throw new Error('Backup inválido');
   PS.applying=true;
   try{
     TRACK.forEach(function(k){localStorage.removeItem(k)});
@@ -556,10 +556,10 @@ function openExternal(url){
 function exportBackup(){
   if(!window.AndroidApp||!AndroidApp.exportBackup)return alert('Backup local disponível na versão Android.');
   var payload=snapshot();
-  payload.formato='marcenaria-pro-local-backup-v1';
+  payload.formato='orcamentos-gestao-local-backup-v1';
   payload.exportado_em=new Date().toISOString();
   var d=new Date(),date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  AndroidApp.exportBackup(JSON.stringify(payload),'MarcenariaPro_Backup_'+date+'.json');
+  AndroidApp.exportBackup(JSON.stringify(payload),'Orcamentos_Gestao_Backup_'+date+'.json');
 }
 
 function importBackup(){
@@ -570,10 +570,10 @@ function importBackup(){
 async function onBackupImported(raw){
   try{
     var payload=typeof raw==='string'?JSON.parse(raw):raw;
-    if(!payload||payload.formato!=='marcenaria-pro-local-backup-v1'||!payload.storage)throw new Error('Arquivo de backup inválido.');
+    if(!payload||payload.formato!=='orcamentos-gestao-local-backup-v1'||!payload.storage)throw new Error('Arquivo de backup inválido.');
     var ok=typeof confirmar==='function'?await confirmar('Restaurar este backup? Os dados atuais deste aparelho serão substituídos.'):confirm('Restaurar este backup?');
     if(!ok)return;
-    payload.formato='marcenaria-pro-cloud-v1';
+    payload.formato='orcamentos-gestao-cloud-v1';
     applySnapshot(payload);
   }catch(e){alert('Não foi possível restaurar o backup: '+e.message)}
 }
