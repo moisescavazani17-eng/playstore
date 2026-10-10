@@ -84,6 +84,9 @@ public class MainActivity extends Activity {
     private static final String PLAN_BASE_KEY = "base_plan_id";
     private static final String PLAN_AUTORENEW_KEY = "auto_renew";
 
+    private static final String TEST_PLAN_PREFS = "orcamentos_gestao_test_plan";
+    private static final String TEST_PLAN_KEY = "tier";
+
     private static final String PRODUCT_PROFESSIONAL = "plano_profissional";
     private static final String PRODUCT_CLOUD = "plano_pro_nuvem";
     private static final String BASE_MONTHLY = "mensal";
@@ -441,7 +444,24 @@ public class MainActivity extends Activity {
         return "free";
     }
 
+    private boolean isTestBuild() {
+        boolean debuggable =
+                (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        return debuggable && getPackageName().endsWith(".test");
+    }
+
+    private String testTierOverride() {
+        if (!isTestBuild()) return null;
+        String tier = getSharedPreferences(TEST_PLAN_PREFS, MODE_PRIVATE)
+                .getString(TEST_PLAN_KEY, "free");
+        if ("professional".equals(tier) || "pro_cloud".equals(tier)) return tier;
+        return "free";
+    }
+
     private String effectiveCachedTier() {
+        String testTier = testTierOverride();
+        if (testTier != null) return testTier;
+
         String tier = getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getString(PLAN_KEY, "free");
         long expiry = getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getLong(PLAN_EXPIRY_KEY, 0L);
         if (!"free".equals(tier) && expiry > 0L && System.currentTimeMillis() >= expiry) {
@@ -455,7 +475,8 @@ public class MainActivity extends Activity {
             JSONObject j = new JSONObject();
             j.put("tier", effectiveCachedTier());
             j.put("billingReady", billingReady);
-            j.put("source", "server_verified_cache");
+            j.put("source", isTestBuild() ? "test_override" : "server_verified_cache");
+            j.put("testBuild", isTestBuild());
             j.put("verifiedAt", getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getLong(PLAN_TIME_KEY, 0L));
             long expiry = getSharedPreferences(PLAN_PREFS, MODE_PRIVATE).getLong(PLAN_EXPIRY_KEY, 0L);
             j.put("expiresAt", expiry > 0 ? formatIsoMillis(expiry) : JSONObject.NULL);
@@ -764,6 +785,21 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String getPlanStatus() { return planStatusJson(); }
+
+        @JavascriptInterface
+        public boolean isTestBuild() { return MainActivity.this.isTestBuild(); }
+
+        @JavascriptInterface
+        public void setTestPlan(String tier) {
+            if (!MainActivity.this.isTestBuild()) return;
+            String safeTier = "free";
+            if ("professional".equals(tier) || "pro_cloud".equals(tier)) safeTier = tier;
+            getSharedPreferences(TEST_PLAN_PREFS, MODE_PRIVATE)
+                    .edit()
+                    .putString(TEST_PLAN_KEY, safeTier)
+                    .apply();
+            notifyPlanChanged();
+        }
 
         @JavascriptInterface
         public String getProductCatalog() { return productCatalogJson; }
