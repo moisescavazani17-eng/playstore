@@ -132,7 +132,7 @@ function renderPlans(){
 function renderBrand(){
   var e=document.getElementById('psBrand');
   if(!e)return;
-  var c=co(),ok=brandPaid(),logo=PS.pendingLogo||c.logoDataUrl||'logo-cavazani.svg';
+  var c=co(),ok=brandPaid(),logo=PS.pendingLogo||c.logoDataUrl||'logo-app.svg';
   var x='<h2>Marca e aparência '+(ok?'':'🔒')+'</h2><p class="muted">Use a identidade da sua empresa no aplicativo e nos PDFs.</p>';
   if(ok){
     x+='<div class="ps-brand"><div><div class="ps-logo"><img id="psLogoPreview" src="'+h(logo)+'"></div><label>Logo<input id="psLogoFile" type="file" accept="image/png,image/jpeg,image/webp"></label></div>'+
@@ -208,7 +208,7 @@ function applyBrand(){
   var c=co(),on=brandPaid()&&c.marcaNoApp!==false,br=document.querySelector('.brand');
   if(br){
     var im=br.querySelector('img'),bt=br.querySelector('b'),sm=br.querySelector('small');
-    if(im)im.src=on&&c.logoDataUrl?c.logoDataUrl:'logo-cavazani.svg';
+    if(im)im.src=on&&c.logoDataUrl?c.logoDataUrl:'logo-app.svg';
     if(bt)bt.textContent=on?company(c):'MARCENARIA PRO';
     if(sm)sm.textContent=on?subtitle(c):'Orçamentos e gestão';
   }
