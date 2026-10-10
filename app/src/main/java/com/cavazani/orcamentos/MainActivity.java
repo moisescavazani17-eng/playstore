@@ -534,28 +534,39 @@ public class MainActivity extends Activity {
             return;
         }
 
-        BillingFlowParams.ProductDetailsParams productParams =
+        Purchase current = currentPurchasedSubscription();
+
+        BillingFlowParams.ProductDetailsParams.Builder productBuilder =
                 BillingFlowParams.ProductDetailsParams.newBuilder()
                         .setProductDetails(details)
-                        .setOfferToken(offer.getOfferToken())
-                        .build();
+                        .setOfferToken(offer.getOfferToken());
 
-        BillingFlowParams.Builder flowBuilder = BillingFlowParams.newBuilder()
-                .setProductDetailsParamsList(Collections.singletonList(productParams));
+        BillingFlowParams.Builder flowBuilder = BillingFlowParams.newBuilder();
 
-        Purchase current = currentPurchasedSubscription();
         if (current != null && !current.getProducts().contains(productId)) {
             boolean upgrading = "pro_cloud".equals(tier);
             int replacementMode = upgrading
-                    ? BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.CHARGE_PRORATED_PRICE
-                    : BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.DEFERRED;
+                    ? BillingFlowParams.ProductDetailsParams.SubscriptionProductReplacementParams.ReplacementMode.CHARGE_PRORATED_PRICE
+                    : BillingFlowParams.ProductDetailsParams.SubscriptionProductReplacementParams.ReplacementMode.DEFERRED;
+
+            String oldProductId = current.getProducts().isEmpty()
+                    ? ("pro_cloud".equals(tier) ? PRODUCT_PROFESSIONAL : PRODUCT_CLOUD)
+                    : current.getProducts().get(0);
+
+            productBuilder.setSubscriptionProductReplacementParams(
+                    BillingFlowParams.ProductDetailsParams.SubscriptionProductReplacementParams.newBuilder()
+                            .setOldProductId(oldProductId)
+                            .setReplacementMode(replacementMode)
+                            .build());
 
             flowBuilder.setSubscriptionUpdateParams(
                     BillingFlowParams.SubscriptionUpdateParams.newBuilder()
                             .setOldPurchaseToken(current.getPurchaseToken())
-                            .setSubscriptionReplacementMode(replacementMode)
                             .build());
         }
+
+        BillingFlowParams.ProductDetailsParams productParams = productBuilder.build();
+        flowBuilder.setProductDetailsParamsList(Collections.singletonList(productParams));
 
         BillingResult launchResult = billingClient.launchBillingFlow(this, flowBuilder.build());
         if (launchResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
