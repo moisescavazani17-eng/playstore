@@ -491,11 +491,21 @@ function usuariosInternosLocal(){try{return JSON.parse(localStorage.getItem('cav
 function guardarUsuariosInternosLocal(a){usuariosInternosCache=a||[];localStorage.setItem('cav_internal_users',JSON.stringify(usuariosInternosCache))}
 function permiteUsuariosExtras(){return !!window.PlayStoreFeatures?.allowsAdditionalUsers?.()}
 function contaProUsuariosConectada(){return !!window.PlayStoreFeatures?.isProAccountConnected?.()}
+function contaProTeste(){return !!window.PlayStoreFeatures?.isTestTeamSimulation?.()}
 function aplicarLimiteUsuariosDoPlano(){
-  if(permiteUsuariosExtras())return;
+  if(permiteUsuariosExtras()){
+    if(window.PlayStoreFeatures?.isTestMode?.()){
+      try{
+        let backup=JSON.parse(localStorage.getItem('ps_test_team_users')||'[]');
+        if(Array.isArray(backup)&&backup.length>1&&usuariosInternosLocal().length<=1)guardarUsuariosInternosLocal(backup);
+      }catch(_){}
+    }
+    return;
+  }
   let a=usuariosInternosLocal();
   if(!a.length)return;
   let master=a.find(x=>x.is_master)||a[0];
+  if(window.PlayStoreFeatures?.isTestMode?.()&&a.length>1)localStorage.setItem('ps_test_team_users',JSON.stringify(a));
   if(a.length!==1||a[0].id!==master.id)guardarUsuariosInternosLocal([master]);
   if(usuarioInternoAtual&&usuarioInternoAtual.id!==master.id){
     usuarioInternoAtual=null;
@@ -541,7 +551,7 @@ function mostrarSetupAdmin(){
 function mostrarLoginInterno(){
   if(!usuariosInternosCache.length){mostrarSetupAdmin();return}
   let el=authOverlay();
-  let conta=contaProUsuariosConectada()?'<p class="muted" style="margin-top:12px">Conta Pro: '+esc(cloudUser?.email||localStorage.getItem('cav_cloud_email')||'conectada')+'</p>':'';
+  let conta=contaProUsuariosConectada()?'<p class="muted" style="margin-top:12px">Conta Pro: '+esc(window.PlayStoreFeatures?.accountEmail?.()||'conectada')+'</p>':'';
   el.innerHTML='<div class="internal-auth-box"><h2>Entrar no aplicativo</h2><p class="muted">Digite seu usuário e senha para acessar seus dados.</p><label>Usuário<input id="loginInternoUsuario" autocomplete="username"></label><label style="margin-top:10px">Senha<input id="loginInternoSenha" type="password" autocomplete="current-password"></label><button class="btn primary" style="width:100%;margin-top:12px" onclick="loginUsuarioInterno()">Entrar</button>'+conta+'</div>';
   el.classList.add('show');
   setTimeout(()=>focarCampo($('loginInternoUsuario')),50);
@@ -551,7 +561,7 @@ async function criarPrimeiroAdmin(){
   if(!nome||!usuario||senha.length<6)return alert('Preencha nome, usuário e uma senha com pelo menos 6 caracteres.');
   try{
     let salt=novoSalt(),hash=await hashSenhaInterna(senha,salt),permissions=permissoesPreset('admin'),data;
-    if(contaProUsuariosConectada()){
+    if(contaProUsuariosConectada()&&!contaProTeste()){
       let r=await cloud.from('playstore_internal_users').insert({owner_user_id:cloudUser.id,nome,usuario,password_salt:salt,password_hash:hash,role:'admin',permissions,ativo:true,is_master:true}).select('*').single();
       if(r.error)throw r.error;data=r.data;
     }else{
@@ -599,7 +609,9 @@ function trocarUsuarioInterno(){
 async function carregarUsuariosInternos(forcarLogin=false){
   try{
     let a;
-    if(contaProUsuariosConectada()){
+    if(contaProTeste()){
+      a=usuariosInternosLocal();guardarUsuariosInternosLocal(a);
+    }else if(contaProUsuariosConectada()){
       let{data,error}=await cloud.from('playstore_internal_users').select('*').eq('owner_user_id',cloudUser.id).order('is_master',{ascending:false}).order('nome',{ascending:true});
       if(error)throw error;a=data||[];guardarUsuariosInternosLocal(a);
     }else{
@@ -621,6 +633,7 @@ function inicializarUsuariosInternosLocal(){
   if(ativo)definirUsuarioInterno(ativo);else mostrarLoginInterno();
 }
 async function migrarUsuarioPrincipalParaNuvem(){
+  if(contaProTeste())return;
   if(!contaProUsuariosConectada()||!cloud||!cloudUser)return;
   let local=usuariosInternosLocal(),master=local.find(x=>x.is_master)||local[0];
   let{data:remotos,error}=await cloud.from('playstore_internal_users').select('*').eq('owner_user_id',cloudUser.id).order('is_master',{ascending:false}).order('nome',{ascending:true});
@@ -635,6 +648,14 @@ async function migrarUsuarioPrincipalParaNuvem(){
 }
 async function registrarLog(acao,detalhes={}){
   if(!contaProUsuariosConectada()||!usuarioInternoAtual)return;
+  if(contaProTeste()){
+    try{
+      let a=JSON.parse(localStorage.getItem('ps_test_audit')||'[]');
+      a.unshift({id:'test-log-'+Date.now(),app_user_name:usuarioInternoAtual.nome||usuarioInternoAtual.usuario,acao,detalhes,created_at:new Date().toISOString()});
+      localStorage.setItem('ps_test_audit',JSON.stringify(a.slice(0,100)));
+    }catch(_){}
+    return;
+  }
   try{
     await cloud.from('playstore_user_audit_log').insert({owner_user_id:cloudUser.id,app_user_id:usuarioInternoAtual.id,app_user_name:usuarioInternoAtual.nome||usuarioInternoAtual.usuario,acao,detalhes});
   }catch(e){console.error('Log interno:',e)}
@@ -659,6 +680,28 @@ async function salvarUsuarioInterno(){
   if(!nome||!usuario)return alert('Informe o nome e o usuário.');
   if(!usuarioInternoEditandoId&&senha.length<6)return alert('A senha precisa ter pelo menos 6 caracteres.');
   try{
+    if(contaProTeste()){
+      if(usuariosInternosCache.some(x=>x.id!==usuarioInternoEditandoId&&String(x.usuario).toLowerCase()===usuario))throw new Error('Já existe um usuário com esse login.');
+      if(usuarioInternoEditandoId){
+        let atual=usuariosInternosCache.find(x=>x.id===usuarioInternoEditandoId);if(!atual)return;
+        if(atual.is_master){role='admin';permissions=permissoesPreset('admin')}
+        let upd={...atual,nome,usuario,role,permissions,updated_at:new Date().toISOString()};
+        if(senha){upd.password_salt=novoSalt();upd.password_hash=await hashSenhaInterna(senha,upd.password_salt)}
+        guardarUsuariosInternosLocal(usuariosInternosCache.map(x=>x.id===upd.id?upd:x));
+        if(usuarioInternoAtual?.id===upd.id)definirUsuarioInterno(upd);
+        await registrarLog('usuario_editado',{usuario:upd.usuario,role:upd.role});
+        mostrarAviso('Usuário de teste atualizado.');
+      }else{
+        let salt=novoSalt(),hash=await hashSenhaInterna(senha,salt);
+        let data={id:'test-user-'+Date.now(),nome,usuario,password_salt:salt,password_hash:hash,role,permissions,ativo:true,is_master:false,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+        guardarUsuariosInternosLocal([...usuariosInternosCache,data]);
+        await registrarLog('usuario_criado',{usuario:data.usuario,role:data.role});
+        mostrarAviso('Usuário de teste criado.');
+      }
+      localStorage.setItem('ps_test_team_users',JSON.stringify(usuariosInternosLocal()));
+      cancelarEdicaoUsuarioInterno();renderUsuariosInternos();carregarAuditLog();
+      return;
+    }
     if(usuarioInternoEditandoId){
       let atual=usuariosInternosCache.find(x=>x.id===usuarioInternoEditandoId);if(!atual)return;
       if(atual.is_master){role='admin';permissions=permissoesPreset('admin')}
@@ -707,6 +750,12 @@ async function alternarUsuarioInterno(id){
   if(u.is_master)return alert('O administrador principal não pode ser desativado.');
   if(usuarioInternoAtual?.id===id)return alert('Você não pode desativar o usuário que está usando agora.');
   try{
+    if(contaProTeste()){
+      let data={...u,ativo:!u.ativo,updated_at:new Date().toISOString()};
+      guardarUsuariosInternosLocal(usuariosInternosCache.map(x=>x.id===id?data:x));
+      localStorage.setItem('ps_test_team_users',JSON.stringify(usuariosInternosLocal()));
+      await registrarLog(data.ativo?'usuario_ativado':'usuario_desativado',{usuario:u.usuario});renderUsuariosInternos();return;
+    }
     let novo=!u.ativo,{data,error}=await cloud.from('playstore_internal_users').update({ativo:novo,updated_at:new Date().toISOString()}).eq('id',id).select('*').single();if(error)throw error;
     guardarUsuariosInternosLocal(usuariosInternosCache.map(x=>x.id===id?data:x));await registrarLog(novo?'usuario_ativado':'usuario_desativado',{usuario:u.usuario});renderUsuariosInternos();
   }catch(e){alert('Erro ao alterar usuário: '+e.message)}
@@ -719,6 +768,11 @@ async function excluirUsuarioInterno(id){
   if(usuarioInternoAtual?.id===id)return alert('Você não pode excluir o usuário que está usando agora.');
   if(!(await confirmar('Excluir o usuário '+u.nome+'?')))return;
   try{
+    if(contaProTeste()){
+      guardarUsuariosInternosLocal(usuariosInternosCache.filter(x=>x.id!==id));
+      localStorage.setItem('ps_test_team_users',JSON.stringify(usuariosInternosLocal()));
+      await registrarLog('usuario_excluido',{usuario:u.usuario});renderUsuariosInternos();carregarAuditLog();return;
+    }
     let{error}=await cloud.from('playstore_internal_users').delete().eq('id',id);if(error)throw error;
     guardarUsuariosInternosLocal(usuariosInternosCache.filter(x=>x.id!==id));await registrarLog('usuario_excluido',{usuario:u.usuario});renderUsuariosInternos();carregarAuditLog();
   }catch(e){alert('Erro ao excluir usuário: '+e.message)}
@@ -733,7 +787,12 @@ function renderUsuariosInternos(){
 async function carregarAuditLog(){
   if(!$('auditLista')||!pode('usuarios_gerenciar')||!contaProUsuariosConectada())return;
   try{
-    let{data,error}=await cloud.from('playstore_user_audit_log').select('*').eq('owner_user_id',cloudUser.id).order('created_at',{ascending:false}).limit(40);if(error)throw error;
+    let data;
+    if(contaProTeste()){
+      try{data=JSON.parse(localStorage.getItem('ps_test_audit')||'[]').slice(0,40)}catch(_){data=[]}
+    }else{
+      let r=await cloud.from('playstore_user_audit_log').select('*').eq('owner_user_id',cloudUser.id).order('created_at',{ascending:false}).limit(40);if(r.error)throw r.error;data=r.data;
+    }
     $('auditLista').innerHTML=(data||[]).length?(data||[]).map(x=>`<div class="audit-row"><b>${esc(x.app_user_name)}</b> <span class="muted">• ${esc(String(x.acao).replaceAll('_',' '))}</span><div class="muted">${new Date(x.created_at).toLocaleString('pt-BR')}</div></div>`).join(''):'<div class="muted">Nenhuma ação registrada ainda.</div>';
   }catch(e){console.error(e)}
 }
