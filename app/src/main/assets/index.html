@@ -439,7 +439,7 @@ body.colaborador-mode .colaborador-note{display:block}
 <div class="grid">
 <label>Nome<input id="usrNome" placeholder="Ex.: João"></label>
 <label>Usuário<input id="usrLogin" placeholder="Ex.: joao"></label>
-<label>Senha<input id="usrSenha" type="password" placeholder="Senha do usuário"></label>
+<label>Senha<input id="usrSenha" type="password" placeholder="Mínimo de 6 caracteres"></label>
 <label>Perfil<select id="usrRole" onchange="aplicarPresetPermissoes()"><option value="operador">Operador</option><option value="visualizador">Somente visualização</option><option value="colaborador">Colaboradores</option><option value="admin">Administrador</option></select></label>
 </div>
 <div class="permission-grid">
@@ -524,7 +524,7 @@ function mostrarSetupAdmin(){
   el.classList.add('show');
 }
 function mostrarLoginInterno(){
-  if(!usuariosInternosCache.length){if(cloudReady)mostrarSetupAdmin();return}
+  if(!usuariosInternosCache.length){mostrarSetupAdmin();return}
   let el=authOverlay();
   let conta=contaProUsuariosConectada()?'<p class="muted" style="margin-top:12px">Conta Pro: '+esc(cloudUser?.email||localStorage.getItem('cav_cloud_email')||'conectada')+'</p>':'';
   el.innerHTML='<div class="internal-auth-box"><h2>Entrar no aplicativo</h2><p class="muted">Digite seu usuário e senha para acessar seus dados.</p><label>Usuário<input id="loginInternoUsuario" autocomplete="username"></label><label style="margin-top:10px">Senha<input id="loginInternoSenha" type="password" autocomplete="current-password"></label><button class="btn primary" style="width:100%;margin-top:12px" onclick="loginUsuarioInterno()">Entrar</button>'+conta+'</div>';
