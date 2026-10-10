@@ -30,7 +30,7 @@ function htmlPage() {
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Excluir conta - Marcenaria Pro</title>
+<title>Excluir conta - Orçamentos & Gestão</title>
 <style>
 body{font-family:Arial,sans-serif;background:#071722;color:#f4f7f9;margin:0;padding:24px}
 main{max-width:620px;margin:auto;background:#0d2634;border:1px solid #29495a;border-radius:16px;padding:22px}
@@ -42,7 +42,7 @@ button{width:100%;margin-top:15px;padding:12px;border:0;border-radius:10px;font-
 </head>
 <body><main>
 <h1>Excluir conta e dados da nuvem</h1>
-<p>Esta página permite excluir permanentemente a conta de nuvem do Marcenaria Pro. A exclusão remove a conta de acesso, o backup/sincronização armazenado na nuvem e o vínculo da assinatura com essa conta.</p>
+<p>Esta página permite excluir permanentemente a conta de nuvem do Orçamentos & Gestão. A exclusão remove a conta de acesso, o backup/sincronização armazenado na nuvem e o vínculo da assinatura com essa conta.</p>
 <p class="note">Os dados que estiverem somente no seu aparelho não podem ser apagados por esta página. Para removê-los, desinstale o aplicativo ou limpe os dados do app no Android.</p>
 <p class="note"><strong>Importante:</strong> excluir a conta de nuvem não cancela uma assinatura Google Play ativa. O cancelamento da renovação deve ser feito na área de assinaturas da Google Play.</p>
 <label>E-mail</label><input id="email" type="email" autocomplete="username">
