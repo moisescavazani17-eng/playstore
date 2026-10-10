@@ -5,11 +5,11 @@ Este repositório contém somente a versão Android destinada à Google Play.
 ## Arquitetura
 
 - **Local-first:** clientes, produtos, serviços, orçamentos, vendas e configurações ficam no aparelho.
-- **Sem conta obrigatória:** o plano Gratuito funciona sem login e sem internet.
+- **Básico/Gratuito:** funciona sem e-mail e sem internet, mas exige a criação de 1 usuário local com senha para proteger o acesso.
 - **Backup local:** exportação e restauração de arquivo pelo seletor nativo do Android.
 - **PDF offline:** jsPDF é empacotado no APK/AAB.
 - **Profissional:** personalização da marca, logo no app/PDF, cores e slogan.
-- **Pro + Nuvem:** tudo do Profissional + conta opcional, backup e sincronização.
+- **Pro + Nuvem:** tudo do Profissional + conta principal por e-mail, usuários adicionais com perfis/permissões, histórico de ações, backup e sincronização.
 - **Nuvem protegida por entitlement:** a RLS do Supabase exige assinatura Pro + Nuvem validada no servidor.
 
 ## Google Play Billing
@@ -138,3 +138,13 @@ Itens que dependem de configuração externa e não ficam no código:
 7. Preencher Data Safety conforme `PLAY_CONSOLE_DATA_SAFETY.md`.
 8. Configurar a chave de upload nos GitHub Secrets e ativar Play App Signing.
 9. Publicar primeiro em Internal testing e testar compra, renovação, upgrade, downgrade, cancelamento e restauração.
+
+
+## Usuários por plano
+
+- **Gratuito/Básico:** exatamente 1 usuário principal local, obrigatório, protegido por usuário e senha.
+- **Profissional:** mantém o usuário principal e adiciona os recursos de identidade visual.
+- **Pro + Nuvem:** permite vincular um e-mail à conta principal e criar usuários adicionais com perfis e permissões.
+- Os usuários adicionais ficam em `playstore_internal_users` e o histórico em `playstore_user_audit_log`.
+- As políticas RLS dessas tabelas exigem entitlement Pro + Nuvem válido.
+- Se o Pro expirar, os usuários extras deixam de ser liberados no aparelho, mas não são apagados do backend. Ao reativar a assinatura, voltam a ficar disponíveis.
