@@ -425,8 +425,23 @@ body.colaborador-mode .colaborador-note{display:block}
 <div id="chequesPropriosLista" class="list"></div>
 </section>
 
-<section id="view-produtos" class="view"><h1>Produtos e serviços</h1><div class="card">
-<div class="grid"><label>Descrição<input id="prodDesc"></label><label>Valor<input id="prodValor" inputmode="decimal"></label></div><button class="btn primary" style="margin-top:10px" onclick="addProduto()">Adicionar</button><div id="produtos" class="list" style="margin-top:12px"></div>
+<section id="view-produtos" class="view"><h1>Produtos e serviços</h1>
+<div class="product-tabs">
+  <button id="prodTabProduto" class="btn primary" type="button" onclick="mudarAbaProduto('produto')">Produtos</button>
+  <button id="prodTabServico" class="btn" type="button" onclick="mudarAbaProduto('servico')">Serviços</button>
+</div>
+<div class="card">
+<h2 id="prodFormTitulo">Adicionar produto</h2>
+<div class="grid">
+  <label>Descrição<input id="prodDesc" placeholder="Ex.: Produto ou serviço"></label>
+  <label>Valor à vista<input id="prodValorVista" inputmode="decimal" placeholder="0,00"></label>
+  <label>Valor a prazo<input id="prodValorPrazo" inputmode="decimal" placeholder="0,00"></label>
+</div>
+<div class="actions" style="margin-top:10px">
+  <button id="prodSalvarBtn" class="btn primary" onclick="salvarProdutoServico()">Adicionar produto</button>
+  <button id="prodCancelarBtn" class="btn" style="display:none" onclick="cancelarEdicaoProduto()">Cancelar edição</button>
+</div>
+<div id="produtos" class="list" style="margin-top:12px"></div>
 </div></section>
 <section id="view-config" class="view"><h1>Configurações</h1>
 <div class="card" id="empresaConfigCard"><h2>Dados da empresa</h2><div class="grid"><label>Empresa<input id="cfgEmpresa" value="Meu Negócio"></label><label>Telefone<input id="cfgTelefone"></label><label>E-mail<input id="cfgEmail"></label><label>Instagram<input id="cfgInstagram"></label><label>Endereço<input id="cfgEndereco"></label><label>CNPJ<input id="cfgCnpj"></label><label>Inscrição estadual<input id="cfgIe" placeholder="Número da inscrição estadual ou Isento"></label></div><button class="btn primary" id="salvarConfigBtn" style="margin-top:10px" onclick="salvarConfig()">Salvar dados</button></div>
@@ -728,7 +743,7 @@ function aplicarPermissoesUI(){
   ['cliNome','cliTelefone','cliEmail','cliDoc','cliEndereco','cliCidade'].forEach(id=>{if($(id))$(id).disabled=!cli});let cliBtn=document.querySelector('#view-clientes button[onclick="adicionarClienteDireto()"]');if(cliBtn)cliBtn.style.display=cli?'':'none';
   ['cpNumero','cpBanco','cpAgenciaConta','cpDestinatario','cpValor','cpEmissao','cpCompensacao','cpDescricao'].forEach(id=>{if($(id))$(id).disabled=!fin});
   if($('cpSalvarBtn'))$('cpSalvarBtn').style.display=fin?'':'none';if($('cpCancelarBtn')&&!fin)$('cpCancelarBtn').style.display='none';['instChequeNome','instChequeDescricao'].forEach(id=>{if($(id))$(id).disabled=!fin});let instBtn=document.querySelector('#view-cheques-destinados button[onclick="adicionarInstituicaoCheque()"]');if(instBtn)instBtn.style.display=fin?'':'none';
-  if($('prodDesc'))$('prodDesc').disabled=!prod;if($('prodValor'))$('prodValor').disabled=!prod;let prodBtn=document.querySelector('#view-produtos button[onclick="addProduto()"]');if(prodBtn)prodBtn.style.display=prod?'':'none';
+  ['prodDesc','prodValorVista','prodValorPrazo'].forEach(id=>{if($(id))$(id).disabled=!prod});let prodBtn=$('prodSalvarBtn');if(prodBtn)prodBtn.style.display=prod?'':'none';
   ['cfgEmpresa','cfgTelefone','cfgEmail','cfgInstagram','cfgEndereco','cfgCnpj','cfgIe'].forEach(id=>{if($(id))$(id).disabled=!conf});
   if($('salvarConfigBtn'))$('salvarConfigBtn').style.display=conf?'':'none';if($('btnLancarVenda'))$('btnLancarVenda').style.display=(vendas&&!vendaRealizadaAtual)?'':'none';
   if($('cloudAccountCard'))$('cloudAccountCard').style.display=users?'':'none';
@@ -1550,9 +1565,81 @@ function renderClientes(){
   }).join(''):'<div class="muted">Nenhum cliente.</div>';
 }
 
-function produtosLista(){return JSON.parse(localStorage.getItem('cav_prods')||'[]')}function addProduto(){if(!pode('produtos_editar'))return negar('produtos_editar');let d=$('prodDesc').value.trim(),v=parse($('prodValor').value);if(!d)return;let a=produtosLista();a.push({d,v});localStorage.setItem('cav_prods',JSON.stringify(a));$('prodDesc').value='';$('prodValor').value='';renderProdutos();salvarEstado()}
-function usarProd(i){if(!pode('orcamentos_editar'))return negar('orcamentos_editar');let p=produtosLista()[i];$('itemDesc').value=p.d;$('itemCor').value='';$('itemValor').value=String(p.v).replace('.',',');document.querySelector('[data-view="novo"]').click()}function delProd(i){if(!pode('produtos_editar'))return negar('produtos_editar');let a=produtosLista();a.splice(i,1);localStorage.setItem('cav_prods',JSON.stringify(a));renderProdutos();salvarEstado()}
-function renderProdutos(){let a=produtosLista();$('produtos').innerHTML=a.length?a.map((p,i)=>`<div class="list-item"><div><b>${esc(p.d)}</b><div class="muted">${BRL.format(p.v)}</div></div><div>${pode('orcamentos_editar')?`<button class="btn" onclick="usarProd(${i})">Usar</button> `:''}${pode('produtos_editar')?`<button class="btn danger" onclick="delProd(${i})">Excluir</button>`:''}</div></div>`).join(''):'<div class="muted">Nenhum produto.</div>'}
+let tipoProdutoAtual='produto',produtoEditandoIndex=null;
+function produtosLista(){
+  let a=[];try{a=JSON.parse(localStorage.getItem('cav_prods')||'[]')}catch(_){}
+  return (Array.isArray(a)?a:[]).map(p=>({
+    ...p,
+    tipo:p.tipo==='servico'?'servico':'produto',
+    vista:Number(p.vista??p.valorVista??p.v??0)||0,
+    prazo:Number(p.prazo??p.valorPrazo??p.v??0)||0
+  }));
+}
+function guardarProdutos(a){localStorage.setItem('cav_prods',JSON.stringify(a))}
+function mudarAbaProduto(tipo){
+  tipoProdutoAtual=tipo==='servico'?'servico':'produto';
+  produtoEditandoIndex=null;
+  limparFormularioProduto();
+  renderProdutos();
+}
+function limparFormularioProduto(){
+  if($('prodDesc'))$('prodDesc').value='';
+  if($('prodValorVista'))$('prodValorVista').value='';
+  if($('prodValorPrazo'))$('prodValorPrazo').value='';
+  if($('prodSalvarBtn'))$('prodSalvarBtn').textContent=tipoProdutoAtual==='servico'?'Adicionar serviço':'Adicionar produto';
+  if($('prodCancelarBtn'))$('prodCancelarBtn').style.display='none';
+  if($('prodFormTitulo'))$('prodFormTitulo').textContent=tipoProdutoAtual==='servico'?'Adicionar serviço':'Adicionar produto';
+}
+function salvarProdutoServico(){
+  if(!pode('produtos_editar'))return negar('produtos_editar');
+  let d=$('prodDesc').value.trim(),vista=parse($('prodValorVista').value),prazo=parse($('prodValorPrazo').value);
+  if(!d){alert('Digite a descrição.');return}
+  let a=produtosLista(),registro={d,tipo:tipoProdutoAtual,vista,prazo};
+  if(produtoEditandoIndex!==null&&a[produtoEditandoIndex]){
+    a[produtoEditandoIndex]={...a[produtoEditandoIndex],...registro};
+    mostrarAviso(tipoProdutoAtual==='servico'?'Serviço atualizado.':'Produto atualizado.');
+  }else{
+    a.push(registro);
+  }
+  guardarProdutos(a);produtoEditandoIndex=null;limparFormularioProduto();renderProdutos();salvarEstado();
+}
+function addProduto(){salvarProdutoServico()}
+function editarProduto(i){
+  if(!pode('produtos_editar'))return negar('produtos_editar');
+  let a=produtosLista(),p=a[i];if(!p)return;
+  tipoProdutoAtual=p.tipo==='servico'?'servico':'produto';produtoEditandoIndex=i;
+  $('prodDesc').value=p.d||'';
+  $('prodValorVista').value=String(Number(p.vista)||0).replace('.',',');
+  $('prodValorPrazo').value=String(Number(p.prazo)||0).replace('.',',');
+  $('prodSalvarBtn').textContent='Salvar alterações';
+  $('prodCancelarBtn').style.display='';
+  $('prodFormTitulo').textContent=tipoProdutoAtual==='servico'?'Editar serviço':'Editar produto';
+  renderProdutos();
+}
+function cancelarEdicaoProduto(){produtoEditandoIndex=null;limparFormularioProduto();renderProdutos()}
+function usarProd(i,tipoValor){
+  if(!pode('orcamentos_editar'))return negar('orcamentos_editar');
+  let p=produtosLista()[i];if(!p)return;
+  $('itemDesc').value=p.d;$('itemCor').value='';
+  let valor=tipoValor==='prazo'?p.prazo:p.vista;
+  $('itemValor').value=String(Number(valor)||0).replace('.',',');
+  document.querySelector('[data-view="novo"]').click();
+}
+function delProd(i){
+  if(!pode('produtos_editar'))return negar('produtos_editar');
+  let a=produtosLista();a.splice(i,1);guardarProdutos(a);
+  if(produtoEditandoIndex===i)produtoEditandoIndex=null;
+  else if(produtoEditandoIndex!==null&&produtoEditandoIndex>i)produtoEditandoIndex--;
+  limparFormularioProduto();renderProdutos();salvarEstado();
+}
+function renderProdutos(){
+  if(!$('produtos'))return;
+  if($('prodTabProduto'))$('prodTabProduto').className='btn '+(tipoProdutoAtual==='produto'?'primary':'');
+  if($('prodTabServico'))$('prodTabServico').className='btn '+(tipoProdutoAtual==='servico'?'primary':'');
+  if(produtoEditandoIndex===null&&$('prodFormTitulo'))$('prodFormTitulo').textContent=tipoProdutoAtual==='servico'?'Adicionar serviço':'Adicionar produto';
+  let todos=produtosLista(),indices=todos.map((p,i)=>({p,i})).filter(x=>x.p.tipo===tipoProdutoAtual);
+  $('produtos').innerHTML=indices.length?indices.map(({p,i})=>`<div class="list-item"><div><b>${esc(p.d)}</b><div class="muted">À vista: ${BRL.format(p.vista)} • A prazo: ${BRL.format(p.prazo)}</div></div><div>${pode('orcamentos_editar')?`<button class="btn" onclick="usarProd(${i},'vista')">Usar à vista</button> <button class="btn" onclick="usarProd(${i},'prazo')">Usar a prazo</button> `:''}${pode('produtos_editar')?`<button class="btn" onclick="editarProduto(${i})">Editar</button> <button class="btn danger" onclick="delProd(${i})">Excluir</button>`:''}</div></div>`).join(''):`<div class="muted">Nenhum ${tipoProdutoAtual==='servico'?'serviço':'produto'} cadastrado.</div>`;
+}
 function cfg(){return JSON.parse(localStorage.getItem('cav_cfg')||'{}')}
 function salvarConfig(){if(!pode('config_editar'))return negar('config_editar');let c={...cfg(),empresa:$('cfgEmpresa').value,telefone:$('cfgTelefone').value,email:$('cfgEmail').value,instagram:$('cfgInstagram').value,endereco:$('cfgEndereco').value,cnpj:$('cfgCnpj').value,ie:$('cfgIe').value.trim()};localStorage.setItem('cav_cfg',JSON.stringify(c));salvarEstado();registrarLog('config_empresa_alterada',{});alert('Dados salvos.')}
 function carregarCfg(){let c=cfg();['Empresa','Telefone','Email','Instagram','Endereco','Cnpj','Ie'].forEach(x=>{let k=x.toLowerCase();$('cfg'+x).value=c[k]||$('cfg'+x).value})}
