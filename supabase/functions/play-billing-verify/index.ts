@@ -224,6 +224,21 @@ Deno.serve(async (req) => {
 
     const purchaseTokenHash = await sha256Hex(purchaseToken);
     const userId = await optionalUserId(req.headers.get("authorization"), admin);
+
+    const { data: existingEntitlement, error: existingError } = await admin
+      .from("playstore_entitlements")
+      .select("user_id")
+      .eq("purchase_token_hash", purchaseTokenHash)
+      .maybeSingle();
+    if (existingError) throw new Error(`entitlement_lookup_failed:${existingError.message}`);
+    if (
+      userId &&
+      existingEntitlement?.user_id &&
+      existingEntitlement.user_id !== userId
+    ) {
+      return json({ error: "purchase_already_linked" }, 409);
+    }
+
     const row: Record<string, unknown> = {
       purchase_token_hash: purchaseTokenHash,
       package_name: PACKAGE_NAME,
