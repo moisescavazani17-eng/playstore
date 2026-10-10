@@ -1,13 +1,13 @@
-# Marcenaria Pro - Play Store
+# Orçamentos & Gestão - Play Store
 
-Repositório exclusivo da versão Android destinada à Google Play.
+Repositório exclusivo da versão Android destinada à Google Play, voltada a autônomos, prestadores de serviço e pequenos negócios.
 
 ## Estrutura
 
-- Aplicativo Android local-first.
+- Aplicativo Android local-first para clientes, produtos, serviços, orçamentos, vendas e documentos.
 - Plano gratuito sem conta obrigatória.
-- Plano Profissional com identidade visual e logo da empresa.
-- Plano Pro + Nuvem com backup e sincronização opcional.
+- Plano Profissional com identidade visual e logo do negócio.
+- Plano Pro + Nuvem com backup e sincronização opcional entre dispositivos.
 - Google Play Billing para assinaturas.
 - Backend de sincronização isolado em `playstore_snapshots`.
 
