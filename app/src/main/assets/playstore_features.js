@@ -1,7 +1,21 @@
 (function(){
 'use strict';
-var PS={plan:{tier:'free'},cloudConnected:false,syncing:false,applying:false,timer:null,pendingLogo:null};
-var TRACK=['cav_orcs','cav_cheques','cav_cheque_instituicoes','cav_cheques_proprios','cav_prods','cav_cfg','cav_seq','cav_theme','cav_internal_users'];
+
+var PS={
+  plan:{tier:'free',billingReady:false,source:'fallback'},
+  catalog:{ready:false,products:[]},
+  cloudConnected:false,
+  syncing:false,
+  applying:false,
+  timer:null,
+  pendingLogo:null
+};
+
+var TRACK=[
+  'cav_orcs','cav_cheques','cav_cheque_instituicoes','cav_cheques_proprios',
+  'cav_prods','cav_cfg','cav_seq','cav_theme','cav_internal_users'
+];
+
 function rank(t){return t==='pro_cloud'?2:t==='professional'?1:0}
 function brandPaid(){return rank(PS.plan.tier)>=1}
 function cloudPaid(){return rank(PS.plan.tier)>=2}
@@ -11,38 +25,356 @@ function company(c){c=c||co();return String(c.empresa||'Minha Marcenaria').trim(
 function shortName(c){var n=company(c);return n.length>28?n.slice(0,28):n}
 function subtitle(c){c=c||co();return String(c.slogan||'ORÇAMENTOS E GESTÃO').trim()||'ORÇAMENTOS E GESTÃO'}
 function footer(c){c=c||co();return company(c)+(c.slogan?' • '+c.slogan:'')}
-window.nomeEmpresa=company;window.nomeCurtoMarca=shortName;window.subtituloMarca=subtitle;window.rodapeMarca=footer;
-function readPlan(){try{if(window.AndroidApp&&AndroidApp.getPlanStatus){var p=JSON.parse(AndroidApp.getPlanStatus());if(p&&p.tier)return p}}catch(e){}return {tier:'free',billingReady:false,source:'fallback'}}
-function addStyles(){if(document.getElementById('psStyle'))return;var s=document.createElement('style');s.id='psStyle';s.textContent='.ps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.ps-box{border:1px solid var(--line);border-radius:12px;padding:11px;background:var(--panel2)}.ps-box.on{outline:2px solid var(--accent)}.ps-box p,.ps-note{font-size:11px;color:var(--muted);line-height:1.45}.ps-brand{display:grid;grid-template-columns:110px 1fr;gap:12px}.ps-logo{width:92px;height:92px;border:1px solid var(--line);border-radius:14px;background:#fff;display:grid;place-items:center;overflow:hidden}.ps-logo img{max-width:100%;max-height:100%;object-fit:contain}.ps-lock{border:1px dashed var(--line);border-radius:10px;padding:10px;color:var(--muted)}.ps-warn{margin-top:10px;border:1px solid #7d5d32;border-radius:10px;padding:10px;color:#f0d49b;background:#2c271c;font-size:11px;line-height:1.5}.ps-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.primary{color:var(--accent-text,#0b1f2b)!important}@media(max-width:620px){.ps-grid,.ps-brand,.ps-actions{grid-template-columns:1fr}}';document.head.appendChild(s)}
-function renderPlans(){var e=document.getElementById('psPlans');if(!e)return;var t=PS.plan.tier;e.innerHTML='<h2>Planos</h2><p class="muted">O aplicativo funciona localmente sem conta. A assinatura libera recursos adicionais.</p><div class="ps-grid">'+'<div class="ps-box '+(t==='free'?'on':'')+'"><b>Gratuito</b><p>Dados locais no aparelho<br>Orçamentos e gestão<br>Sem conta obrigatória</p></div>'+'<div class="ps-box '+(t==='professional'?'on':'')+'"><b>Profissional</b><p>Logo própria<br>Identidade nos PDFs<br>Cores e slogan</p><button class="btn primary" onclick="PlayStoreFeatures.buy(\'professional\')">'+(rank(t)>=1?'Liberado':'Assinar')+'</button></div>'+'<div class="ps-box '+(t==='pro_cloud'?'on':'')+'"><b>Pro + Nuvem</b><p>Tudo do Profissional<br>Backup na nuvem<br>Sincronização entre aparelhos</p><button class="btn primary" onclick="PlayStoreFeatures.buy(\'pro_cloud\')">'+(t==='pro_cloud'?'Liberado':'Assinar')+'</button></div></div>'+'<div class="actions" style="margin-top:10px"><button class="btn" onclick="PlayStoreFeatures.restorePurchases()">Restaurar compras</button><button class="btn" onclick="PlayStoreFeatures.manage()">Gerenciar assinatura</button></div>'+'<p class="ps-note">Produtos preparados: plano_profissional_mensal e plano_pro_nuvem_mensal.</p>'}
-function renderBrand(){var e=document.getElementById('psBrand');if(!e)return;var c=co(),ok=brandPaid(),logo=PS.pendingLogo||c.logoDataUrl||'logo-cavazani.svg';var x='<h2>Marca e aparência '+(ok?'':'🔒')+'</h2><p class="muted">Use a identidade da sua empresa no aplicativo e nos PDFs.</p>';if(ok)x+='<div class="ps-brand"><div><div class="ps-logo"><img id="psLogoPreview" src="'+h(logo)+'"></div><label>Logo<input id="psLogoFile" type="file" accept="image/png,image/jpeg,image/webp"></label></div><div class="grid"><label>Slogan<input id="psSlogan" value="'+h(c.slogan||'')+'"></label><label>Cor principal<input id="psColor" type="color" value="'+h(c.corPrincipal||'#dce7ed')+'"></label><label>Cor do cabeçalho<input id="psHead" type="color" value="'+h(c.corCabecalho||'#061a27')+'"></label></div></div><label><input id="psInApp" type="checkbox" '+(c.marcaNoApp===false?'':'checked')+'> Aplicar identidade dentro do app</label><label><input id="psInPdf" type="checkbox" '+(c.mostrarLogoPdf===false?'':'checked')+'> Mostrar logo nos PDFs</label><div class="actions"><button class="btn primary" onclick="PlayStoreFeatures.saveBrand()">Salvar identidade</button><button class="btn" onclick="PlayStoreFeatures.removeLogo()">Remover logo</button></div>';else x+='<div class="ps-lock">Disponível a partir do plano Profissional.</div>';x+='<div class="ps-warn"><b>Ícone do aplicativo:</b> uma logo escolhida pelo usuário não pode substituir livremente o ícone do mesmo app da Play Store. Nome e ícone totalmente próprios ficam reservados ao White Label, com uma build separada.</div>';e.innerHTML=x;if(ok){var inp=document.getElementById('psLogoFile');if(inp)inp.onchange=chooseLogo}}
-function renderCloud(){var e=document.getElementById('cloudAccountCard');if(!e)return;if(!cloudPaid()){e.innerHTML='<h2>Nuvem e sincronização 🔒</h2><p class="muted">Os dados permanecem neste aparelho. Backup e sincronização fazem parte do Pro + Nuvem.</p><button class="btn primary" onclick="PlayStoreFeatures.buy(\'pro_cloud\')">Conhecer Pro + Nuvem</button>';return}e.innerHTML='<h2>Nuvem e sincronização</h2><p class="muted">A nuvem é opcional. O armazenamento local continua sendo a fonte principal.</p><div class="grid"><label>E-mail<input id="cloudEmail" type="email" value="'+h(localStorage.getItem('cav_cloud_email')||'')+'"></label><label>Senha<input id="cloudPass" type="password"></label></div><div class="actions"><button class="btn primary" onclick="entrar()">Entrar</button><button class="btn" onclick="criarConta()">Criar conta</button><button class="btn" onclick="sair()">Desconectar</button></div><div class="ps-actions"><button class="btn primary" onclick="PlayStoreFeatures.backup()">Enviar backup agora</button><button class="btn" onclick="PlayStoreFeatures.restoreCloud()">Restaurar da nuvem</button></div><p class="muted" id="cloudStatus"></p>';cloudStatus()}
-function inject(){addStyles();var v=document.getElementById('view-config'),c=document.getElementById('empresaConfigCard');if(v&&c&&!document.getElementById('psPlans')){var p=document.createElement('div');p.className='card';p.id='psPlans';v.insertBefore(p,c);var b=document.createElement('div');b.className='card';b.id='psBrand';c.insertAdjacentElement('afterend',b)}renderPlans();renderBrand();renderCloud()}
-function contrast(hex){var v=String(hex||'').replace('#','');if(!/^[0-9a-f]{6}$/i.test(v))return '#0b1f2b';var r=parseInt(v.slice(0,2),16),g=parseInt(v.slice(2,4),16),b=parseInt(v.slice(4),16);return (r*299+g*587+b*114)/1000>150?'#10202a':'#fff'}
-function applyBrand(){var c=co(),on=brandPaid()&&c.marcaNoApp!==false,br=document.querySelector('.brand');if(br){var im=br.querySelector('img'),bt=br.querySelector('b'),sm=br.querySelector('small');if(im)im.src=on&&c.logoDataUrl?c.logoDataUrl:'logo-cavazani.svg';if(bt)bt.textContent=on?company(c):'MARCENARIA PRO';if(sm)sm.textContent=on?subtitle(c):'Orçamentos e gestão'}if(on){document.documentElement.style.setProperty('--accent',c.corPrincipal||'#dce7ed');document.documentElement.style.setProperty('--accent-text',contrast(c.corPrincipal||'#dce7ed'));var hd=document.querySelector('header');if(hd)hd.style.background=(c.corCabecalho||'#061a27')+'ef'}}
-function resize(file){return new Promise(function(res,rej){var rd=new FileReader();rd.onerror=function(){rej(new Error('Falha ao ler imagem'))};rd.onload=function(){var im=new Image();im.onerror=function(){rej(new Error('Imagem inválida'))};im.onload=function(){var sc=Math.min(1,640/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(im.width*sc));cv.height=Math.max(1,Math.round(im.height*sc));cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL('image/png'))};im.src=rd.result};rd.readAsDataURL(file)})}
-async function chooseLogo(ev){var f=ev.target.files&&ev.target.files[0];if(!f)return;if(f.size>8*1024*1024)return alert('A logo deve ter no máximo 8 MB.');try{PS.pendingLogo=await resize(f);document.getElementById('psLogoPreview').src=PS.pendingLogo}catch(e){alert(e.message)}}
-function saveBrand(){if(!brandPaid())return;var c=co();c.slogan=(document.getElementById('psSlogan').value||'').trim();c.corPrincipal=document.getElementById('psColor').value;c.corCabecalho=document.getElementById('psHead').value;c.marcaNoApp=document.getElementById('psInApp').checked;c.mostrarLogoPdf=document.getElementById('psInPdf').checked;if(PS.pendingLogo)c.logoDataUrl=PS.pendingLogo;localStorage.setItem('cav_cfg',JSON.stringify(c));PS.pendingLogo=null;applyBrand();renderBrand();if(typeof mostrarAviso==='function')mostrarAviso('Identidade salva.')}
-function removeLogo(){var c=co();delete c.logoDataUrl;localStorage.setItem('cav_cfg',JSON.stringify(c));PS.pendingLogo=null;applyBrand();renderBrand()}
-var oldLogo=window.logoPng;window.logoPng=async function(){var c=co();if(brandPaid()&&c.mostrarLogoPdf!==false&&c.logoDataUrl)return c.logoDataUrl;return oldLogo?oldLogo():null};
+window.nomeEmpresa=company;
+window.nomeCurtoMarca=shortName;
+window.subtituloMarca=subtitle;
+window.rodapeMarca=footer;
+
+function readPlan(){
+  try{
+    if(window.AndroidApp&&AndroidApp.getPlanStatus){
+      var p=JSON.parse(AndroidApp.getPlanStatus());
+      if(p&&p.tier)return p;
+    }
+  }catch(e){}
+  return {tier:'free',billingReady:false,source:'fallback'};
+}
+
+function readCatalog(){
+  try{
+    if(window.AndroidApp&&AndroidApp.getProductCatalog){
+      var c=JSON.parse(AndroidApp.getProductCatalog());
+      if(c&&Array.isArray(c.products))return c;
+    }
+  }catch(e){}
+  return {ready:false,products:[]};
+}
+
+function addStyles(){
+  if(document.getElementById('psStyle'))return;
+  var s=document.createElement('style');
+  s.id='psStyle';
+  s.textContent=
+    '.ps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}'+
+    '.ps-box{border:1px solid var(--line);border-radius:12px;padding:11px;background:var(--panel2)}'+
+    '.ps-box.on{outline:2px solid var(--accent)}.ps-box h3{margin:0 0 5px;font-size:15px}'+
+    '.ps-box p,.ps-note{font-size:11px;color:var(--muted);line-height:1.5}'+
+    '.ps-price-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}'+
+    '.ps-price{border:1px solid var(--line);border-radius:9px;padding:8px;background:var(--panel)}'+
+    '.ps-price b{display:block;font-size:13px;margin-bottom:5px}.ps-price .btn{width:100%;padding:8px 7px;font-size:11px}'+
+    '.ps-current{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:5px 8px;font-size:11px;font-weight:700;margin-bottom:9px}'+
+    '.ps-brand{display:grid;grid-template-columns:110px 1fr;gap:12px}.ps-logo{width:92px;height:92px;border:1px solid var(--line);border-radius:14px;background:#fff;display:grid;place-items:center;overflow:hidden}'+
+    '.ps-logo img{max-width:100%;max-height:100%;object-fit:contain}.ps-lock{border:1px dashed var(--line);border-radius:10px;padding:10px;color:var(--muted)}'+
+    '.ps-warn{margin-top:10px;border:1px solid #7d5d32;border-radius:10px;padding:10px;color:#f0d49b;background:#2c271c;font-size:11px;line-height:1.5}'+
+    '.ps-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.ps-billing-state{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}'+
+    '.primary{color:var(--accent-text,#0b1f2b)!important}@media(max-width:620px){.ps-grid,.ps-brand{grid-template-columns:1fr}.ps-actions{grid-template-columns:1fr}}';
+  document.head.appendChild(s);
+}
+
+function productForTier(tier){
+  return (PS.catalog.products||[]).find(function(p){return p.tier===tier})||null;
+}
+function offerFor(tier,basePlanId){
+  var p=productForTier(tier);
+  if(!p)return null;
+  return (p.offers||[]).find(function(o){return o.basePlanId===basePlanId})||null;
+}
+function priceText(tier,basePlanId){
+  var o=offerFor(tier,basePlanId);
+  return o&&o.formattedPrice?o.formattedPrice:(basePlanId==='anual'?'Anual':'Mensal');
+}
+function planName(t){
+  return t==='pro_cloud'?'Pro + Nuvem':t==='professional'?'Profissional':'Gratuito';
+}
+function formatDate(value){
+  if(!value)return '';
+  try{return new Date(value).toLocaleDateString('pt-BR')}catch(_){return ''}
+}
+function planDetail(){
+  var p=PS.plan||{}, txt='Plano atual: '+planName(p.tier);
+  if(p.basePlanId)txt+=' • '+(p.basePlanId==='anual'?'anual':'mensal');
+  if(p.expiresAt)txt+=' • válido até '+formatDate(p.expiresAt);
+  if(p.tier!=='free'&&p.autoRenew===false)txt+=' • renovação cancelada';
+  return txt;
+}
+function actionButton(tier,base){
+  if(rank(PS.plan.tier)>rank(tier)){
+    return '<button class="btn" onclick="PlayStoreFeatures.manage()">Gerenciar</button>';
+  }
+  if(PS.plan.tier===tier&&PS.plan.basePlanId===base){
+    return '<button class="btn" onclick="PlayStoreFeatures.manage()">Plano atual</button>';
+  }
+  var label=PS.plan.tier===tier?'Trocar para '+(base==='anual'?'anual':'mensal'):
+    (rank(PS.plan.tier)>0?'Mudar plano':'Assinar');
+  return '<button class="btn primary" onclick="PlayStoreFeatures.buy(\''+tier+'\',\''+base+'\')">'+label+'</button>';
+}
+function priceBox(tier,base){
+  return '<div class="ps-price"><b>'+(base==='anual'?'Anual':'Mensal')+'</b><div class="muted" style="margin-bottom:7px">'+h(priceText(tier,base))+'</div>'+actionButton(tier,base)+'</div>';
+}
+
+function renderPlans(){
+  var e=document.getElementById('psPlans');
+  if(!e)return;
+  var t=PS.plan.tier;
+  e.innerHTML=
+    '<h2>Planos e assinatura</h2>'+
+    '<div class="ps-current">'+h(planDetail())+'</div>'+
+    '<p class="muted">O aplicativo funciona sem conta e sem internet. A Google Play processa a compra, renovação e os meios de pagamento disponíveis para sua conta.</p>'+
+    '<div class="ps-grid">'+
+      '<div class="ps-box '+(t==='free'?'on':'')+'"><h3>Gratuito</h3><p>Dados no aparelho<br>Orçamentos, clientes, vendas e documentos<br>Backup local/manual<br>Sem conta obrigatória</p></div>'+
+      '<div class="ps-box '+(t==='professional'?'on':'')+'"><h3>Profissional</h3><p>Tudo do Gratuito<br>Logo própria no app<br>Logo e identidade nos PDFs<br>Cores e slogan personalizados</p><div class="ps-price-grid">'+priceBox('professional','mensal')+priceBox('professional','anual')+'</div></div>'+
+      '<div class="ps-box '+(t==='pro_cloud'?'on':'')+'"><h3>Pro + Nuvem</h3><p>Tudo do Profissional<br>Backup na nuvem<br>Restauração em aparelho novo<br>Sincronização entre aparelhos</p><div class="ps-price-grid">'+priceBox('pro_cloud','mensal')+priceBox('pro_cloud','anual')+'</div></div>'+
+    '</div>'+
+    '<div class="actions" style="margin-top:10px"><button class="btn" onclick="PlayStoreFeatures.restorePurchases()">Restaurar compras</button><button class="btn" onclick="PlayStoreFeatures.manage()">Gerenciar assinatura</button></div>'+
+    '<div class="ps-billing-state">'+(PS.catalog.ready?'Preços carregados diretamente da Google Play.':'Os preços serão carregados quando a Google Play estiver disponível.')+'</div>';
+}
+
+function renderBrand(){
+  var e=document.getElementById('psBrand');
+  if(!e)return;
+  var c=co(),ok=brandPaid(),logo=PS.pendingLogo||c.logoDataUrl||'logo-cavazani.svg';
+  var x='<h2>Marca e aparência '+(ok?'':'🔒')+'</h2><p class="muted">Use a identidade da sua empresa no aplicativo e nos PDFs.</p>';
+  if(ok){
+    x+='<div class="ps-brand"><div><div class="ps-logo"><img id="psLogoPreview" src="'+h(logo)+'"></div><label>Logo<input id="psLogoFile" type="file" accept="image/png,image/jpeg,image/webp"></label></div>'+
+      '<div class="grid"><label>Slogan<input id="psSlogan" value="'+h(c.slogan||'')+'"></label><label>Cor principal<input id="psColor" type="color" value="'+h(c.corPrincipal||'#dce7ed')+'"></label><label>Cor do cabeçalho<input id="psHead" type="color" value="'+h(c.corCabecalho||'#061a27')+'"></label></div></div>'+
+      '<label><input id="psInApp" type="checkbox" '+(c.marcaNoApp===false?'':'checked')+'> Aplicar identidade dentro do app</label>'+
+      '<label><input id="psInPdf" type="checkbox" '+(c.mostrarLogoPdf===false?'':'checked')+'> Mostrar logo nos PDFs</label>'+
+      '<div class="actions"><button class="btn primary" onclick="PlayStoreFeatures.saveBrand()">Salvar identidade</button><button class="btn" onclick="PlayStoreFeatures.removeLogo()">Remover logo</button></div>';
+  }else{
+    x+='<div class="ps-lock">Disponível nos planos Profissional e Pro + Nuvem.</div>';
+  }
+  x+='<div class="ps-warn"><b>Ícone do aplicativo:</b> nome e ícone totalmente próprios continuam reservados ao White Label, pois o ícone do pacote publicado não pode ser substituído livremente por uma imagem escolhida no aparelho.</div>';
+  e.innerHTML=x;
+  if(ok){
+    var inp=document.getElementById('psLogoFile');
+    if(inp)inp.onchange=chooseLogo;
+  }
+}
+
+function renderCloud(){
+  var e=document.getElementById('cloudAccountCard');
+  if(!e)return;
+  if(!cloudPaid()){
+    e.innerHTML='<h2>Nuvem e sincronização 🔒</h2><p class="muted">Os dados permanecem neste aparelho. Backup online, restauração e sincronização entre dispositivos fazem parte do Pro + Nuvem.</p><button class="btn primary" onclick="PlayStoreFeatures.buy(\'pro_cloud\',\'mensal\')">Assinar Pro + Nuvem</button>';
+    return;
+  }
+  e.innerHTML=
+    '<h2>Nuvem e sincronização</h2>'+
+    '<p class="muted">A conta é opcional para usar o app, mas é necessária para associar seu backup ao plano Pro + Nuvem. O armazenamento local continua sendo a fonte principal.</p>'+
+    '<div class="grid"><label>E-mail<input id="cloudEmail" type="email" value="'+h(localStorage.getItem('cav_cloud_email')||'')+'"></label><label>Senha<input id="cloudPass" type="password"></label></div>'+
+    '<div class="actions"><button class="btn primary" onclick="entrar()">Entrar</button><button class="btn" onclick="criarConta()">Criar conta</button><button class="btn" onclick="sair()">Desconectar</button></div>'+
+    '<div class="ps-actions"><button class="btn primary" onclick="PlayStoreFeatures.backup()">Enviar backup agora</button><button class="btn" onclick="PlayStoreFeatures.restoreCloud()">Restaurar da nuvem</button></div>'+
+    '<p class="muted" id="cloudStatus"></p>';
+  cloudStatus();
+}
+
+function inject(){
+  addStyles();
+  var v=document.getElementById('view-config'),c=document.getElementById('empresaConfigCard');
+  if(v&&c&&!document.getElementById('psPlans')){
+    var p=document.createElement('div');p.className='card';p.id='psPlans';v.insertBefore(p,c);
+    var b=document.createElement('div');b.className='card';b.id='psBrand';c.insertAdjacentElement('afterend',b);
+  }
+  renderPlans();renderBrand();renderCloud();
+}
+
+function contrast(hex){
+  var v=String(hex||'').replace('#','');
+  if(!/^[0-9a-f]{6}$/i.test(v))return '#0b1f2b';
+  var r=parseInt(v.slice(0,2),16),g=parseInt(v.slice(2,4),16),b=parseInt(v.slice(4),16);
+  return (r*299+g*587+b*114)/1000>150?'#10202a':'#fff';
+}
+
+function applyBrand(){
+  var c=co(),on=brandPaid()&&c.marcaNoApp!==false,br=document.querySelector('.brand');
+  if(br){
+    var im=br.querySelector('img'),bt=br.querySelector('b'),sm=br.querySelector('small');
+    if(im)im.src=on&&c.logoDataUrl?c.logoDataUrl:'logo-cavazani.svg';
+    if(bt)bt.textContent=on?company(c):'MARCENARIA PRO';
+    if(sm)sm.textContent=on?subtitle(c):'Orçamentos e gestão';
+  }
+  if(on){
+    document.documentElement.style.setProperty('--accent',c.corPrincipal||'#dce7ed');
+    document.documentElement.style.setProperty('--accent-text',contrast(c.corPrincipal||'#dce7ed'));
+    var hd=document.querySelector('header');if(hd)hd.style.background=(c.corCabecalho||'#061a27')+'ef';
+  }else{
+    document.documentElement.style.removeProperty('--accent');
+    document.documentElement.style.setProperty('--accent-text','#0b1f2b');
+    var header=document.querySelector('header');if(header)header.style.background='';
+  }
+}
+
+function resize(file){
+  return new Promise(function(res,rej){
+    var rd=new FileReader();
+    rd.onerror=function(){rej(new Error('Falha ao ler imagem'))};
+    rd.onload=function(){
+      var im=new Image();
+      im.onerror=function(){rej(new Error('Imagem inválida'))};
+      im.onload=function(){
+        var sc=Math.min(1,640/Math.max(im.width,im.height)),cv=document.createElement('canvas');
+        cv.width=Math.max(1,Math.round(im.width*sc));cv.height=Math.max(1,Math.round(im.height*sc));
+        cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+        res(cv.toDataURL('image/png'));
+      };
+      im.src=rd.result;
+    };
+    rd.readAsDataURL(file);
+  });
+}
+
+async function chooseLogo(ev){
+  var f=ev.target.files&&ev.target.files[0];if(!f)return;
+  if(f.size>8*1024*1024)return alert('A logo deve ter no máximo 8 MB.');
+  try{PS.pendingLogo=await resize(f);document.getElementById('psLogoPreview').src=PS.pendingLogo}catch(e){alert(e.message)}
+}
+
+function saveBrand(){
+  if(!brandPaid())return alert('A personalização está disponível a partir do plano Profissional.');
+  var c=co();
+  c.slogan=(document.getElementById('psSlogan').value||'').trim();
+  c.corPrincipal=document.getElementById('psColor').value;
+  c.corCabecalho=document.getElementById('psHead').value;
+  c.marcaNoApp=document.getElementById('psInApp').checked;
+  c.mostrarLogoPdf=document.getElementById('psInPdf').checked;
+  if(PS.pendingLogo)c.logoDataUrl=PS.pendingLogo;
+  localStorage.setItem('cav_cfg',JSON.stringify(c));
+  PS.pendingLogo=null;
+  applyBrand();renderBrand();
+  if(typeof mostrarAviso==='function')mostrarAviso('Identidade salva.');
+}
+
+function removeLogo(){
+  if(!brandPaid())return;
+  var c=co();delete c.logoDataUrl;
+  localStorage.setItem('cav_cfg',JSON.stringify(c));
+  PS.pendingLogo=null;applyBrand();renderBrand();
+}
+
+var oldLogo=window.logoPng;
+window.logoPng=async function(){
+  var c=co();
+  if(brandPaid()&&c.mostrarLogoPdf!==false&&c.logoDataUrl)return c.logoDataUrl;
+  return oldLogo?oldLogo():null;
+};
+
 function localHasData(){
   try{
     var arrays=['cav_orcs','cav_prods','cav_cheques','cav_cheques_proprios','cav_cheque_instituicoes','cav_internal_users'];
     for(var i=0;i<arrays.length;i++){
       var raw=localStorage.getItem(arrays[i]);
-      if(raw&&Array.isArray(JSON.parse(raw))&&JSON.parse(raw).length)return true;
+      if(raw){
+        var parsed=JSON.parse(raw);
+        if(Array.isArray(parsed)&&parsed.length)return true;
+      }
     }
     var c=JSON.parse(localStorage.getItem('cav_cfg')||'{}');
     return Object.keys(c).length>0;
   }catch(e){return false}
 }
-function snapshot(){var st={};TRACK.forEach(function(k){var v=localStorage.getItem(k);if(v!==null)st[k]=v});return {formato:'marcenaria-pro-cloud-v1',versao:1,updated_at:localStorage.getItem('playstore_local_updated_at')||new Date().toISOString(),storage:st}}
-function applySnapshot(p){if(!p||p.formato!=='marcenaria-pro-cloud-v1'||!p.storage)throw new Error('Backup inválido');PS.applying=true;try{TRACK.forEach(function(k){localStorage.removeItem(k)});Object.keys(p.storage).forEach(function(k){if(TRACK.indexOf(k)>=0)localStorage.setItem(k,p.storage[k])});localStorage.setItem('playstore_local_updated_at',p.updated_at||new Date().toISOString())}finally{PS.applying=false}location.reload()}
-function watchStorage(){if(window.__psWatch)return;window.__psWatch=true;var orig=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){orig.apply(this,arguments);if(this===localStorage&&TRACK.indexOf(String(k))>=0&&!PS.applying){orig.call(localStorage,'playstore_local_updated_at',new Date().toISOString());schedule();if(k==='cav_cfg')setTimeout(applyBrand,0)}}}
-async function ensureCloud(){if(!cloudPaid())throw new Error('Disponível no Pro + Nuvem.');if(!window.supabase)throw new Error('Conecte-se à internet.');if(!cloud)cloud=criarCloudClient();return cloud}
-function cloudStatus(msg){var top=document.getElementById('syncTop'),s=document.getElementById('cloudStatus');if(top){top.textContent=PS.cloudConnected?'Nuvem':'Local';top.classList.toggle('ok',PS.cloudConnected)}if(s)s.textContent=msg||(PS.cloudConnected?'Conta conectada: '+(cloudUser&&cloudUser.email||'')+' • dados locais preservados':'Faça login para ativar o backup.')}
-async function backup(silent){if(!cloudPaid())throw new Error('Disponível no Pro + Nuvem.');if(!PS.cloudConnected||!cloudUser)throw new Error('Entre na conta da nuvem primeiro.');if(PS.syncing)return;PS.syncing=true;try{cloudStatus('Enviando backup...');var p=snapshot(),now=new Date().toISOString(),r=await cloud.from('playstore_snapshots').upsert({user_id:cloudUser.id,payload:p,updated_at:now},{onConflict:'user_id'});if(r.error)throw r.error;localStorage.setItem('playstore_last_cloud_sync',now);cloudStatus('Sincronizado agora');if(!silent&&typeof mostrarAviso==='function')mostrarAviso('Backup enviado para a nuvem.')}finally{PS.syncing=false}}
-async function restoreCloud(){if(!PS.cloudConnected)return alert('Entre na conta primeiro.');try{var r=await cloud.from('playstore_snapshots').select('payload').eq('user_id',cloudUser.id).maybeSingle();if(r.error)throw r.error;if(!r.data||!r.data.payload)return alert('Nenhum backup encontrado.');var ok=typeof confirmar==='function'?await confirmar('Restaurar o backup da nuvem? Os dados locais atuais serão substituídos.'):confirm('Restaurar o backup da nuvem?');if(ok)applySnapshot(r.data.payload)}catch(e){alert('Erro ao restaurar: '+e.message)}}
+
+function snapshot(){
+  var st={};
+  TRACK.forEach(function(k){var v=localStorage.getItem(k);if(v!==null)st[k]=v});
+  return {formato:'marcenaria-pro-cloud-v1',versao:2,updated_at:localStorage.getItem('playstore_local_updated_at')||new Date().toISOString(),storage:st};
+}
+
+function applySnapshot(p){
+  if(!p||p.formato!=='marcenaria-pro-cloud-v1'||!p.storage)throw new Error('Backup inválido');
+  PS.applying=true;
+  try{
+    TRACK.forEach(function(k){localStorage.removeItem(k)});
+    Object.keys(p.storage).forEach(function(k){if(TRACK.indexOf(k)>=0)localStorage.setItem(k,p.storage[k])});
+    localStorage.setItem('playstore_local_updated_at',p.updated_at||new Date().toISOString());
+  }finally{PS.applying=false}
+  location.reload();
+}
+
+function watchStorage(){
+  if(window.__psWatch)return;
+  window.__psWatch=true;
+  var orig=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(k,v){
+    orig.apply(this,arguments);
+    if(this===localStorage&&TRACK.indexOf(String(k))>=0&&!PS.applying){
+      orig.call(localStorage,'playstore_local_updated_at',new Date().toISOString());
+      schedule();
+      if(k==='cav_cfg')setTimeout(applyBrand,0);
+    }
+  };
+}
+
+async function ensureCloud(){
+  if(!cloudPaid())throw new Error('Disponível no Pro + Nuvem.');
+  if(!cloud)cloud=await criarCloudClient();
+  return cloud;
+}
+
+function cloudStatus(msg){
+  var top=document.getElementById('syncTop'),s=document.getElementById('cloudStatus');
+  if(top){
+    top.textContent=PS.cloudConnected?'Nuvem':'Local';
+    top.classList.toggle('ok',PS.cloudConnected);
+  }
+  if(s)s.textContent=msg||(PS.cloudConnected?'Conta conectada: '+(cloudUser&&cloudUser.email||'')+' • armazenamento local preservado':'Faça login para ativar o backup.');
+}
+
+async function currentSession(){
+  if(!cloud)return null;
+  var r=await cloud.auth.getSession();
+  if(r.error)throw r.error;
+  return r.data&&r.data.session||null;
+}
+
+async function linkCloudEntitlement(sess){
+  if(!cloudPaid())throw new Error('Seu plano não inclui nuvem.');
+  var token='';
+  try{token=window.AndroidApp&&AndroidApp.getPurchaseToken?AndroidApp.getPurchaseToken():''}catch(_){}
+  if(!token)throw new Error('Não foi possível localizar a assinatura no aparelho. Use “Restaurar compras” e tente novamente.');
+  if(!sess||!sess.access_token)throw new Error('Sessão da conta inválida.');
+
+  var response=await fetch(SUPABASE_URL+'/functions/v1/play-billing-verify',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'apikey':SUPABASE_KEY,
+      'Authorization':'Bearer '+sess.access_token
+    },
+    body:JSON.stringify({purchaseToken:token})
+  });
+  var body=await response.json().catch(function(){return{}});
+  if(!response.ok)throw new Error(body.detail||body.error||'Falha ao validar a assinatura.');
+  if(!body.entitled||body.tier!=='pro_cloud')throw new Error('A assinatura Pro + Nuvem não está ativa.');
+  return body;
+}
+
+async function backup(silent){
+  if(!cloudPaid())throw new Error('Disponível no Pro + Nuvem.');
+  if(!PS.cloudConnected||!cloudUser)throw new Error('Entre na conta da nuvem primeiro.');
+  if(PS.syncing)return;
+  PS.syncing=true;
+  try{
+    cloudStatus('Enviando backup...');
+    var p=snapshot(),now=new Date().toISOString();
+    var r=await cloud.from('playstore_snapshots').upsert({user_id:cloudUser.id,payload:p,updated_at:now},{onConflict:'user_id'});
+    if(r.error)throw r.error;
+    localStorage.setItem('playstore_last_cloud_sync',now);
+    cloudStatus('Sincronizado agora');
+    if(!silent&&typeof mostrarAviso==='function')mostrarAviso('Backup enviado para a nuvem.');
+  }finally{PS.syncing=false}
+}
+
+async function restoreCloud(){
+  if(!PS.cloudConnected)return alert('Entre na conta primeiro.');
+  try{
+    var r=await cloud.from('playstore_snapshots').select('payload').eq('user_id',cloudUser.id).maybeSingle();
+    if(r.error)throw r.error;
+    if(!r.data||!r.data.payload)return alert('Nenhum backup encontrado.');
+    var ok=typeof confirmar==='function'?await confirmar('Restaurar o backup da nuvem? Os dados locais atuais serão substituídos.'):confirm('Restaurar o backup da nuvem?');
+    if(ok)applySnapshot(r.data.payload);
+  }catch(e){alert('Erro ao restaurar: '+e.message)}
+}
+
 async function reconcile(){
   if(!PS.cloudConnected)return;
   var r=await cloud.from('playstore_snapshots').select('payload,updated_at').eq('user_id',cloudUser.id).maybeSingle();
@@ -62,16 +394,161 @@ async function reconcile(){
   else if(rt>lt)cloudStatus('Há backup mais recente na nuvem. Use Restaurar da nuvem.');
   else cloudStatus('Local e nuvem sincronizados.');
 }
-function schedule(){if(!cloudPaid()||!PS.cloudConnected)return;clearTimeout(PS.timer);PS.timer=setTimeout(function(){backup(true).catch(function(){cloudStatus('Conta conectada • backup pendente')})},4500)}
-async function restoreAuth(){cloudReady=false;PS.cloudConnected=false;if(!cloudPaid()){cloudUser=null;cloudStatus();return}try{await ensureCloud();var r=await cloud.auth.getSession(),sess=r.data&&r.data.session;if(!sess&&typeof carregarSessaoNativa==='function'){var sv=await carregarSessaoNativa();if(sv){var z=await cloud.auth.setSession({access_token:sv.access_token,refresh_token:sv.refresh_token});sess=z.data&&z.data.session}}cloudUser=sess&&sess.user||null;PS.cloudConnected=!!cloudUser;cloudReady=false;if(sess&&typeof salvarSessaoNativa==='function')await salvarSessaoNativa(sess);cloudStatus();if(PS.cloudConnected)await reconcile()}catch(e){cloudUser=null;PS.cloudConnected=false;cloudReady=false;cloudStatus()}}
-async function signIn(){try{await ensureCloud();var email=(document.getElementById('cloudEmail').value||'').trim(),pass=document.getElementById('cloudPass').value||'';if(!email||!pass)return alert('Informe e-mail e senha.');localStorage.setItem('cav_cloud_email',email);var r=await cloud.auth.signInWithPassword({email:email,password:pass});if(r.error)throw r.error;cloudUser=r.data.user;PS.cloudConnected=true;cloudReady=false;if(r.data.session&&typeof salvarSessaoNativa==='function')await salvarSessaoNativa(r.data.session);cloudStatus();await reconcile()}catch(e){alert('Não foi possível entrar: '+e.message)}}
-async function createAccount(){try{await ensureCloud();var email=(document.getElementById('cloudEmail').value||'').trim(),pass=document.getElementById('cloudPass').value||'';if(!email||!pass)return alert('Informe e-mail e senha.');var r=await cloud.auth.signUp({email:email,password:pass});if(r.error)throw r.error;localStorage.setItem('cav_cloud_email',email);if(r.data.session){cloudUser=r.data.session.user;PS.cloudConnected=true;cloudReady=false;await salvarSessaoNativa(r.data.session);await backup(true);cloudStatus();alert('Conta criada e conectada.')}else alert('Conta criada. Confirme seu e-mail e depois entre.')}catch(e){alert('Não foi possível criar a conta: '+e.message)}}
-async function signOut(){try{if(cloud)await cloud.auth.signOut()}catch(e){}if(typeof limparSessaoNativa==='function')await limparSessaoNativa();cloudUser=null;cloudReady=false;PS.cloudConnected=false;cloudStatus()}
-function overrides(){window.restaurar=restoreAuth;window.entrar=signIn;window.criarConta=createAccount;window.sair=signOut;window.sincronizar=function(){backup(false).catch(function(e){alert(e.message)})};window.status=cloudStatus}
-function buy(t){if(rank(PS.plan.tier)>=rank(t))return;if(window.AndroidApp&&AndroidApp.buyPlan)AndroidApp.buyPlan(t);else alert('A compra funciona na versão instalada pela Google Play.')}
-function restorePurchases(){if(window.AndroidApp&&AndroidApp.restorePurchases)AndroidApp.restorePurchases()}
-function manage(){if(window.AndroidApp&&AndroidApp.openSubscriptionCenter)AndroidApp.openSubscriptionCenter()}
-function planChanged(p){try{PS.plan=typeof p==='string'?JSON.parse(p):p;inject();applyBrand()}catch(e){}}
-async function start(){watchStorage();overrides();if(!localStorage.getItem('playstore_local_updated_at')&&localHasData())localStorage.setItem('playstore_local_updated_at',new Date().toISOString());PS.plan=readPlan();inject();applyBrand();if(typeof window.__legacyIniciarAplicativo==='function')await window.__legacyIniciarAplicativo();inject();applyBrand();cloudStatus()}
-window.PlayStoreFeatures={start:start,buy:buy,restorePurchases:restorePurchases,manage:manage,saveBrand:saveBrand,removeLogo:removeLogo,backup:function(){backup(false).catch(function(e){alert(e.message)})},restoreCloud:restoreCloud,onNativePlanChanged:planChanged};
+
+function schedule(){
+  if(!cloudPaid()||!PS.cloudConnected)return;
+  clearTimeout(PS.timer);
+  PS.timer=setTimeout(function(){
+    backup(true).catch(function(){cloudStatus('Conta conectada • backup pendente')});
+  },4500);
+}
+
+async function restoreAuth(){
+  cloudReady=false;
+  PS.cloudConnected=false;
+  if(!cloudPaid()){
+    cloudUser=null;cloudStatus();return;
+  }
+  try{
+    await ensureCloud();
+    var r=await cloud.auth.getSession(),sess=r.data&&r.data.session;
+    if(!sess&&typeof carregarSessaoNativa==='function'){
+      var sv=await carregarSessaoNativa();
+      if(sv){
+        var z=await cloud.auth.setSession({access_token:sv.access_token,refresh_token:sv.refresh_token});
+        sess=z.data&&z.data.session;
+      }
+    }
+    cloudUser=sess&&sess.user||null;
+    PS.cloudConnected=!!cloudUser;
+    cloudReady=false;
+    if(sess&&typeof salvarSessaoNativa==='function')await salvarSessaoNativa(sess);
+    if(sess)await linkCloudEntitlement(sess);
+    cloudStatus();
+    if(PS.cloudConnected)await reconcile();
+  }catch(e){
+    cloudUser=null;PS.cloudConnected=false;cloudReady=false;
+    cloudStatus('Nuvem indisponível: '+e.message);
+  }
+}
+
+async function signIn(){
+  try{
+    await ensureCloud();
+    var email=(document.getElementById('cloudEmail').value||'').trim(),pass=document.getElementById('cloudPass').value||'';
+    if(!email||!pass)return alert('Informe e-mail e senha.');
+    localStorage.setItem('cav_cloud_email',email);
+    var r=await cloud.auth.signInWithPassword({email:email,password:pass});
+    if(r.error)throw r.error;
+    cloudUser=r.data.user;PS.cloudConnected=true;cloudReady=false;
+    if(r.data.session&&typeof salvarSessaoNativa==='function')await salvarSessaoNativa(r.data.session);
+    await linkCloudEntitlement(r.data.session);
+    cloudStatus();
+    await reconcile();
+    if(typeof mostrarAviso==='function')mostrarAviso('Conta vinculada ao seu plano Pro + Nuvem.');
+  }catch(e){
+    PS.cloudConnected=false;cloudUser=null;cloudReady=false;
+    cloudStatus();
+    alert('Não foi possível ativar a nuvem: '+e.message);
+  }
+}
+
+async function createAccount(){
+  try{
+    await ensureCloud();
+    var email=(document.getElementById('cloudEmail').value||'').trim(),pass=document.getElementById('cloudPass').value||'';
+    if(!email||!pass)return alert('Informe e-mail e senha.');
+    var r=await cloud.auth.signUp({email:email,password:pass});
+    if(r.error)throw r.error;
+    localStorage.setItem('cav_cloud_email',email);
+    if(r.data.session){
+      cloudUser=r.data.session.user;PS.cloudConnected=true;cloudReady=false;
+      if(typeof salvarSessaoNativa==='function')await salvarSessaoNativa(r.data.session);
+      await linkCloudEntitlement(r.data.session);
+      await backup(true);cloudStatus();
+      alert('Conta criada, vinculada à assinatura e conectada.');
+    }else{
+      alert('Conta criada. Confirme seu e-mail e depois entre para vincular a assinatura.');
+    }
+  }catch(e){alert('Não foi possível criar a conta: '+e.message)}
+}
+
+async function signOut(){
+  try{if(cloud)await cloud.auth.signOut()}catch(e){}
+  if(typeof limparSessaoNativa==='function')await limparSessaoNativa();
+  cloudUser=null;cloudReady=false;PS.cloudConnected=false;cloudStatus();
+}
+
+function overrides(){
+  window.restaurar=restoreAuth;
+  window.entrar=signIn;
+  window.criarConta=createAccount;
+  window.sair=signOut;
+  window.sincronizar=function(){backup(false).catch(function(e){alert(e.message)})};
+  window.status=cloudStatus;
+}
+
+function buy(tier,basePlanId){
+  if(!window.AndroidApp||!AndroidApp.buyPlan)return alert('A assinatura só pode ser comprada pela versão instalada através da Google Play.');
+  if(PS.plan.tier===tier&&PS.plan.basePlanId===basePlanId)return manage();
+  if(rank(PS.plan.tier)>rank(tier))return manage();
+  AndroidApp.buyPlan(tier,basePlanId||'mensal');
+}
+
+function restorePurchases(){
+  if(window.AndroidApp&&AndroidApp.restorePurchases)AndroidApp.restorePurchases();
+}
+
+function manage(){
+  if(window.AndroidApp&&AndroidApp.openSubscriptionCenter)AndroidApp.openSubscriptionCenter();
+}
+
+function refreshCatalog(){
+  if(window.AndroidApp&&AndroidApp.refreshBillingCatalog)AndroidApp.refreshBillingCatalog();
+}
+
+function planChanged(p){
+  try{
+    PS.plan=typeof p==='string'?JSON.parse(p):p;
+    inject();applyBrand();
+    if(!cloudPaid()){
+      PS.cloudConnected=false;cloudUser=null;cloudReady=false;
+    }
+  }catch(e){console.warn(e)}
+}
+
+function catalogChanged(c){
+  try{
+    PS.catalog=typeof c==='string'?JSON.parse(c):c;
+    renderPlans();
+  }catch(e){console.warn(e)}
+}
+
+async function start(){
+  watchStorage();
+  overrides();
+  if(!localStorage.getItem('playstore_local_updated_at')&&localHasData()){
+    localStorage.setItem('playstore_local_updated_at',new Date().toISOString());
+  }
+  PS.plan=readPlan();
+  PS.catalog=readCatalog();
+  inject();applyBrand();
+  if(typeof window.__legacyIniciarAplicativo==='function')await window.__legacyIniciarAplicativo();
+  inject();applyBrand();cloudStatus();
+  if(!PS.catalog.ready)refreshCatalog();
+}
+
+window.PlayStoreFeatures={
+  start:start,
+  buy:buy,
+  restorePurchases:restorePurchases,
+  manage:manage,
+  refreshCatalog:refreshCatalog,
+  saveBrand:saveBrand,
+  removeLogo:removeLogo,
+  backup:function(){backup(false).catch(function(e){alert(e.message)})},
+  restoreCloud:restoreCloud,
+  onNativePlanChanged:planChanged,
+  onCatalogChanged:catalogChanged
+};
 })();
