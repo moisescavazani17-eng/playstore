@@ -1338,9 +1338,7 @@ async function gerarExtratoMensalPDF(){
   p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co)+' • Extrato mensal de vendas.',105,293,{align:'center'});
 
   let arq='Extrato_Vendas_'+r.mes+'.pdf';
-  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);
-  else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);
-  else p.save(arq);
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq); else p.save(arq);
 }
 function renderReembolsos(){
   let reemb=lista().filter(o=>o.vendaRealizada&&o.reembolsada).sort((x,y)=>String(y.dataReembolso||'').localeCompare(String(x.dataReembolso||'')));
@@ -1526,101 +1524,6 @@ function renderProdutos(){let a=produtosLista();$('produtos').innerHTML=a.length
 function cfg(){return JSON.parse(localStorage.getItem('cav_cfg')||'{}')}
 function salvarConfig(){if(!pode('config_editar'))return negar('config_editar');let c={...cfg(),empresa:$('cfgEmpresa').value,telefone:$('cfgTelefone').value,email:$('cfgEmail').value,instagram:$('cfgInstagram').value,endereco:$('cfgEndereco').value,cnpj:$('cfgCnpj').value,ie:$('cfgIe').value.trim()};localStorage.setItem('cav_cfg',JSON.stringify(c));salvarEstado();registrarLog('config_empresa_alterada',{});alert('Dados salvos.')}
 function carregarCfg(){let c=cfg();['Empresa','Telefone','Email','Instagram','Endereco','Cnpj','Ie'].forEach(x=>{let k=x.toLowerCase();$('cfg'+x).value=c[k]||$('cfg'+x).value})}
-let backupTimer=null;
-function dadosBackup(){
-  return{
-    formato:'orcamentos-gestao-backup',
-    versao:5,
-    aplicativo:'Orçamentos & Gestão',
-    criadoEm:new Date().toISOString(),
-    dados:{
-      orcamentos:lista(),
-      cheques:chequesLista(),
-      instituicoesCheque:instituicoesChequeLista(),
-      chequesProprios:chequesPropriosLista(),      produtos:produtosLista(),
-      config:cfg(),
-      tema:temaAtual(),
-      sequencia:localStorage.getItem('cav_seq')||'0'
-    }
-  };
-}
-function fmtDataHora(iso){
-  if(!iso)return 'Ainda não há backup registrado.';
-  try{return new Date(iso).toLocaleString('pt-BR')}catch(_){return iso}
-}
-function agendarBackupAutomatico(){
-  if(!window.WindowsApp||typeof window.WindowsApp.backupLocal!=='function')return;
-  clearTimeout(backupTimer);
-  backupTimer=setTimeout(async()=>{
-    try{
-      let r=await window.WindowsApp.backupLocal(dadosBackup(),false);
-      if($('backupLocalStatus'))$('backupLocalStatus').innerHTML='<span class="backup-ok">Backup automático ativo.</span> Última cópia: '+fmtDataHora(r.lastBackupAt);
-    }catch(e){
-      console.error('Backup automático:',e);
-      if($('backupLocalStatus'))$('backupLocalStatus').innerHTML='<span class="backup-warn">Falha no backup automático:</span> '+esc(e.message||e);
-    }
-  },1200);
-}
-async function carregarInfoBackup(){
-  if(!window.WindowsApp||typeof window.WindowsApp.getBackupInfo!=='function')return;
-  try{
-    let info=await window.WindowsApp.getBackupInfo();
-    if($('backupPath1'))$('backupPath1').textContent=info.localPaths?.[0]||'-';
-    if($('backupPath2'))$('backupPath2').textContent=info.localPaths?.[1]||'-';
-    if($('backupExternalPath'))$('backupExternalPath').textContent=info.externalPath||'Nenhum destino externo escolhido.';
-    if($('backupLocalStatus'))$('backupLocalStatus').innerHTML='<span class="backup-ok">Backup automático ativo.</span> '+(info.lastBackupAt?'Última cópia: '+fmtDataHora(info.lastBackupAt):'A primeira cópia será criada ao salvar dados.');
-    if($('backupExternalStatus')&&info.externalPath)$('backupExternalStatus').textContent=info.externalAvailable?'Destino externo disponível.':'Destino salvo, mas o dispositivo não está conectado agora.';
-  }catch(e){console.error(e)}
-}
-async function fazerBackupLocalAgora(){
-  if(!window.WindowsApp)return;
-  try{
-    let r=await window.WindowsApp.backupLocal(dadosBackup(),true);
-    $('backupLocalStatus').innerHTML='<span class="backup-ok">Backup concluído.</span> '+fmtDataHora(r.lastBackupAt);
-    mostrarAviso('Backup salvo nas duas pastas do computador.');
-  }catch(e){alert('Erro ao fazer backup local: '+e.message)}
-}
-async function abrirPastaBackup(tipo){
-  try{await window.WindowsApp?.openBackupFolder(tipo)}catch(e){alert('Não foi possível abrir a pasta: '+e.message)}
-}
-async function escolherBackupExterno(){
-  if(!window.WindowsApp)return;
-  try{
-    let r=await window.WindowsApp.chooseExternalBackup();
-    if(!r)return;
-    $('backupExternalPath').textContent=r.externalPath;
-    $('backupExternalStatus').textContent='Destino externo selecionado.';
-  }catch(e){alert('Erro ao escolher o destino: '+e.message)}
-}
-async function fazerBackupExterno(){
-  if(!window.WindowsApp)return;
-  try{
-    let r=await window.WindowsApp.backupExternal(dadosBackup());
-    $('backupExternalStatus').innerHTML='<span class="backup-ok">Backup externo concluído.</span> '+r.path;
-    mostrarAviso('Backup externo concluído.');
-  }catch(e){alert('Erro no backup externo: '+e.message)}
-}
-async function restaurarBackupArquivo(){if(!pode('usuarios_gerenciar'))return negar('usuarios_gerenciar');
-  if(!window.WindowsApp)return;
-  try{
-    let r=await window.WindowsApp.restoreBackup();
-    if(!r)return;
-    let b=r.data;
-    if(!b||b.formato!=='orcamentos-gestao-backup'||!b.dados)throw new Error('O arquivo selecionado não é um backup válido do aplicativo.');
-    if(!(await confirmar('Restaurar este backup? Os dados locais atuais serão substituídos.')))return;
-    localStorage.setItem('cav_orcs',JSON.stringify(b.dados.orcamentos||[]));
-    localStorage.setItem('cav_cheques',JSON.stringify(b.dados.cheques||[]));
-    localStorage.setItem('cav_cheque_instituicoes',JSON.stringify(b.dados.instituicoesCheque||[]));
-    localStorage.setItem('cav_cheques_proprios',JSON.stringify(b.dados.chequesProprios||[]));    localStorage.setItem('cav_prods',JSON.stringify(b.dados.produtos||[]));
-    localStorage.setItem('cav_cfg',JSON.stringify(b.dados.config||{}));
-    if(b.dados.tema)localStorage.setItem('cav_theme',b.dados.tema==='light'?'light':'dark');
-    localStorage.setItem('cav_seq',String(b.dados.sequencia||'0'));
-    carregarTema();renderHistorico();renderVendas();renderResumoMensal();renderReembolsos();renderClientes();renderProdutos();renderCheques();renderChequesDestinados();renderChequesProprios();carregarCfg();avisarChequesHoje();avisarChequesPropriosHoje();
-    agendarBackupAutomatico();
-    mostrarAviso('Backup restaurado no computador.');
-    if(cloudReady)$('backupExternalStatus').textContent='Backup restaurado localmente. A nuvem não foi sobrescrita automaticamente.';
-  }catch(e){alert('Erro ao restaurar backup: '+e.message)}
-}
 function inicializarBackupWindows(){}
 const SUPABASE_URL='https://vssbgmzkprhsbpxdtald.supabase.co';
 const SUPABASE_KEY='sb_publishable_ljcrxLGYHRkDCX9vH9_Byg_oYfU7Qo6';
@@ -1661,17 +1564,15 @@ function sessaoPersistivel(sessao){
 async function salvarSessaoNativa(sessao){
   let json=sessaoPersistivel(sessao);if(!json)return;
   try{
-    if(window.WindowsApp?.saveAuthSession)await window.WindowsApp.saveAuthSession(json);
-    else if(window.AndroidApp?.saveAuthSession)window.AndroidApp.saveAuthSession(json);
-    localStorage.setItem('cav_auth_session_backup',json);
+    if(window.AndroidApp?.saveAuthSession)window.AndroidApp.saveAuthSession(json);
+    localStorage.setItem('og_auth_session_backup',json);
   }catch(e){console.error('Falha ao persistir sessão:',e)}
 }
 async function carregarSessaoNativa(){
   try{
     let json=null;
-    if(window.WindowsApp?.loadAuthSession)json=await window.WindowsApp.loadAuthSession();
-    else if(window.AndroidApp?.loadAuthSession)json=window.AndroidApp.loadAuthSession();
-    if(!json)json=localStorage.getItem('cav_auth_session_backup');
+    if(window.AndroidApp?.loadAuthSession)json=window.AndroidApp.loadAuthSession();
+    if(!json)json=localStorage.getItem('og_auth_session_backup')||localStorage.getItem('cav_auth_session_backup');
     if(!json)return null;
     let obj=JSON.parse(json);
     return obj?.access_token&&obj?.refresh_token?obj:null;
@@ -1679,9 +1580,9 @@ async function carregarSessaoNativa(){
 }
 async function limparSessaoNativa(){
   try{
-    if(window.WindowsApp?.clearAuthSession)await window.WindowsApp.clearAuthSession();
-    else if(window.AndroidApp?.clearAuthSession)window.AndroidApp.clearAuthSession();
+    if(window.AndroidApp?.clearAuthSession)window.AndroidApp.clearAuthSession();
   }catch(e){console.error('Falha ao limpar sessão persistida:',e)}
+  localStorage.removeItem('og_auth_session_backup');
   localStorage.removeItem('cav_auth_session_backup');
 }
 function ouvirAuth(){
@@ -1877,9 +1778,7 @@ async function gerarDeclaracaoReembolso(numero){
   p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
 
   let nome=(o.cliente?.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Declaracao_Reembolso_'+String(o.numero).padStart(4,'0')+'_'+nome+'.pdf';
-  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);
-  else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);
-  else p.save(arq);
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq); else p.save(arq);
 }
 // Contratos são preservados no JSON da venda e sincronizados junto ao orçamento.
 function podeContratos(){return !ehColaborador()&&pode('vendas_lancar')}
@@ -1991,7 +1890,7 @@ async function gerarPDFContrato(c){
   espaco(36);y+=18;p.setDrawColor(120,137,146);p.line(12,y,98,y);p.line(112,y,198,y);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text('ASSINATURA DO CONTRATANTE',55,y+6,{align:'center'});p.text('ASSINATURA DO CONTRATADO',155,y+6,{align:'center'});
   let paginas=p.getNumberOfPages();for(let i=1;i<=paginas;i++){p.setPage(i);p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFont('helvetica','normal');p.setFontSize(8);p.text(rodapeMarca(co),12,293);p.text(i+' / '+paginas,198,293,{align:'right'})}
   let nome=(o.cliente?.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Contrato_'+o.numero+'_'+nome+'.pdf';
-  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);else p.save(arq);
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq); else p.save(arq);
   return p;
 }
 
@@ -2063,9 +1962,7 @@ async function gerarReciboVenda(numero){
   p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
 
   let nome=(o.cliente?.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Recibo_Venda_'+String(o.numero).padStart(4,'0')+'_'+nome+'.pdf';
-  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);
-  else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);
-  else p.save(arq);
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq); else p.save(arq);
 }
 async function gerarPDFColaborador(){
   if(!itens.length)return alert('Adicione itens primeiro.');
@@ -2109,9 +2006,7 @@ async function gerarPDFColaborador(){
   p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
 
   let nome=(o.cliente.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Orcamento_'+o.numero+'_'+nome+'.pdf';
-  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);
-  else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);
-  else p.save(arq);
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq); else p.save(arq);
 }
 async function gerarPDF(){
 if(!itens.length)return alert('Adicione itens primeiro.');
@@ -2206,13 +2101,7 @@ p.setDrawColor(120,137,146);p.line(133,assinaturaY,198,assinaturaY);p.setFontSiz
 p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
 
 let nome=(o.cliente.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Orcamento_'+o.numero+'_'+nome+'.pdf';
-if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function'){
-  window.AndroidApp.savePdf(p.output('datauristring'),arq);
-}else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function'){
-  window.WindowsApp.savePdf(p.output('datauristring'),arq);
-}else{
-  p.save(arq);
-}
+if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function'){window.AndroidApp.savePdf(p.output('datauristring'),arq);}else{p.save(arq);}
 }
 async function iniciarAplicativo(){
   if(window.AndroidApp)document.body.classList.add('android-app');
