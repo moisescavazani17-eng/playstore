@@ -1,0 +1,2263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Marcenaria Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#071722;--panel:#0d2634;--panel2:#102d3d;--line:#29495a;--text:#f4f7f9;--muted:#a7bac6;--accent:#dce7ed;--safe-top:0px;--safe-bottom:0px}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#06141e,#0b2635);color:var(--text);font-family:Arial,sans-serif;min-height:100vh;-webkit-text-size-adjust:100%}body.android-app{--safe-top:max(env(safe-area-inset-top,0px),26px);--safe-bottom:max(env(safe-area-inset-bottom,0px),10px)}
+header{position:sticky;top:0;z-index:30;background:#061a27ef;border-bottom:1px solid #24414f;padding:calc(10px + var(--safe-top)) 14px 10px;backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:10px}.brand img{width:44px;height:44px}.brand b{font-size:18px}.brand small{display:block;color:var(--muted);margin-top:2px}
+.menu-toggle{width:42px;height:42px;border:1px solid #35566a;border-radius:10px;background:#102a39;color:#fff;font-size:23px;line-height:1;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
+.menu-backdrop{position:fixed;inset:0;z-index:40;background:#0008;opacity:0;pointer-events:none;transition:.2s}
+.menu-backdrop.show{opacity:1;pointer-events:auto}
+#sideNav{position:fixed;z-index:50;left:0;top:0;bottom:0;width:min(330px,86vw);background:#081c28;border-right:1px solid #29495a;box-shadow:18px 0 50px #0008;padding:calc(14px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));display:flex;flex-direction:column;gap:7px;overflow:auto;transform:translateX(-105%);transition:transform .22s ease}
+#sideNav.open{transform:translateX(0)}
+.side-nav-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px 12px;border-bottom:1px solid #29495a;margin-bottom:5px}
+.side-nav-head b{font-size:16px}.side-nav-close{border:1px solid #35566a;background:#102a39;color:#fff;border-radius:9px;width:38px;height:38px;font-size:20px}
+#sideNav button[data-view]{width:100%;text-align:left;white-space:normal;border:0;border-radius:10px;background:#102a39;color:#c3d1d9;padding:12px 13px}
+#sideNav button[data-view].active{background:var(--accent);color:#0b1f2b;font-weight:700}
+body.menu-open{overflow:hidden}
+.menu-user-box{display:none;border-top:1px solid #29495a;margin-top:auto;padding-top:12px}
+.menu-user-box.show{display:block}
+.menu-user-name{font-size:12px;color:var(--muted);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-user-box .btn{width:100%;padding:9px 10px}
+.theme-switcher{margin-top:12px;border-top:1px solid #29495a;padding-top:12px}
+.theme-switcher .theme-label{font-size:11px;color:var(--muted);margin:0 0 7px 3px;text-transform:uppercase;letter-spacing:.08em}
+.theme-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.theme-options button{border:1px solid #35566a;border-radius:9px;background:#102a39;color:#c3d1d9;padding:10px;cursor:pointer}
+.theme-options button.active{background:var(--accent);color:#0b1f2b;border-color:var(--accent);font-weight:700}
+
+/* Modo claro */
+body.light-theme{--bg:#f3f6f8;--panel:#ffffff;--panel2:#eef3f6;--line:#cbd7de;--text:#17242c;--muted:#667985;--accent:#d8e4ea;background:linear-gradient(135deg,#f7fafb,#e9f0f4);color:var(--text)}
+body.light-theme header{background:#ffffffed;border-bottom-color:#d4dee4}
+body.light-theme .menu-toggle,
+body.light-theme .side-nav-close{background:#eef3f6;border-color:#c8d4db;color:#20313b}
+body.light-theme #sideNav{background:#f8fbfc;border-right-color:#cbd7de;box-shadow:18px 0 50px #47606f28}
+body.light-theme .side-nav-head{border-bottom-color:#d4dee4}
+body.light-theme #sideNav button[data-view]{background:#eef3f6;color:#314651}
+body.light-theme #sideNav button[data-view].active{background:#d4e3e9;color:#18303b}
+body.light-theme .menu-user-box,body.light-theme .theme-switcher{border-top-color:#d4dee4}
+body.light-theme .theme-options button{background:#eef3f6;border-color:#c8d4db;color:#314651}
+body.light-theme .theme-options button.active{background:#d4e3e9;color:#18303b;border-color:#b9cbd4}
+body.light-theme .card{background:linear-gradient(180deg,#ffffff,#f6f9fa);box-shadow:0 10px 24px #4b65751a}
+body.light-theme label{color:#526772}
+body.light-theme input,
+body.light-theme select,
+body.light-theme textarea{background:#ffffff;color:#1b2b34;border-color:#bdcbd3}
+body.light-theme input[readonly]{color:#314651;background:#f2f6f8}
+body.light-theme .btn{background:#eef3f6;color:#263b46;border-color:#c3d0d7}
+body.light-theme .primary{background:#d4e3e9;color:#18303b;border-color:#b9cbd4}
+body.light-theme .danger{background:#fff1f2;border-color:#e0b7bb;color:#8b3039}
+body.light-theme .list-item,
+body.light-theme .cheque-card,
+body.light-theme .destino-card,
+body.light-theme .instituicao-card,
+body.light-theme .proprio-card,
+body.light-theme .user-access-card{background:#ffffff}
+body.light-theme .status{background:#edf3f6;border-color:#c7d5dc;color:#4e6570}
+body.light-theme .cheque-tag,{background:#edf3f6;border-color:#c5d3da;color:#475f6b}
+body.light-theme .venda-stat,
+body.light-theme .proprio-bank-item{background:#f7fafb}
+body.light-theme .editor-venda-status{background:#edf8f2;color:#2a6647;border-color:#9fcdb3}
+body.light-theme .reembolso-modal-card,
+body.light-theme .internal-auth-box{background:#ffffff;border-color:#c8d5dc;box-shadow:0 20px 60px #38515f35}
+body.light-theme .readonly-note,
+body.light-theme .colaborador-note{background:#f1f6f8;color:#526772;border-color:#c8d5dc}
+body.light-theme .total{background:#e4edf1;color:#18303b}
+body.light-theme .backup-path{background:#f1f5f7;border-color:#cbd7de;color:#2c414c}
+body.light-theme .proprio-alert{background:#fff8df;border-color:#e1c56a;color:#725d16}
+body.light-theme .venda-badge{background:#edf8f2;border-color:#a8d1b9;color:#326b4c}
+body.light-theme .venda-badge.reembolso{background:#fff1f2;border-color:#deb6ba;color:#89363e}
+body.light-theme .internal-user-chip{background:#eef3f6;border-color:#c6d3da;color:#314651}
+main{padding:12px;max-width:900px;margin:auto}.view{display:none}.view.active{display:block}.card{background:linear-gradient(180deg,#0f2a38,#0a1f2b);border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px;box-shadow:0 12px 30px #0003}
+h1{font-size:24px;margin:4px 0 14px}h2{font-size:15px;margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:grid;gap:5px;color:#c5d1d8;font-size:12px}
+input,select,textarea{width:100%;border:1px solid #355568;border-radius:9px;background:#0a202c;color:white;padding:11px;outline:none;pointer-events:auto;-webkit-user-select:text;user-select:text}textarea{min-height:84px;resize:vertical}input[readonly]{font-weight:700;color:#d9e5eb}
+button{font:inherit}.btn{border:1px solid #35566a;background:#102a39;color:white;padding:11px 14px;border-radius:10px}.primary{background:var(--accent);color:#0b1f2b;border-color:var(--accent);font-weight:700}.danger{background:#3a2027;border-color:#7d3d45;color:#ffdede}
+.item-add{display:grid;grid-template-columns:minmax(220px,1fr) 160px 70px 120px;gap:8px}.item-add .btn{grid-column:1/-1}.item-edit-actions{display:flex;gap:8px;grid-column:1/-1}.item-edit-actions .btn{grid-column:auto;flex:1}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left}.scroll{overflow:auto}.total{display:flex;justify-content:space-between;align-items:center;background:#e8eef2;color:#0b1f2b;border-radius:11px;padding:14px;margin-top:10px}.total b{font-size:22px}.row{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;margin:8px 0}.discount{display:grid;grid-template-columns:55px 1fr;gap:8px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions .primary{grid-column:1/-1}.list{display:grid;gap:9px}.list-item{border:1px solid var(--line);background:#0c2230;border-radius:12px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:center}.muted{color:var(--muted);font-size:12px}.status{font-size:12px;padding:7px 9px;border-radius:999px;background:#0a2130;border:1px solid #34576a;color:#b8cbd6}.status.ok{color:#8de0af}
+.cheque-badge{display:none;min-width:18px;height:18px;align-items:center;justify-content:center;border-radius:999px;background:#ffd166;color:#18232b;font-size:10px;font-weight:700;padding:0 5px;margin-left:4px}
+.cheque-badge.show{display:inline-flex}
+.cheque-editor{display:none}
+.cheque-editor.show{display:block}
+.cheque-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.cheque-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.cheque-stat{border:1px solid var(--line);border-radius:12px;padding:12px;background:#0b2230}
+.cheque-stat b{display:block;font-size:22px;margin-top:3px}
+.cheque-alert{display:none;border:1px solid #8d6f20;background:#342d16;color:#ffe9a6;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-weight:700}
+.cheque-alert.show{display:block}
+.cheque-card{border:1px solid var(--line);background:#0c2230;border-radius:12px;padding:12px}
+.cheque-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.cheque-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cheque-tag{font-size:11px;padding:5px 7px;border-radius:999px;background:#102f40;border:1px solid #34576a;color:#c7d7df}
+.cheque-tag.hoje{background:#4a3c14;border-color:#8d6f20;color:#ffe9a6}
+.cheque-tag.atrasado{background:#472127;border-color:#7d3d45;color:#ffdede}
+.cheque-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.cheque-actions select{width:auto;min-width:150px}
+.backup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.backup-path{display:block;margin-top:6px;padding:9px 10px;border-radius:9px;background:#081b26;border:1px solid #29495a;color:#d9e5eb;font-size:12px;word-break:break-all}
+.backup-ok{color:#8de0af}.backup-warn{color:#f0c778}
+.venda-subnav{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.venda-subnav button.active{background:var(--accent);color:#0b1f2b;font-weight:700}
+.venda-pane{display:none}.venda-pane.active{display:block}
+.venda-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.venda-stat{border:1px solid var(--line);border-radius:12px;padding:12px;background:#0b2230}
+.venda-stat b{display:block;font-size:22px;margin-top:3px}
+.venda-badge{display:inline-block;font-size:11px;padding:5px 7px;border-radius:999px;background:#163c2d;border:1px solid #2d7657;color:#a9ebca;margin-top:6px}
+.editor-venda-status{display:none;border:1px solid #2d7657;background:#102e24;color:#b9efd2;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-weight:700}
+.editor-venda-status.show{display:block}
+.venda-badge.reembolso{background:#472127;border-color:#7d3d45;color:#ffdede}
+.reembolso-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.reembolso-modal-grid label:last-child{grid-column:1/-1}
+.month-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+.month-summary .venda-stat b{font-size:19px}
+.destino-card{border:1px solid var(--line);background:#0c2230;border-radius:12px;padding:12px}
+.destino-card .destino-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.destino-card .destino-desc{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.45}
+.instituicao-card{border:1px solid var(--line);background:#0c2230;border-radius:12px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.proprio-alert{display:none;border:1px solid #8d6f20;background:#342d16;color:#ffe9a6;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-weight:700}
+.proprio-alert.show{display:block}
+.proprio-card{border:1px solid var(--line);background:#0c2230;border-radius:12px;padding:12px}
+.proprio-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.proprio-bank-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.proprio-bank-item{border:1px solid var(--line);border-radius:10px;padding:10px;background:#0a202c}
+.proprio-bank-item b{display:block;font-size:16px;margin-top:3px}
+.internal-user-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #355568;background:#0b2533;color:#dce8ee;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:700}
+.internal-auth-overlay{position:fixed;inset:0;z-index:20000;background:#061a27f5;display:none;align-items:center;justify-content:center;padding:18px}
+.internal-auth-overlay.show{display:flex}
+.internal-auth-box{width:min(460px,100%);background:#0d2634;border:1px solid #355568;border-radius:18px;padding:20px;box-shadow:0 20px 60px #000a}
+.internal-auth-box h2{font-size:20px;margin-bottom:8px}
+.internal-auth-box .muted{margin-bottom:14px}
+.permission-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.permission-grid label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:9px;background:#0a202c;font-size:12px}
+.permission-grid input{width:auto}
+.user-access-card{border:1px solid var(--line);background:#0c2230;border-radius:12px;padding:12px}
+.user-access-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.audit-row{border-bottom:1px solid var(--line);padding:9px 0}
+.audit-row:last-child{border-bottom:0}
+.readonly-note{border:1px solid #355568;background:#0a202c;color:#b9cbd5;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.colaborador-note{display:none;border:1px solid #4f6572;background:#0b2533;color:#d7e3e9;border-radius:11px;padding:11px 12px;margin-bottom:12px}
+body.colaborador-mode .colaborador-note{display:block}
+.toast-app{position:fixed;right:18px;bottom:18px;z-index:9999;max-width:360px;background:#102d3d;color:#fff;border:1px solid #486a7c;border-radius:12px;padding:12px 14px;box-shadow:0 12px 35px #0008;opacity:0;transform:translateY(12px);pointer-events:none;transition:.18s}
+.toast-app.show{opacity:1;transform:translateY(0)}
+.modal-app{position:fixed;inset:0;z-index:10000;background:#0009;display:none;align-items:center;justify-content:center;padding:18px}
+.modal-app.show{display:flex}
+.modal-app-box{width:min(420px,100%);background:#0d2634;border:1px solid #355568;border-radius:16px;padding:18px;box-shadow:0 18px 45px #0009}
+.modal-app-box p{margin:0 0 16px;line-height:1.45}
+.modal-app-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.preview-box{background:#fff;color:#10202a;border-radius:14px;padding:16px;min-height:220px}
+.preview-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-bottom:1px solid #d7e0e5;padding-bottom:10px;margin-bottom:14px}
+.preview-logo{display:flex;align-items:center;gap:10px}.preview-logo img{width:46px;height:46px}
+.preview-title{font:700 20px Georgia,serif}.preview-mini{font:12px/1.55 Arial,sans-serif;color:#4c5f69}
+.preview-total{margin:12px 0 0 auto;max-width:250px;border:1px solid #d6e0e5;border-radius:10px;padding:10px;background:#f7fbfd}
+.pdf-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:620px){
+  body{font-size:14px}
+  header{padding-left:10px;padding-right:10px;padding-bottom:8px}
+  .brand{gap:7px;min-width:0}
+  .brand>div{min-width:0;flex:1}
+  .brand img{width:36px;height:36px;flex:0 0 36px}
+  .brand b{font-size:16px;letter-spacing:.01em}
+  .brand small{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .menu-toggle{width:38px;height:38px;border-radius:9px;font-size:21px;flex:0 0 38px}
+  #syncTop{font-size:10px;padding:5px 7px;flex:0 0 auto}
+  #internalUserChip{display:none!important}
+  #trocarUsuarioBtn{display:none!important}
+  #sideNav{width:min(310px,88vw);gap:6px}
+  #sideNav button[data-view]{padding:11px 12px}
+  main{padding:12px 10px calc(22px + var(--safe-bottom));max-width:100%}
+  h1{font-size:22px;line-height:1.15;margin:5px 2px 12px}
+  h2{font-size:15px;margin-bottom:10px}
+  .card{padding:12px;border-radius:14px;margin-bottom:10px;box-shadow:0 8px 22px #0002}
+  label{gap:4px;font-size:11.5px}
+  input,select,textarea{padding:10px;border-radius:9px;min-height:42px;font-size:16px}
+  textarea{min-height:76px}
+  .grid,.pdf-options,.cheque-grid,.cheque-stats,.backup-grid,.venda-stats,.reembolso-modal-grid,.month-summary,.proprio-bank-summary,.permission-grid{grid-template-columns:1fr;gap:8px}
+  .client-grid{grid-template-columns:1fr 1fr}
+  .client-grid .span-all{grid-column:1/-1}
+  .budget-grid{grid-template-columns:1fr 1fr}
+  .reembolso-modal-grid label:last-child{grid-column:auto}
+  .row{grid-template-columns:1fr;gap:5px;margin:7px 0}
+  .item-add{grid-template-columns:1fr 82px;gap:7px}
+  .item-add label:first-child{grid-column:1/-1}
+  .item-add .item-color{grid-column:1/-1}
+  .item-add .money-only{grid-column:1/-1}
+  .item-add .btn{grid-column:1/-1}
+  .actions{grid-template-columns:1fr;gap:7px}
+  .actions .primary{grid-column:auto}
+  .btn{padding:10px 12px;border-radius:9px}
+  .list-item{align-items:flex-start;flex-direction:column;padding:11px}
+  .list-item>div:last-child{width:100%;display:flex;gap:7px;flex-wrap:wrap}
+  .list-item>div:last-child .btn{flex:1}
+  .cheque-card,.destino-card,.proprio-card,.user-access-card{padding:11px}
+  table{font-size:11px}
+  th,td{padding:8px 5px}
+  .total{padding:12px}
+  .total b{font-size:19px}
+}
+@media(max-width:380px){
+  .client-grid,.budget-grid{grid-template-columns:1fr}
+  .client-grid .span-all{grid-column:auto}
+  .brand small{display:none}
+  #syncTop{max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><button class="menu-toggle" aria-label="Abrir menu" onclick="abrirMenu()">☰</button><img src="logo-cavazani.svg" alt="Marcenaria Pro"><div><b>MARCENARIA PRO</b><small>Orçamentos e gestão</small></div><span id="syncTop" class="status" style="margin-left:auto">Local</span><span id="internalUserChip" class="internal-user-chip" style="display:none"></span><button id="trocarUsuarioBtn" class="btn" style="display:none;padding:6px 9px" onclick="trocarUsuarioInterno()">Trocar usuário</button></div>
+</header>
+<div id="menuBackdrop" class="menu-backdrop" onclick="fecharMenu()"></div>
+<nav id="sideNav">
+  <div class="side-nav-head"><div><b>Menu</b><div class="muted">Cavazani Orçamentos</div></div><button class="side-nav-close" aria-label="Fechar menu" onclick="fecharMenu()">×</button></div>
+  <button class="active" data-view="novo">Novo orçamento</button>
+  <button data-view="historico">Orçamentos</button>
+  <button data-view="vendas">Vendas</button>
+  <button data-view="contrato">Contrato</button>
+  <button data-view="contratos-salvos">Contratos salvos</button>
+  <button data-view="reembolsos">Reembolsos</button>
+  <button data-view="clientes">Clientes</button>
+  <button data-view="cheques">Cheques <span id="chequeBadge" class="cheque-badge"></span></button>
+  <button data-view="cheques-destinados">Cheques destinados</button>
+  <button data-view="cheques-proprios">Nossos cheques <span id="chequeProprioBadge" class="cheque-badge"></span></button>
+  <button data-view="produtos">Produtos e serviços</button>
+  <button id="backupNav" data-view="backup" style="display:none">Backup</button>
+  <button data-view="config">Configurações</button>
+  <div id="menuUserBox" class="menu-user-box">
+    <div id="menuUserName" class="menu-user-name"></div>
+    <button class="btn" type="button" onclick="trocarUsuarioInterno();fecharMenu()">Trocar usuário</button>
+  </div>
+  <div class="theme-switcher">
+    <div class="theme-label">Aparência</div>
+    <div class="theme-options">
+      <button id="temaEscuroBtn" type="button" onclick="definirTema('dark')">Escuro</button>
+      <button id="temaClaroBtn" type="button" onclick="definirTema('light')">Claro</button>
+    </div>
+  </div>
+</nav>
+<main>
+<section id="view-novo" class="view active">
+<h1>Novo orçamento</h1>
+<div class="colaborador-note">Perfil Colaborador: você pode montar e salvar orçamentos completos, incluindo valores. Balanços, vendas realizadas e áreas financeiras continuam restritos.</div>
+<div class="card"><h2>Cliente</h2><div class="grid client-grid">
+<label class="span-all">Nome<input id="nome"></label>
+<label>Telefone<input id="telefone"></label><label>CPF/CNPJ<input id="doc"></label>
+<label class="span-all">E-mail<input id="email" type="email"></label>
+<label class="span-all">Endereço<input id="endereco"></label><label class="span-all">Cidade / UF<input id="cidade"></label>
+</div></div>
+<div class="card"><h2>Orçamento</h2><div class="grid budget-grid">
+<label>Número automático<input id="numero" readonly></label><label>Data<input id="data" type="date"></label>
+<label>Validade<select id="validade"><option>7 dias</option><option selected>15 dias</option><option>30 dias</option></select></label>
+<label>Prazo de entrega<select id="prazo"></select></label>
+</div></div>
+<div class="card"><h2>Itens</h2>
+<div class="item-add"><label>Descrição<input id="itemDesc"></label><label class="item-color">Cor do item<input id="itemCor" placeholder="Ex.: Branco TX, Freijó, Preto"></label><label>Qtd.<input id="itemQtd" type="number" value="1" min="1"></label><label class="money-only">Valor unitário<input id="itemValor" inputmode="decimal"></label><div class="item-edit-actions"><button id="itemSalvarBtn" class="btn primary" onclick="addItem()">Adicionar item</button><button id="itemCancelarBtn" class="btn" style="display:none" onclick="cancelarEdicaoItem()">Cancelar edição</button></div></div>
+<div class="scroll"><table><thead><tr><th>Descrição</th><th>Cor</th><th>Qtd.</th><th class="money-col">Unit.</th><th class="money-col">Total</th><th></th></tr></thead><tbody id="itens"></tbody></table></div>
+</div>
+<div class="card money-only"><h2>Pagamento e valores</h2>
+<label>Método de pagamento<select id="pagamentoMetodo" onchange="pagamentoMudou()"><option value="combinar">A combinar</option><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="credito">Cartão de crédito</option><option value="debito">Cartão de débito</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option><option value="cheque">Cheque</option></select></label>
+<div class="row"><span>Subtotal</span><input id="subtotal" readonly></div>
+<div class="row"><span>Desconto</span><div class="discount"><select id="descontoTipo" onchange="calc()"><option value="reais">R$</option><option value="percentual">%</option></select><input id="desconto" inputmode="decimal" value="0" oninput="calc()"></div></div>
+<div class="row"><span>Frete/instalação</span><input id="frete" inputmode="decimal" value="0" oninput="calc()"></div>
+<div class="total"><span>Total</span><b id="total">R$ 0,00</b></div>
+<label style="margin-top:10px">Condições de pagamento<textarea id="condicoes">50% na aprovação do orçamento e 50% na conclusão do serviço.</textarea></label>
+<label style="margin-top:10px">Observações<textarea id="obs">Móveis confeccionados conforme medidas, cores e acabamentos definidos com o cliente.</textarea></label>
+</div>
+<div class="card cheque-editor money-only" id="chequeEditor">
+<h2>Cheques deste orçamento</h2>
+<p class="muted">Os cheques ficam automaticamente vinculados ao cliente e ao número do orçamento.</p>
+<div class="cheque-grid">
+<label>Número do cheque<input id="chNumero" placeholder="Ex.: 000123"></label>
+<label>Banco<input id="chBanco" placeholder="Ex.: Banco do Brasil"></label>
+<label>Agência / Conta<input id="chAgenciaConta" placeholder="Opcional"></label>
+<label>Valor<input id="chValor" inputmode="decimal" placeholder="0,00"></label>
+<label>Data para depósito<input id="chData" type="date"></label>
+<label>Observação<input id="chObs" placeholder="Opcional"></label>
+</div>
+<button class="btn primary" style="margin-top:10px" onclick="addChequeOrcamento()">Adicionar cheque</button>
+<div class="scroll" style="margin-top:12px"><table><thead><tr><th>Cheque</th><th>Banco</th><th>Valor</th><th>Depósito</th><th></th></tr></thead><tbody id="chequesOrcamentoBody"></tbody></table></div>
+<div class="muted" id="chequesOrcamentoTotal" style="margin-top:8px"></div>
+</div>
+<div id="editorVendaStatus" class="editor-venda-status">Venda realizada</div>
+<div class="actions"><button class="btn" onclick="novo()">Novo</button><button class="btn" onclick="salvar()">Salvar</button><button class="btn primary" onclick="gerarPDF()">Gerar PDF</button><button class="btn primary" id="btnLancarVenda" onclick="lancarVendaRealizada()">Lançar venda realizada</button></div>
+</section>
+
+<section id="view-historico" class="view"><h1>Meus orçamentos</h1><div class="card"><div id="historico" class="list"></div></div></section>
+<section id="view-contrato" class="view"><h1>Contrato</h1>
+<div class="card"><p class="muted">Selecione uma venda realizada. Os itens, valores, prazo, pagamento e condições serão preenchidos conforme o orçamento salvo.</p><div class="grid"><label>Venda vinculada<select id="contratoVenda" onchange="previewContrato()"></select></label><label>Data do contrato<input id="contratoData" type="date" onchange="previewContrato()"></label><label>Local da assinatura<input id="contratoLocal" value="Morro Agudo - SP" oninput="previewContrato()"></label><label>RG do contratante (opcional)<input id="contratoRg" oninput="previewContrato()"></label></div><div class="actions" style="margin-top:12px"><button class="btn primary" id="contratoSalvarBtn" onclick="salvarContratoVenda()">Salvar contrato</button><button class="btn" onclick="gerarContratoAtual()">Gerar PDF</button></div></div><div id="contratoPreview" class="card"></div></section>
+<section id="view-contratos-salvos" class="view"><h1>Contratos salvos</h1><div class="card"><label>Buscar por cliente ou orçamento<input id="contratosBusca" oninput="renderContratos()" placeholder="Nome ou número"></label><p class="muted">Os contratos preservam os dados registrados na emissão e ficam vinculados à venda, inclusive no histórico de reembolsos.</p></div><div id="contratosLista" class="list"></div></section>
+<section id="view-vendas" class="view"><h1>Vendas</h1>
+<div class="venda-stats">
+  <div class="venda-stat"><span class="muted">Vendas realizadas</span><b id="vendasQtd">0</b></div>
+  <div class="venda-stat"><span class="muted">Valor vendido</span><b id="vendasTotal">R$ 0,00</b></div>
+</div>
+<div class="venda-subnav">
+  <button class="btn active" id="vendaTabLista" onclick="mostrarAbaVendas('lista')">Vendas realizadas</button>
+  <button class="btn" id="vendaTabRecibos" onclick="mostrarAbaVendas('recibos')">Emitir recibos</button>
+  <button class="btn" id="vendaTabResumo" onclick="mostrarAbaVendas('resumo')">Resumo mensal</button>
+</div>
+<div id="vendaPaneLista" class="venda-pane active"><div id="vendasLista" class="list"></div></div>
+<div id="vendaPaneRecibos" class="venda-pane">
+  <div class="card"><p class="muted">Escolha uma venda para emitir o recibo em PDF com os dados da empresa, cliente, itens, valores e forma de pagamento.</p></div>
+  <div id="recibosLista" class="list"></div>
+</div>
+<div id="vendaPaneResumo" class="venda-pane">
+  <div class="card">
+    <div class="grid">
+      <label>Mês do extrato<input id="vendaMes" type="month" onchange="renderResumoMensal()"></label>
+      <div style="display:flex;align-items:end"><button class="btn primary" style="width:100%" onclick="gerarExtratoMensalPDF()">Gerar extrato PDF</button></div>
+    </div>
+    <div class="month-summary">
+      <div class="venda-stat"><span class="muted">Vendas no mês</span><b id="mesVendasQtd">0</b></div>
+      <div class="venda-stat"><span class="muted">Vendas brutas</span><b id="mesVendasBruto">R$ 0,00</b></div>
+      <div class="venda-stat"><span class="muted">Reembolsos no mês</span><b id="mesReembolsos">R$ 0,00</b></div>
+      <div class="venda-stat"><span class="muted">Resultado líquido</span><b id="mesLiquido">R$ 0,00</b></div>
+    </div>
+  </div>
+  <div class="card"><h2>Movimentações do mês</h2><div id="mesMovimentacoes" class="list"></div></div>
+  <div class="card"><h2>Totais por forma de pagamento</h2><div id="mesPagamentos" class="list"></div></div>
+</div>
+</section>
+
+<section id="view-reembolsos" class="view"><h1>Reembolsos</h1>
+<div class="venda-stats">
+  <div class="venda-stat"><span class="muted">Reembolsos registrados</span><b id="reembolsosQtd">0</b></div>
+  <div class="venda-stat"><span class="muted">Valor reembolsado</span><b id="reembolsosTotal">R$ 0,00</b></div>
+  <div class="venda-stat"><span class="muted">Itens reembolsados</span><b id="reembolsosItensQtd">0</b></div>
+</div>
+<div class="card"><p class="muted">Uma venda reembolsada deixa de contar como venda realizada, mas continua registrada aqui para controle, consulta dos itens e emissão da declaração de reembolso.</p></div>
+<h2 style="margin:14px 0 10px">Vendas reembolsadas</h2>
+<div id="reembolsosLista" class="list"></div>
+<h2 style="margin:18px 0 10px">Itens reembolsados</h2>
+<div id="reembolsosItensLista" class="list"></div>
+</section>
+<section id="view-clientes" class="view"><h1>Clientes</h1>
+<div class="card"><h2>Adicionar cliente</h2>
+<div class="grid">
+<label>Nome<input id="cliNome"></label>
+<label>Telefone<input id="cliTelefone"></label>
+<label>E-mail<input id="cliEmail" type="email"></label>
+<label>CPF/CNPJ<input id="cliDoc"></label>
+<label>Endereço<input id="cliEndereco"></label>
+<label>Cidade / UF<input id="cliCidade"></label>
+</div>
+<button class="btn primary" style="margin-top:10px" onclick="adicionarClienteDireto()">Adicionar cliente</button>
+</div>
+<div class="card"><div id="clientes" class="list"></div></div>
+</section>
+<section id="view-cheques" class="view"><h1>Controle de cheques</h1>
+<div id="chequeHojeAviso" class="cheque-alert"></div>
+<div class="cheque-stats">
+<div class="cheque-stat"><span class="muted">Para depositar hoje</span><b id="chStatHoje">0</b></div>
+<div class="cheque-stat"><span class="muted">A depositar</span><b id="chStatAbertos">0</b></div>
+<div class="cheque-stat"><span class="muted">Valor em aberto</span><b id="chStatValor">R$ 0,00</b></div>
+</div>
+<div class="card">
+<div class="grid">
+<label>Buscar cliente ou cheque<input id="chequeBusca" placeholder="Nome, documento ou número" oninput="renderCheques()"></label>
+<label>Filtrar status<select id="chequeFiltro" onchange="renderCheques()"><option value="todos">Todos</option><option value="a_depositar">A depositar</option><option value="depositado">Depositado</option><option value="compensado">Compensado</option><option value="devolvido">Devolvido</option></select></label>
+</div>
+</div>
+<div id="chequesLista" class="list"></div>
+</section>
+
+<section id="view-cheques-destinados" class="view"><h1>Cheques destinados</h1>
+<div class="cheque-stats">
+  <div class="cheque-stat"><span class="muted">Cheques destinados</span><b id="destQtd">0</b></div>
+  <div class="cheque-stat"><span class="muted">Valor destinado</span><b id="destValor">R$ 0,00</b></div>
+  <div class="cheque-stat"><span class="muted">Instituições cadastradas</span><b id="destInstituicoesQtd">0</b></div>
+</div>
+
+<div class="card"><h2>Instituições para troca / destino de cheques</h2>
+  <div class="grid">
+    <label>Nome da instituição<input id="instChequeNome" placeholder="Ex.: Banco X, Factoring Y"></label>
+    <label>Descrição<input id="instChequeDescricao" placeholder="Ex.: agência, contato ou observação"></label>
+  </div>
+  <button class="btn primary" style="margin-top:10px" onclick="adicionarInstituicaoCheque()">Adicionar instituição</button>
+  <div id="instituicoesChequeLista" class="list" style="margin-top:12px"></div>
+</div>
+
+<div class="card">
+  <div class="grid">
+    <label>Buscar cheque destinado<input id="destBusca" placeholder="Cliente, cheque ou instituição" oninput="renderChequesDestinados()"></label>
+    <label>Instituição<select id="destFiltroInstituicao" onchange="renderChequesDestinados()"><option value="">Todas</option></select></label>
+  </div>
+</div>
+<div id="chequesDestinadosLista" class="list"></div>
+</section>
+
+<section id="view-cheques-proprios" class="view"><h1>Nossos cheques</h1>
+<div id="chequeProprioHojeAviso" class="proprio-alert"></div>
+
+<div class="card"><h2>Cadastrar cheque próprio</h2>
+<div class="grid">
+<label>Número do cheque<input id="cpNumero" placeholder="Ex.: 001245"></label>
+<label>Banco<input id="cpBanco" placeholder="Ex.: Banco do Brasil"></label>
+<label>Agência / Conta<input id="cpAgenciaConta" placeholder="Opcional"></label>
+<label>Entregue para<input id="cpDestinatario" placeholder="Pessoa, fornecedor ou empresa"></label>
+<label>Valor<input id="cpValor" inputmode="decimal" placeholder="0,00"></label>
+<label>Data de emissão<input id="cpEmissao" type="date"></label>
+<label>Data de compensação<input id="cpCompensacao" type="date"></label>
+<label>Descrição<input id="cpDescricao" placeholder="Ex.: pagamento de MDF, ferragens..."></label>
+</div>
+<div class="actions" style="margin-top:10px">
+<button class="btn primary" id="cpSalvarBtn" onclick="salvarChequeProprio()">Adicionar cheque</button>
+<button class="btn" id="cpCancelarBtn" style="display:none" onclick="cancelarEdicaoChequeProprio()">Cancelar edição</button>
+</div>
+</div>
+
+<div class="card"><h2>Compensações por dia</h2>
+<div class="grid">
+<label>Data para consulta<input id="cpDataResumo" type="date" onchange="renderChequesProprios()"></label>
+<label>Buscar cheque<input id="cpBusca" placeholder="Número, destinatário, banco ou descrição" oninput="renderChequesProprios()"></label>
+<label>Status<select id="cpFiltroStatus" onchange="renderChequesProprios()"><option value="todos">Todos</option><option value="a_compensar">A compensar</option><option value="compensado">Compensado</option><option value="cancelado">Cancelado</option></select></label>
+</div>
+<div class="cheque-stats" style="margin-top:12px">
+<div class="cheque-stat"><span class="muted">Cheques a compensar no dia</span><b id="cpStatQtd">0</b></div>
+<div class="cheque-stat"><span class="muted">Total do dia</span><b id="cpStatTotal">R$ 0,00</b></div>
+<div class="cheque-stat"><span class="muted">Bancos envolvidos</span><b id="cpStatBancos">0</b></div>
+</div>
+<div id="cpResumoBancos" class="proprio-bank-summary"></div>
+</div>
+
+<div id="chequesPropriosLista" class="list"></div>
+</section>
+
+<section id="view-produtos" class="view"><h1>Produtos e serviços</h1><div class="card">
+<div class="grid"><label>Descrição<input id="prodDesc"></label><label>Valor<input id="prodValor" inputmode="decimal"></label></div><button class="btn primary" style="margin-top:10px" onclick="addProduto()">Adicionar</button><div id="produtos" class="list" style="margin-top:12px"></div>
+</div></section>
+<section id="view-backup" class="view"><h1>Backup e segurança</h1>
+<div class="card">
+<h2>Backup automático no computador</h2>
+<p class="muted">Sempre que os dados do sistema são salvos, o Windows cria cópias automáticas em duas pastas diferentes. O backup contém orçamentos, cheques, produtos e configurações, mas não salva sua senha nem a sessão da conta.</p>
+<div class="backup-grid">
+<div><b>Documentos</b><span id="backupPath1" class="backup-path">Carregando...</span><button class="btn" style="margin-top:8px" onclick="abrirPastaBackup('documents')">Abrir pasta</button></div>
+<div><b>Downloads</b><span id="backupPath2" class="backup-path">Carregando...</span><button class="btn" style="margin-top:8px" onclick="abrirPastaBackup('downloads')">Abrir pasta</button></div>
+</div>
+<p id="backupLocalStatus" class="muted" style="margin-top:12px">Aguardando informações...</p>
+<button class="btn primary" onclick="fazerBackupLocalAgora()">Fazer backup local agora</button>
+</div>
+
+<div class="card">
+<h2>Pendrive / HD externo</h2>
+<p class="muted">Escolha um pendrive, HD externo ou outra pasta. O sistema criará uma pasta <b>Cavazani-Backups</b> no destino escolhido.</p>
+<span id="backupExternalPath" class="backup-path">Nenhum destino externo escolhido.</span>
+<div class="actions" style="margin-top:10px">
+<button class="btn" onclick="escolherBackupExterno()">Escolher destino</button>
+<button class="btn primary" onclick="fazerBackupExterno()">Fazer backup externo agora</button>
+</div>
+<p id="backupExternalStatus" class="muted"></p>
+</div>
+
+<div class="card">
+<h2>Restaurar um backup</h2>
+<p class="muted">Use esta opção apenas se precisar recuperar dados de um arquivo de backup. A restauração é feita primeiro no computador e não sobrescreve a nuvem automaticamente.</p>
+<button class="btn danger" onclick="restaurarBackupArquivo()">Escolher arquivo e restaurar</button>
+</div>
+</section>
+
+<section id="view-config" class="view"><h1>Configurações</h1>
+<div class="card" id="empresaConfigCard"><h2>Dados da empresa</h2><div class="grid"><label>Empresa<input id="cfgEmpresa" value="Minha Marcenaria"></label><label>Telefone<input id="cfgTelefone"></label><label>E-mail<input id="cfgEmail"></label><label>Instagram<input id="cfgInstagram"></label><label>Endereço<input id="cfgEndereco"></label><label>CNPJ<input id="cfgCnpj"></label><label>Inscrição estadual<input id="cfgIe" placeholder="Número da inscrição estadual ou Isento"></label></div><button class="btn primary" id="salvarConfigBtn" style="margin-top:10px" onclick="salvarConfig()">Salvar dados</button></div>
+
+<div class="card" id="cloudAccountCard"><h2>Conta da Marcenaria</h2><p class="muted">Este é o acesso principal da empresa à nuvem. Os usuários internos abaixo não precisam conhecer esta senha.</p><div class="grid"><label>E-mail da conta<input id="cloudEmail" type="email" placeholder="empresa@email.com"></label><label>Senha<input id="cloudPass" type="password" placeholder="Sua senha"></label></div>
+<div class="actions" style="margin-top:10px"><button class="btn primary" onclick="entrar()">Entrar e sincronizar</button><button class="btn" onclick="criarConta()">Criar conta</button><button class="btn" onclick="sincronizar()">Sincronizar agora</button><button class="btn danger" onclick="sair()">Sair</button></div><p class="muted" id="cloudStatus">Nuvem pronta. Entre com a mesma conta no celular e no Windows.</p></div>
+
+<div class="card" id="usuariosAcessoCard" style="display:none"><h2>Usuários e acessos</h2>
+<p class="muted">O administrador principal pode criar usuários internos para a mesma conta da empresa e definir exatamente o que cada pessoa pode editar.</p>
+<div class="grid">
+<label>Nome<input id="usrNome" placeholder="Ex.: João"></label>
+<label>Usuário<input id="usrLogin" placeholder="Ex.: joao"></label>
+<label>Senha<input id="usrSenha" type="password" placeholder="Senha do usuário"></label>
+<label>Perfil<select id="usrRole" onchange="aplicarPresetPermissoes()"><option value="operador">Operador</option><option value="visualizador">Somente visualização</option><option value="colaborador">Colaboradores</option><option value="admin">Administrador</option></select></label>
+</div>
+<div class="permission-grid">
+<label><input type="checkbox" id="permOrcamentos"> Editar orçamentos</label>
+<label><input type="checkbox" id="permVendas"> Lançar vendas</label>
+<label><input type="checkbox" id="permClientes"> Editar clientes</label>
+<label><input type="checkbox" id="permFinanceiro"> Editar financeiro e cheques</label>
+<label><input type="checkbox" id="permReembolsos"> Registrar reembolsos</label>
+<label><input type="checkbox" id="permProdutos"> Editar produtos/serviços</label>
+<label><input type="checkbox" id="permConfig"> Editar dados da empresa</label>
+<label><input type="checkbox" id="permUsuarios"> Gerenciar usuários</label>
+</div>
+<div class="actions" style="margin-top:10px"><button class="btn primary" id="usrSalvarBtn" onclick="salvarUsuarioInterno()">Adicionar usuário</button><button class="btn" id="usrCancelarBtn" style="display:none" onclick="cancelarEdicaoUsuarioInterno()">Cancelar edição</button></div>
+<div id="usuariosInternosLista" class="list" style="margin-top:14px"></div>
+</div>
+
+<div class="card" id="auditCard" style="display:none"><h2>Histórico de ações dos usuários</h2><p class="muted">Últimas ações registradas dentro desta conta da empresa.</p><div id="auditLista"></div></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id),BRL=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+let itens=[],itemEditandoIndex=null,chequesOrcamento=[],editandoNumero=null,vendaRealizadaAtual=false,dataVendaAtual=null,reembolsadaAtual=false,dataReembolsoAtual=null,valorReembolsoAtual=0,motivoReembolsoAtual='',chequeProprioEditandoId=null,usuarioInternoAtual=null,usuariosInternosCache=[],usuarioInternoEditandoId=null,cloud=null,cloudUser=null,cloudReady=false;
+const parse=v=>Number(String(v??0).replace(/\./g,'').replace(',','.'))||0;
+const PERMISSOES_CHAVES=['orcamentos_editar','vendas_lancar','clientes_editar','financeiro_editar','reembolsos_editar','produtos_editar','config_editar','usuarios_gerenciar'];
+function permissoesPreset(role){
+  if(role==='admin')return Object.fromEntries(PERMISSOES_CHAVES.map(k=>[k,true]));
+  if(role==='operador')return{orcamentos_editar:true,vendas_lancar:true,clientes_editar:true,financeiro_editar:false,reembolsos_editar:false,produtos_editar:false,config_editar:false,usuarios_gerenciar:false};
+  if(role==='colaborador')return{orcamentos_editar:true,vendas_lancar:false,clientes_editar:false,financeiro_editar:false,reembolsos_editar:false,produtos_editar:false,config_editar:false,usuarios_gerenciar:false};
+  return Object.fromEntries(PERMISSOES_CHAVES.map(k=>[k,false]));
+}
+function perfilNome(role){return{admin:'Administrador',operador:'Operador',visualizador:'Somente visualização',colaborador:'Colaboradores'}[role]||role}
+function ehColaborador(){return usuarioInternoAtual?.role==='colaborador'}
+function usuariosInternosLocal(){try{return JSON.parse(localStorage.getItem('cav_internal_users')||'[]')}catch(_){return[]}}
+function guardarUsuariosInternosLocal(a){usuariosInternosCache=a||[];localStorage.setItem('cav_internal_users',JSON.stringify(usuariosInternosCache))}
+function usuarioTemPermissao(chave){
+  if(!usuariosInternosCache.length)return true;
+  if(!usuarioInternoAtual)return false;
+  if(usuarioInternoAtual.is_master)return true;
+  let permissoes={...permissoesPreset(usuarioInternoAtual.role),...(usuarioInternoAtual.permissions||{})};
+  return permissoes[chave]===true;
+}
+function pode(chave){return usuarioTemPermissao(chave)}
+function negar(chave){
+  let nomes={orcamentos_editar:'editar orçamentos',vendas_lancar:'lançar vendas',clientes_editar:'editar clientes',financeiro_editar:'alterar o financeiro e cheques',reembolsos_editar:'registrar reembolsos',produtos_editar:'editar produtos e serviços',config_editar:'alterar dados da empresa',usuarios_gerenciar:'gerenciar usuários'};
+  alert('Seu usuário não tem permissão para '+(nomes[chave]||'realizar esta ação')+'.');
+  return false;
+}
+function bytesHex(buf){return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+function hexBytes(hex){let a=new Uint8Array(Math.floor(hex.length/2));for(let i=0;i<a.length;i++)a[i]=parseInt(hex.slice(i*2,i*2+2),16);return a}
+function novoSalt(){let b=new Uint8Array(16);crypto.getRandomValues(b);return bytesHex(b)}
+async function hashSenhaInterna(senha,salt){
+  if(!window.crypto?.subtle)throw new Error('Este dispositivo não oferece o recurso de segurança necessário.');
+  let enc=new TextEncoder(),material=await crypto.subtle.importKey('raw',enc.encode(String(senha)),{name:'PBKDF2'},false,['deriveBits']);
+  let bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:hexBytes(salt),iterations:150000,hash:'SHA-256'},material,256);
+  return bytesHex(bits);
+}
+function authOverlay(){
+  let el=$('internalAuthOverlay');
+  if(!el){
+    el=document.createElement('div');el.id='internalAuthOverlay';el.className='internal-auth-overlay';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function mostrarSetupAdmin(){
+  let el=authOverlay();
+  el.innerHTML='<div class="internal-auth-box"><h2>Criar administrador principal</h2><p class="muted">Esta conta da empresa ainda não possui usuários internos. Crie o primeiro usuário superior, que terá acesso total e poderá liberar acesso para os demais.</p><div class="grid"><label>Nome<input id="masterNome" placeholder="Ex.: Moisés"></label><label>Usuário<input id="masterLogin" placeholder="Ex.: administrador"></label><label>Senha<input id="masterSenha" type="password" placeholder="Crie uma senha interna"></label></div><button class="btn primary" style="width:100%;margin-top:12px" onclick="criarPrimeiroAdmin()">Criar administrador</button></div>';
+  el.classList.add('show');
+}
+function mostrarLoginInterno(){
+  if(!usuariosInternosCache.length){if(cloudReady)mostrarSetupAdmin();return}
+  let el=authOverlay();
+  el.innerHTML='<div class="internal-auth-box"><h2>Entrar no sistema</h2><p class="muted">Use o usuário interno criado pelo administrador da empresa.</p><label>Usuário<input id="loginInternoUsuario" autocomplete="username"></label><label style="margin-top:10px">Senha<input id="loginInternoSenha" type="password" autocomplete="current-password"></label><button class="btn primary" style="width:100%;margin-top:12px" onclick="loginUsuarioInterno()">Entrar</button><p class="muted" style="margin-top:12px">Conta da empresa: '+esc(cloudUser?.email||localStorage.getItem('cav_cloud_email')||'conectada')+'</p></div>';
+  el.classList.add('show');
+  setTimeout(()=>focarCampo($('loginInternoUsuario')),50);
+}
+async function criarPrimeiroAdmin(){
+  if(!cloudReady)return alert('Entre primeiro na conta da empresa para criar o administrador.');
+  let nome=$('masterNome')?.value.trim(),usuario=$('masterLogin')?.value.trim().toLowerCase(),senha=$('masterSenha')?.value||'';
+  if(!nome||!usuario||senha.length<4)return alert('Preencha nome, usuário e uma senha com pelo menos 4 caracteres.');
+  try{
+    let salt=novoSalt(),hash=await hashSenhaInterna(senha,salt),permissions=permissoesPreset('admin');
+    let{data,error}=await cloud.from('app_usuarios').insert({owner_user_id:cloudUser.id,nome,usuario,password_salt:salt,password_hash:hash,role:'admin',permissions,ativo:true,is_master:true}).select('*').single();
+    if(error)throw error;
+    guardarUsuariosInternosLocal([data]);
+    definirUsuarioInterno(data);
+    await registrarLog('usuario_master_criado',{nome,usuario});
+    mostrarAviso('Administrador principal criado.');
+  }catch(e){alert('Erro ao criar administrador: '+e.message)}
+}
+async function loginUsuarioInterno(){
+  let usuario=$('loginInternoUsuario')?.value.trim().toLowerCase(),senha=$('loginInternoSenha')?.value||'';
+  let u=usuariosInternosCache.find(x=>x.ativo&&String(x.usuario).toLowerCase()===usuario);
+  if(!u)return alert('Usuário não encontrado ou desativado.');
+  try{
+    let hash=await hashSenhaInterna(senha,u.password_salt);
+    if(hash!==u.password_hash)return alert('Senha incorreta.');
+    definirUsuarioInterno(u);
+    await registrarLog('login',{});
+  }catch(e){alert('Erro ao entrar: '+e.message)}
+}
+function definirUsuarioInterno(u){
+  usuarioInternoAtual=u;
+  document.body.classList.toggle('colaborador-mode',u.role==='colaborador');
+  sessionStorage.setItem('cav_active_internal_user',u.id);
+  authOverlay().classList.remove('show');
+  let chip=$('internalUserChip'),trocar=$('trocarUsuarioBtn'),menuBox=$('menuUserBox'),menuName=$('menuUserName');
+  if(chip){chip.style.display='inline-flex';chip.textContent=(u.nome||u.usuario)+' • '+perfilNome(u.role)}
+  if(trocar)trocar.style.display='';
+  if(menuBox)menuBox.classList.add('show');
+  if(menuName)menuName.textContent=(u.nome||u.usuario)+' • '+perfilNome(u.role);
+  aplicarPermissoesUI();
+  renderClientes();renderVendas();renderReembolsos();renderCheques();renderChequesDestinados();renderChequesProprios();renderProdutos();renderUsuariosInternos();
+  carregarAuditLog();
+}
+function trocarUsuarioInterno(){
+  if(!usuariosInternosCache.length)return;
+  usuarioInternoAtual=null;document.body.classList.remove('colaborador-mode');sessionStorage.removeItem('cav_active_internal_user');
+  let chip=$('internalUserChip');if(chip)chip.style.display='none';
+  let trocar=$('trocarUsuarioBtn');if(trocar)trocar.style.display='none';
+  let menuBox=$('menuUserBox');if(menuBox)menuBox.classList.remove('show');
+  mostrarLoginInterno();
+}
+async function carregarUsuariosInternos(forcarLogin=false){
+  try{
+    let a;
+    if(cloudReady){
+      let{data,error}=await cloud.from('app_usuarios').select('*').eq('owner_user_id',cloudUser.id).order('is_master',{ascending:false}).order('nome',{ascending:true});
+      if(error)throw error;a=data||[];guardarUsuariosInternosLocal(a);
+    }else{
+      a=usuariosInternosLocal();guardarUsuariosInternosLocal(a);
+    }
+    if(!a.length){usuarioInternoAtual=null;if(cloudReady)mostrarSetupAdmin();return}
+    let ativoId=sessionStorage.getItem('cav_active_internal_user'),ativo=a.find(x=>x.id===ativoId&&x.ativo);
+    if(ativo&&!forcarLogin)definirUsuarioInterno(ativo);else mostrarLoginInterno();
+  }catch(e){
+    console.error('Usuários internos:',e);
+    let local=usuariosInternosLocal();guardarUsuariosInternosLocal(local);
+    if(local.length)mostrarLoginInterno();
+  }
+}
+function inicializarUsuariosInternosLocal(){
+  let a=usuariosInternosLocal();guardarUsuariosInternosLocal(a);
+  if(a.length){
+    let ativoId=sessionStorage.getItem('cav_active_internal_user'),ativo=a.find(x=>x.id===ativoId&&x.ativo);
+    if(ativo)definirUsuarioInterno(ativo);else mostrarLoginInterno();
+  }
+}
+async function registrarLog(acao,detalhes={}){
+  if(!cloudReady||!usuarioInternoAtual)return;
+  try{
+    await cloud.from('app_audit_log').insert({owner_user_id:cloudUser.id,app_user_id:usuarioInternoAtual.id,app_user_name:usuarioInternoAtual.nome||usuarioInternoAtual.usuario,acao,detalhes});
+  }catch(e){console.error('Log interno:',e)}
+}
+function aplicarPresetPermissoes(){
+  let role=$('usrRole')?.value||'operador',p=permissoesPreset(role),fixo=role==='colaborador';
+  let mapa={permOrcamentos:'orcamentos_editar',permVendas:'vendas_lancar',permClientes:'clientes_editar',permFinanceiro:'financeiro_editar',permReembolsos:'reembolsos_editar',permProdutos:'produtos_editar',permConfig:'config_editar',permUsuarios:'usuarios_gerenciar'};
+  Object.entries(mapa).forEach(([id,k])=>{if($(id)){$(id).checked=!!p[k];$(id).disabled=fixo}});
+}
+function permissoesDoFormulario(){
+  return{
+    orcamentos_editar:!!$('permOrcamentos')?.checked,vendas_lancar:!!$('permVendas')?.checked,clientes_editar:!!$('permClientes')?.checked,
+    financeiro_editar:!!$('permFinanceiro')?.checked,reembolsos_editar:!!$('permReembolsos')?.checked,produtos_editar:!!$('permProdutos')?.checked,
+    config_editar:!!$('permConfig')?.checked,usuarios_gerenciar:!!$('permUsuarios')?.checked
+  };
+}
+async function salvarUsuarioInterno(){
+  if(!pode('usuarios_gerenciar'))return negar('usuarios_gerenciar');
+  if(!cloudReady)return alert('Conecte a conta da empresa à nuvem para gerenciar usuários.');
+  let nome=$('usrNome').value.trim(),usuario=$('usrLogin').value.trim().toLowerCase(),senha=$('usrSenha').value,role=$('usrRole').value,permissions=permissoesDoFormulario();
+  if(!nome||!usuario)return alert('Informe o nome e o usuário.');
+  if(!usuarioInternoEditandoId&&senha.length<4)return alert('A senha precisa ter pelo menos 4 caracteres.');
+  try{
+    if(usuarioInternoEditandoId){
+      let atual=usuariosInternosCache.find(x=>x.id===usuarioInternoEditandoId);if(!atual)return;
+      if(atual.is_master){role='admin';permissions=permissoesPreset('admin')}
+      let upd={nome,usuario,role,permissions,updated_at:new Date().toISOString()};
+      if(senha){
+        if(senha.length<4)return alert('A senha precisa ter pelo menos 4 caracteres.');
+        upd.password_salt=novoSalt();upd.password_hash=await hashSenhaInterna(senha,upd.password_salt);
+      }
+      let{data,error}=await cloud.from('app_usuarios').update(upd).eq('id',usuarioInternoEditandoId).eq('owner_user_id',cloudUser.id).select('*').single();if(error)throw error;
+      if(!data||data.role!==role||PERMISSOES_CHAVES.some(k=>data.permissions?.[k]!==permissions[k]))throw new Error('As permissões não foram confirmadas pelo servidor. Sincronize e tente novamente.');
+      guardarUsuariosInternosLocal(usuariosInternosCache.map(x=>x.id===data.id?data:x));
+      if(usuarioInternoAtual?.id===data.id)definirUsuarioInterno(data);
+      await registrarLog('usuario_editado',{usuario:data.usuario,role:data.role});
+      mostrarAviso('Usuário atualizado.');
+    }else{
+      let salt=novoSalt(),hash=await hashSenhaInterna(senha,salt);
+      let{data,error}=await cloud.from('app_usuarios').insert({owner_user_id:cloudUser.id,nome,usuario,password_salt:salt,password_hash:hash,role,permissions,ativo:true,is_master:false}).select('*').single();if(error)throw error;
+      guardarUsuariosInternosLocal([...usuariosInternosCache,data]);
+      await registrarLog('usuario_criado',{usuario:data.usuario,role:data.role});
+      mostrarAviso('Usuário criado.');
+    }
+    cancelarEdicaoUsuarioInterno();renderUsuariosInternos();carregarAuditLog();
+  }catch(e){alert('Erro ao salvar usuário: '+e.message)}
+}
+function editarUsuarioInterno(id){
+  if(!pode('usuarios_gerenciar'))return negar('usuarios_gerenciar');
+  let u=usuariosInternosCache.find(x=>x.id===id);if(!u)return;
+  usuarioInternoEditandoId=id;$('usrNome').value=u.nome||'';$('usrLogin').value=u.usuario||'';$('usrSenha').value='';$('usrRole').value=u.role||'operador';
+  let p=u.is_master?permissoesPreset('admin'):{...permissoesPreset(u.role),...(u.permissions||{})};
+  let mapa={permOrcamentos:'orcamentos_editar',permVendas:'vendas_lancar',permClientes:'clientes_editar',permFinanceiro:'financeiro_editar',permReembolsos:'reembolsos_editar',permProdutos:'produtos_editar',permConfig:'config_editar',permUsuarios:'usuarios_gerenciar'};
+  Object.entries(mapa).forEach(([idc,k])=>$(idc).checked=!!p[k]);
+  if(u.is_master){$('usrRole').value='admin';$('usrRole').disabled=true}else $('usrRole').disabled=false;
+  let fixo=u.is_master||u.role==='colaborador';Object.keys(mapa).forEach(id=>{if($(id))$(id).disabled=fixo});
+  $('usrSalvarBtn').textContent='Salvar alterações';$('usrCancelarBtn').style.display='';
+  focarCampo($('usrNome'));
+}
+function cancelarEdicaoUsuarioInterno(){
+  usuarioInternoEditandoId=null;['usrNome','usrLogin','usrSenha'].forEach(id=>{if($(id))$(id).value=''});if($('usrRole')){$('usrRole').disabled=false;$('usrRole').value='operador'}
+  ['permOrcamentos','permVendas','permClientes','permFinanceiro','permReembolsos','permProdutos','permConfig','permUsuarios'].forEach(id=>{if($(id))$(id).disabled=false});
+  aplicarPresetPermissoes();if($('usrSalvarBtn'))$('usrSalvarBtn').textContent='Adicionar usuário';if($('usrCancelarBtn'))$('usrCancelarBtn').style.display='none';
+}
+async function alternarUsuarioInterno(id){
+  if(!pode('usuarios_gerenciar'))return negar('usuarios_gerenciar');
+  if(!cloudReady)return alert('Conecte a conta da empresa à nuvem para alterar usuários.');
+  let u=usuariosInternosCache.find(x=>x.id===id);if(!u)return;
+  if(u.is_master)return alert('O administrador principal não pode ser desativado.');
+  if(usuarioInternoAtual?.id===id)return alert('Você não pode desativar o usuário que está usando agora.');
+  try{
+    let novo=!u.ativo,{data,error}=await cloud.from('app_usuarios').update({ativo:novo,updated_at:new Date().toISOString()}).eq('id',id).select('*').single();if(error)throw error;
+    guardarUsuariosInternosLocal(usuariosInternosCache.map(x=>x.id===id?data:x));await registrarLog(novo?'usuario_ativado':'usuario_desativado',{usuario:u.usuario});renderUsuariosInternos();
+  }catch(e){alert('Erro ao alterar usuário: '+e.message)}
+}
+async function excluirUsuarioInterno(id){
+  if(!pode('usuarios_gerenciar'))return negar('usuarios_gerenciar');
+  if(!cloudReady)return alert('Conecte a conta da empresa à nuvem para excluir usuários.');
+  let u=usuariosInternosCache.find(x=>x.id===id);if(!u)return;
+  if(u.is_master)return alert('O administrador principal não pode ser excluído.');
+  if(usuarioInternoAtual?.id===id)return alert('Você não pode excluir o usuário que está usando agora.');
+  if(!(await confirmar('Excluir o usuário '+u.nome+'?')))return;
+  try{
+    let{error}=await cloud.from('app_usuarios').delete().eq('id',id);if(error)throw error;
+    guardarUsuariosInternosLocal(usuariosInternosCache.filter(x=>x.id!==id));await registrarLog('usuario_excluido',{usuario:u.usuario});renderUsuariosInternos();carregarAuditLog();
+  }catch(e){alert('Erro ao excluir usuário: '+e.message)}
+}
+function renderUsuariosInternos(){
+  if(!$('usuariosInternosLista'))return;
+  let card=$('usuariosAcessoCard'),audit=$('auditCard'),ok=pode('usuarios_gerenciar');
+  if(card)card.style.display=ok?'':'none';if(audit)audit.style.display=ok?'':'none';
+  if(!ok)return;
+  $('usuariosInternosLista').innerHTML=usuariosInternosCache.length?usuariosInternosCache.map(u=>`<div class="user-access-card"><div class="user-access-head"><div><b>${esc(u.nome)}</b><div class="muted">@${esc(u.usuario)} • ${esc(perfilNome(u.role))}${u.is_master?' • principal':''}</div></div><span class="cheque-tag">${u.ativo?'Ativo':'Desativado'}</span></div><div class="cheque-actions"><button class="btn" onclick="editarUsuarioInterno('${u.id}')">Editar acessos</button>${!u.is_master?`<button class="btn" onclick="alternarUsuarioInterno('${u.id}')">${u.ativo?'Desativar':'Ativar'}</button><button class="btn danger" onclick="excluirUsuarioInterno('${u.id}')">Excluir</button>`:''}</div></div>`).join(''):'<div class="muted">Nenhum usuário interno cadastrado.</div>';
+}
+async function carregarAuditLog(){
+  if(!$('auditLista')||!pode('usuarios_gerenciar')||!cloudReady)return;
+  try{
+    let{data,error}=await cloud.from('app_audit_log').select('*').eq('owner_user_id',cloudUser.id).order('created_at',{ascending:false}).limit(40);if(error)throw error;
+    $('auditLista').innerHTML=(data||[]).length?(data||[]).map(x=>`<div class="audit-row"><b>${esc(x.app_user_name)}</b> <span class="muted">• ${esc(String(x.acao).replaceAll('_',' '))}</span><div class="muted">${new Date(x.created_at).toLocaleString('pt-BR')}</div></div>`).join(''):'<div class="muted">Nenhuma ação registrada ainda.</div>';
+  }catch(e){console.error(e)}
+}
+function aplicarPermissoesUI(){
+  let orc=pode('orcamentos_editar'),vendas=pode('vendas_lancar'),cli=pode('clientes_editar'),fin=pode('financeiro_editar'),prod=pode('produtos_editar'),conf=pode('config_editar'),users=pode('usuarios_gerenciar');
+  document.querySelectorAll('#view-novo input,#view-novo select,#view-novo textarea').forEach(el=>{if(el.id!=='numero')el.disabled=!orc});let addItemBtn=document.querySelector('#view-novo button[onclick="addItem()"]');if(addItemBtn)addItemBtn.style.display=orc?'':'none';let salvarOrcBtn=document.querySelector('#view-novo button[onclick="salvar()"]');if(salvarOrcBtn)salvarOrcBtn.style.display=orc?'':'none';
+  ['cliNome','cliTelefone','cliEmail','cliDoc','cliEndereco','cliCidade'].forEach(id=>{if($(id))$(id).disabled=!cli});let cliBtn=document.querySelector('#view-clientes button[onclick="adicionarClienteDireto()"]');if(cliBtn)cliBtn.style.display=cli?'':'none';
+  ['cpNumero','cpBanco','cpAgenciaConta','cpDestinatario','cpValor','cpEmissao','cpCompensacao','cpDescricao'].forEach(id=>{if($(id))$(id).disabled=!fin});
+  if($('cpSalvarBtn'))$('cpSalvarBtn').style.display=fin?'':'none';if($('cpCancelarBtn')&&!fin)$('cpCancelarBtn').style.display='none';['instChequeNome','instChequeDescricao'].forEach(id=>{if($(id))$(id).disabled=!fin});let instBtn=document.querySelector('#view-cheques-destinados button[onclick="adicionarInstituicaoCheque()"]');if(instBtn)instBtn.style.display=fin?'':'none';
+  if($('prodDesc'))$('prodDesc').disabled=!prod;if($('prodValor'))$('prodValor').disabled=!prod;let prodBtn=document.querySelector('#view-produtos button[onclick="addProduto()"]');if(prodBtn)prodBtn.style.display=prod?'':'none';
+  ['cfgEmpresa','cfgTelefone','cfgEmail','cfgInstagram','cfgEndereco','cfgCnpj','cfgIe'].forEach(id=>{if($(id))$(id).disabled=!conf});
+  if($('salvarConfigBtn'))$('salvarConfigBtn').style.display=conf?'':'none';if($('btnLancarVenda'))$('btnLancarVenda').style.display=(vendas&&!vendaRealizadaAtual)?'':'none';
+  if($('cloudAccountCard'))$('cloudAccountCard').style.display=users?'':'none';
+  if($('usuariosAcessoCard'))$('usuariosAcessoCard').style.display=users?'':'none';
+  if($('auditCard'))$('auditCard').style.display=users?'':'none';
+  let colaborador=ehColaborador();
+  document.querySelectorAll('#sideNav button[data-view]').forEach(btn=>{
+    if(btn.id==='backupNav'){btn.style.display=(!colaborador&&users&&window.WindowsApp)?'':'none';return}
+    btn.style.display=colaborador&& !['novo','historico'].includes(btn.dataset.view)?'none':'';
+  });
+  document.body.classList.toggle('colaborador-mode',colaborador);renderContratos();
+}
+
+function focarCampo(el){try{el?.focus({preventScroll:true})}catch(_){}}
+let toastTimer=null;
+function mostrarAviso(msg){
+  let el=document.getElementById('toastApp');
+  if(!el){
+    el=document.createElement('div');
+    el.id='toastApp';
+    el.className='toast-app';
+    document.body.appendChild(el);
+  }
+  el.textContent=String(msg??'');
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
+function confirmar(msg){
+  return new Promise(resolve=>{
+    let modal=document.getElementById('modalApp');
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id='modalApp';
+      modal.className='modal-app';
+      modal.innerHTML='<div class="modal-app-box"><p id="modalAppMsg"></p><div class="modal-app-actions"><button class="btn" id="modalAppCancelar">Cancelar</button><button class="btn danger" id="modalAppConfirmar">Confirmar</button></div></div>';
+      document.body.appendChild(modal);
+    }
+    modal.querySelector('#modalAppMsg').textContent=String(msg??'Confirmar?');
+    modal.classList.add('show');
+    const fechar=valor=>{
+      modal.classList.remove('show');
+      modal.querySelector('#modalAppCancelar').onclick=null;
+      modal.querySelector('#modalAppConfirmar').onclick=null;
+      resolve(valor);
+    };
+    modal.querySelector('#modalAppCancelar').onclick=()=>fechar(false);
+    modal.querySelector('#modalAppConfirmar').onclick=()=>fechar(true);
+    modal.querySelector('#modalAppCancelar').focus();
+  });
+}
+window.alert=(msg)=>{mostrarAviso(msg);};
+for(let d=15;d<=180;d+=15){let o=document.createElement('option');o.textContent=d+' dias';o.value=d+' dias';if(d===30)o.selected=true;$('prazo').appendChild(o)}
+function temaAtual(){return localStorage.getItem('cav_theme')==='light'?'light':'dark'}
+function atualizarBotoesTema(){
+  let t=temaAtual();
+  if($('temaEscuroBtn'))$('temaEscuroBtn').classList.toggle('active',t==='dark');
+  if($('temaClaroBtn'))$('temaClaroBtn').classList.toggle('active',t==='light');
+}
+function aplicarTema(tema){
+  let claro=tema==='light';
+  document.body.classList.toggle('light-theme',claro);
+  document.documentElement.style.colorScheme=claro?'light':'dark';
+  atualizarBotoesTema();
+}
+function definirTema(tema){
+  let t=tema==='light'?'light':'dark';
+  localStorage.setItem('cav_theme',t);
+  aplicarTema(t);
+}
+function carregarTema(){aplicarTema(temaAtual())}
+window.addEventListener('online',()=>{if(cloudReady)sincronizarComTolerancia(0)});
+function abrirMenu(){let n=$('sideNav'),b=$('menuBackdrop');if(n)n.classList.add('open');if(b)b.classList.add('show');document.body.classList.add('menu-open')}
+function fecharMenu(){let n=$('sideNav'),b=$('menuBackdrop');if(n)n.classList.remove('open');if(b)b.classList.remove('show');document.body.classList.remove('menu-open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenu()});
+document.querySelectorAll('#sideNav button[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelectorAll('#sideNav button[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('view-'+b.dataset.view).classList.add('active');if(b.dataset.view==='cheques')renderCheques();if(b.dataset.view==='cheques-destinados')renderChequesDestinados();if(b.dataset.view==='cheques-proprios')renderChequesProprios();if(['contrato','contratos-salvos'].includes(b.dataset.view))renderContratos();if(b.dataset.view==='vendas'){renderVendas();renderResumoMensal()}if(b.dataset.view==='reembolsos')renderReembolsos();if(b.dataset.view==='backup')carregarInfoBackup();fecharMenu()});
+function lista(){return JSON.parse(localStorage.getItem('cav_orcs')||'[]')}function guarda(x){localStorage.setItem('cav_orcs',JSON.stringify(x));agendarBackupAutomatico();renderContratos()}
+function prox(){let a=lista().map(x=>parseInt(x.numero)||0);let n=Math.max(Number(localStorage.getItem('cav_seq')||0),a.length?Math.max(...a)+1:0);return String(n).padStart(4,'0')}
+function hoje(){let d=new Date(),off=d.getTimezoneOffset();return new Date(d.getTime()-off*60000).toISOString().slice(0,10)}
+function novoIdCheque(){try{return crypto.randomUUID()}catch(_){return 'ch_'+Date.now()+'_'+Math.random().toString(16).slice(2)}}
+function chequesLista(){return JSON.parse(localStorage.getItem('cav_cheques')||'[]')}
+function guardaCheques(a){localStorage.setItem('cav_cheques',JSON.stringify(a));agendarBackupAutomatico()}
+function instituicoesChequeLista(){return JSON.parse(localStorage.getItem('cav_cheque_instituicoes')||'[]')}
+function guardaInstituicoesCheque(a){localStorage.setItem('cav_cheque_instituicoes',JSON.stringify(a));agendarBackupAutomatico()}
+function chequesPropriosLista(){return JSON.parse(localStorage.getItem('cav_cheques_proprios')||'[]')}
+function guardaChequesProprios(a){localStorage.setItem('cav_cheques_proprios',JSON.stringify(a));agendarBackupAutomatico()}
+function fmtDataBR(d){if(!d)return '-';let p=String(d).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d}
+function statusChequeLabel(s){return{a_depositar:'A depositar',depositado:'Depositado',compensado:'Compensado',devolvido:'Devolvido'}[s]||s}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function addChequeOrcamento(){if(!pode('orcamentos_editar'))return negar('orcamentos_editar');
+  let cliente=$('nome').value.trim(),valor=parse($('chValor').value),data=$('chData').value;
+  if(!cliente){alert('Informe o cliente antes de adicionar o cheque.');focarCampo($('nome'));return}
+  if(valor<=0){alert('Informe o valor do cheque.');focarCampo($('chValor'));return}
+  if(!data){alert('Informe a data para depósito do cheque.');focarCampo($('chData'));return}
+  chequesOrcamento.push({
+    id:novoIdCheque(),
+    numero_cheque:$('chNumero').value.trim(),
+    banco:$('chBanco').value.trim(),
+    agencia_conta:$('chAgenciaConta').value.trim(),
+    valor,
+    data_deposito:data,
+    status:'a_depositar',
+    observacao:$('chObs').value.trim()
+  });
+  ['chNumero','chBanco','chAgenciaConta','chValor','chObs'].forEach(id=>$(id).value='');
+  $('chData').value='';
+  renderChequesOrcamento();
+  focarCampo($('chNumero'));
+}
+function delChequeOrcamento(i){if(!pode('orcamentos_editar'))return negar('orcamentos_editar');chequesOrcamento.splice(i,1);renderChequesOrcamento()}
+function renderChequesOrcamento(){
+  let body=$('chequesOrcamentoBody');if(!body)return;
+  let ed=pode('orcamentos_editar');
+  body.innerHTML=chequesOrcamento.length?chequesOrcamento.map((ch,i)=>`<tr><td>${esc(ch.numero_cheque||'-')}</td><td>${esc(ch.banco||'-')}</td><td>${BRL.format(Number(ch.valor)||0)}</td><td>${fmtDataBR(ch.data_deposito)}</td><td>${ed?`<button class="btn danger" onclick="delChequeOrcamento(${i})">×</button>`:''}</td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nenhum cheque adicionado.</td></tr>';
+  $('chequesOrcamentoTotal').textContent=chequesOrcamento.length?'Total em cheques: '+BRL.format(chequesOrcamento.reduce((s,ch)=>s+(Number(ch.valor)||0),0)):'';
+}
+function salvarChequesLocaisDoOrcamento(numero,cliente,arr){
+  let todos=chequesLista().filter(ch=>String(ch.orcamento_numero)!==String(numero));
+  let novos=(arr||[]).map(ch=>({...ch,orcamento_numero:Number(numero)||numero,cliente_nome:cliente.nome||'',cliente_doc:cliente.doc||'',cliente_telefone:cliente.telefone||''}));
+  guardaCheques([...todos,...novos]);
+  renderCheques();
+}
+async function salvarChequesCloud(numero,cliente,arr){
+  if(!cloudReady)return salvarChequesLocaisDoOrcamento(numero,cliente,arr);
+  let num=Number(numero);
+  let {error:delErr}=await cloud.from('cheques').delete().eq('user_id',cloudUser.id).eq('orcamento_numero',num);
+  if(delErr)throw delErr;
+  let rows=(arr||[]).map(ch=>({
+    id:ch.id||novoIdCheque(),user_id:cloudUser.id,orcamento_numero:num,
+    cliente_nome:cliente.nome||'',cliente_doc:cliente.doc||'',cliente_telefone:cliente.telefone||'',
+    numero_cheque:ch.numero_cheque||null,banco:ch.banco||null,agencia_conta:ch.agencia_conta||null,
+    valor:Number(ch.valor)||0,data_deposito:ch.data_deposito,status:ch.status||'a_depositar',
+    observacao:ch.observacao||null,destino_instituicao:ch.destino_instituicao||null,data_destino:ch.data_destino||null,destino_descricao:ch.destino_descricao||null,updated_at:new Date().toISOString()
+  }));
+  if(rows.length){let {error}=await cloud.from('cheques').insert(rows);if(error)throw error}
+}
+function chequesDoOrcamento(numero){return chequesLista().filter(ch=>String(ch.orcamento_numero)===String(numero))}
+function classeDataCheque(ch){
+  if(ch.status!=='a_depositar')return '';
+  let h=hoje();
+  if(ch.data_deposito===h)return 'hoje';
+  if(ch.data_deposito<h)return 'atrasado';
+  return '';
+}
+function avisarChequesHoje(){
+  let hojeLista=chequesLista().filter(ch=>ch.status==='a_depositar'&&ch.data_deposito===hoje());
+  let badge=$('chequeBadge');
+  if(badge){badge.textContent=hojeLista.length;badge.classList.toggle('show',hojeLista.length>0)}
+  if(hojeLista.length){
+    let key='aviso_cheques_'+hoje(),ja=sessionStorage.getItem(key);
+    if(!ja){mostrarAviso(hojeLista.length===1?'Há 1 cheque para depositar hoje.':'Há '+hojeLista.length+' cheques para depositar hoje.');sessionStorage.setItem(key,'1')}
+  }
+}
+function renderCheques(){
+  let todos=chequesLista().slice().sort((a,b)=>String(a.data_deposito).localeCompare(String(b.data_deposito))),fin=pode('financeiro_editar');
+  let h=hoje(),hojeQtd=todos.filter(ch=>ch.status==='a_depositar'&&ch.data_deposito===h).length;
+  let abertos=todos.filter(ch=>ch.status==='a_depositar').length;
+  let valor=todos.filter(ch=>ch.status==='a_depositar').reduce((s,ch)=>s+(Number(ch.valor)||0),0);
+  if($('chStatHoje'))$('chStatHoje').textContent=hojeQtd;
+  if($('chStatAbertos'))$('chStatAbertos').textContent=abertos;
+  if($('chStatValor'))$('chStatValor').textContent=BRL.format(valor);
+  let aviso=$('chequeHojeAviso');
+  if(aviso){aviso.classList.toggle('show',hojeQtd>0);aviso.textContent=hojeQtd?('Atenção: '+hojeQtd+(hojeQtd===1?' cheque precisa':' cheques precisam')+' ser depositado'+(hojeQtd===1?'':'s')+' hoje.'):''}
+  let badge=$('chequeBadge');if(badge){badge.textContent=hojeQtd;badge.classList.toggle('show',hojeQtd>0)}
+  let busca=($('chequeBusca')?.value||'').trim().toLowerCase(),filtro=$('chequeFiltro')?.value||'todos';
+  let lista=todos.filter(ch=>{
+    let okStatus=filtro==='todos'||ch.status===filtro;
+    let txt=[ch.cliente_nome,ch.cliente_doc,ch.numero_cheque,ch.banco,ch.orcamento_numero,ch.destino_instituicao,ch.destino_descricao].join(' ').toLowerCase();
+    return okStatus&&(!busca||txt.includes(busca));
+  });
+  if(!$('chequesLista'))return;
+  $('chequesLista').innerHTML=lista.length?lista.map(ch=>{
+    let cls=classeDataCheque(ch),rotulo=cls==='hoje'?'Depositar hoje':cls==='atrasado'?'Atrasado':statusChequeLabel(ch.status);
+    let controle=fin?`<div class="cheque-actions"><select onchange="atualizarStatusCheque('${ch.id}',this.value)"><option value="a_depositar" ${ch.status==='a_depositar'?'selected':''}>A depositar</option><option value="depositado" ${ch.status==='depositado'?'selected':''}>Depositado</option><option value="compensado" ${ch.status==='compensado'?'selected':''}>Compensado</option><option value="devolvido" ${ch.status==='devolvido'?'selected':''}>Devolvido</option></select><button class="btn" onclick="abrirDestinoCheque('${ch.id}')">${ch.destino_instituicao?'Editar destino':'Destinar cheque'}</button>${ch.status==='compensado'?`<button class="btn danger" onclick="excluirCheque('${ch.id}')">Excluir compensado</button>`:''}</div>`:'<div class="muted" style="margin-top:10px">Somente visualização.</div>';
+    return `<div class="cheque-card"><div class="cheque-card-head"><div><b>${esc(ch.cliente_nome||'Cliente')}</b><div class="muted">Orçamento #${esc(String(ch.orcamento_numero||'-').padStart(4,'0'))} • Cheque ${esc(ch.numero_cheque||'sem número')}</div></div><b>${BRL.format(Number(ch.valor)||0)}</b></div><div class="cheque-meta"><span class="cheque-tag ${cls}">${esc(rotulo)}</span><span class="cheque-tag">Depósito: ${fmtDataBR(ch.data_deposito)}</span>${ch.banco?`<span class="cheque-tag">${esc(ch.banco)}</span>`:''}${ch.cliente_doc?`<span class="cheque-tag">${esc(ch.cliente_doc)}</span>`:''}${ch.destino_instituicao?`<span class="cheque-tag">Destino: ${esc(ch.destino_instituicao)}</span>`:''}</div>${ch.observacao?`<div class="muted" style="margin-top:8px">${esc(ch.observacao)}</div>`:''}${ch.destino_descricao?`<div class="muted" style="margin-top:6px">Destino: ${esc(ch.destino_descricao)}</div>`:''}${controle}</div>`;
+  }).join(''):'<div class="card muted">Nenhum cheque encontrado.</div>';
+}
+async function adicionarInstituicaoCheque(){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let nome=$('instChequeNome').value.trim(),descricao=$('instChequeDescricao').value.trim();
+  if(!nome)return alert('Informe o nome da instituição.');
+  let item={id:novoIdCheque(),nome,descricao,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+  try{
+    if(cloudReady){
+      let{error}=await cloud.from('instituicoes_cheque').insert({id:item.id,user_id:cloudUser.id,nome,descricao:descricao||null});
+      if(error)throw error;
+    }
+    let a=instituicoesChequeLista();a.push(item);guardaInstituicoesCheque(a);
+    $('instChequeNome').value='';$('instChequeDescricao').value='';
+    renderChequesDestinados();
+    mostrarAviso('Instituição adicionada.');
+  }catch(e){alert('Erro ao adicionar instituição: '+e.message)}
+}
+async function excluirInstituicaoCheque(id){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  if(!(await confirmar('Excluir esta instituição da lista? Os cheques já destinados manterão o nome registrado.')))return;
+  try{
+    if(cloudReady){let{error}=await cloud.from('instituicoes_cheque').delete().eq('id',id);if(error)throw error}
+    guardaInstituicoesCheque(instituicoesChequeLista().filter(x=>x.id!==id));
+    renderChequesDestinados();
+  }catch(e){alert('Erro ao excluir instituição: '+e.message)}
+}
+function abrirDestinoCheque(id){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let ch=chequesLista().find(x=>x.id===id);if(!ch)return;
+  let inst=instituicoesChequeLista();
+  if(!inst.length){
+    alert('Cadastre primeiro uma instituição na aba Cheques destinados.');
+    document.querySelector('[data-view="cheques-destinados"]').click();
+    return;
+  }
+  let modal=document.getElementById('modalDestinoCheque');
+  if(!modal){
+    modal=document.createElement('div');modal.id='modalDestinoCheque';modal.className='modal-app';
+    modal.innerHTML='<div class="modal-app-box"><h2 style="font-size:18px;margin-bottom:14px">Destinar cheque</h2><div class="grid"><label>Instituição<select id="destinoChequeInstituicao"></select></label><label>Data do destino / troca<input id="destinoChequeData" type="date"></label></div><label style="margin-top:10px">Descrição individual<textarea id="destinoChequeDescricao" placeholder="Ex.: cheque trocado no caixa, contato, taxa ou observação"></textarea></label><div class="modal-app-actions" style="margin-top:14px"><button class="btn" id="destinoChequeCancelar">Cancelar</button><button class="btn primary" id="destinoChequeSalvar">Salvar destino</button></div></div>';
+    document.body.appendChild(modal);
+  }
+  let select=$('destinoChequeInstituicao');
+  select.innerHTML=inst.map(x=>`<option value="${esc(x.nome)}">${esc(x.nome)}</option>`).join('');
+  if(ch.destino_instituicao&&![...select.options].some(o=>o.value===ch.destino_instituicao)){
+    let opt=document.createElement('option');opt.value=ch.destino_instituicao;opt.textContent=ch.destino_instituicao;select.appendChild(opt);
+  }
+  select.value=ch.destino_instituicao||inst[0].nome;
+  $('destinoChequeData').value=ch.data_destino||hoje();
+  $('destinoChequeDescricao').value=ch.destino_descricao||'';
+  modal.classList.add('show');
+  const fechar=()=>{modal.classList.remove('show');$('destinoChequeCancelar').onclick=null;$('destinoChequeSalvar').onclick=null};
+  $('destinoChequeCancelar').onclick=fechar;
+  $('destinoChequeSalvar').onclick=async()=>{
+    let instituicao=select.value,data=$('destinoChequeData').value,descricao=$('destinoChequeDescricao').value.trim();
+    if(!instituicao)return alert('Escolha a instituição.');
+    if(!data)return alert('Informe a data do destino.');
+    fechar();
+    await salvarDestinoCheque(id,{destino_instituicao:instituicao,data_destino:data,destino_descricao:descricao});
+  };
+}
+async function salvarDestinoCheque(id,destino){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let a=chequesLista(),i=a.findIndex(ch=>ch.id===id);if(i<0)return;
+  Object.assign(a[i],destino,{updated_at:new Date().toISOString()});guardaCheques(a);
+  let j=chequesOrcamento.findIndex(ch=>ch.id===id);if(j>=0)Object.assign(chequesOrcamento[j],destino);
+  try{
+    if(cloudReady){
+      let{error}=await cloud.from('cheques').update({...destino,updated_at:new Date().toISOString()}).eq('id',id);
+      if(error)throw error;
+    }
+    renderCheques();renderChequesDestinados();await registrarLog('cheque_cliente_destino',{id,instituicao:destino.destino_instituicao});mostrarAviso('Destino do cheque salvo.');
+  }catch(e){alert('Erro ao salvar destino: '+e.message)}
+}
+async function removerDestinoCheque(id){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  if(!(await confirmar('Remover o destino registrado deste cheque?')))return;
+  await salvarDestinoCheque(id,{destino_instituicao:null,data_destino:null,destino_descricao:null});
+}
+function renderChequesDestinados(){
+  let inst=instituicoesChequeLista().slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')),fin=pode('financeiro_editar');
+  if($('destInstituicoesQtd'))$('destInstituicoesQtd').textContent=inst.length;
+  if($('instChequeNome'))$('instChequeNome').disabled=!fin;if($('instChequeDescricao'))$('instChequeDescricao').disabled=!fin;
+  let addBtn=$('instChequeNome')?.closest('.card')?.querySelector('button[onclick="adicionarInstituicaoCheque()"]');if(addBtn)addBtn.style.display=fin?'':'none';
+  if($('instituicoesChequeLista'))$('instituicoesChequeLista').innerHTML=inst.length?inst.map(x=>`<div class="instituicao-card"><div><b>${esc(x.nome)}</b>${x.descricao?`<div class="muted">${esc(x.descricao)}</div>`:''}</div>${fin?`<button class="btn danger" onclick="excluirInstituicaoCheque('${x.id}')">Excluir</button>`:''}</div>`).join(''):'<div class="muted">Nenhuma instituição cadastrada.</div>';
+
+  let filtro=$('destFiltroInstituicao'),valorAtual=filtro?.value||'';
+  if(filtro){filtro.innerHTML='<option value="">Todas</option>'+inst.map(x=>`<option value="${esc(x.nome)}">${esc(x.nome)}</option>`).join('');filtro.value=valorAtual}
+
+  let todos=chequesLista().filter(ch=>ch.destino_instituicao);
+  let busca=($('destBusca')?.value||'').trim().toLowerCase(),filtroInst=$('destFiltroInstituicao')?.value||'';
+  let lista=todos.filter(ch=>{
+    let txt=[ch.cliente_nome,ch.numero_cheque,ch.destino_instituicao,ch.destino_descricao,ch.banco].join(' ').toLowerCase();
+    return (!filtroInst||ch.destino_instituicao===filtroInst)&&(!busca||txt.includes(busca));
+  }).sort((a,b)=>String(b.data_destino||'').localeCompare(String(a.data_destino||'')));
+  if($('destQtd'))$('destQtd').textContent=todos.length;
+  if($('destValor'))$('destValor').textContent=BRL.format(todos.reduce((s,ch)=>s+(Number(ch.valor)||0),0));
+  if($('chequesDestinadosLista'))$('chequesDestinadosLista').innerHTML=lista.length?lista.map(ch=>`<div class="destino-card"><div class="destino-head"><div><b>${esc(ch.destino_instituicao)}</b><div class="muted">${esc(ch.cliente_nome||'Cliente')} • Cheque ${esc(ch.numero_cheque||'sem número')} • ${fmtDataBR(ch.data_destino)}</div></div><b>${BRL.format(Number(ch.valor)||0)}</b></div><div class="cheque-meta"><span class="cheque-tag">Orçamento #${esc(String(ch.orcamento_numero||'-').padStart(4,'0'))}</span>${ch.banco?`<span class="cheque-tag">${esc(ch.banco)}</span>`:''}</div>${ch.destino_descricao?`<div class="destino-desc">${esc(ch.destino_descricao)}</div>`:''}${fin?`<div class="cheque-actions"><button class="btn" onclick="abrirDestinoCheque('${ch.id}')">Editar destino</button><button class="btn danger" onclick="removerDestinoCheque('${ch.id}')">Remover destino</button></div>`:'<div class="muted" style="margin-top:10px">Somente visualização.</div>'}</div>`).join(''):'<div class="card muted">Nenhum cheque destinado.</div>';
+}
+async function atualizarStatusCheque(id,status){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let a=chequesLista(),i=a.findIndex(ch=>ch.id===id);if(i<0)return;
+  a[i].status=status;a[i].updated_at=new Date().toISOString();guardaCheques(a);
+  let j=chequesOrcamento.findIndex(ch=>ch.id===id);if(j>=0)chequesOrcamento[j].status=status;
+  if(cloudReady){let{error}=await cloud.from('cheques').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(error)return alert('Erro ao atualizar cheque: '+error.message)}
+  renderCheques();avisarChequesHoje();registrarLog('cheque_cliente_status',{id,status});
+}
+async function excluirCheque(id){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let ch=chequesLista().find(x=>x.id===id);if(!ch)return;
+  if(ch.status!=='compensado')return alert('Marque o cheque como compensado antes de excluí-lo manualmente.');
+  if(!(await confirmar('Excluir este cheque compensado do controle? Esta ação remove o registro do cheque.')))return;
+  try{
+    let orcs=lista(),oi=orcs.findIndex(o=>String(o.numero)===String(ch.orcamento_numero));
+    if(cloudReady){
+      let{error}=await cloud.from('cheques').delete().eq('id',id);if(error)throw error;
+      if(oi>=0&&orcs[oi]._cloudId){
+        let atualizado={...orcs[oi],cheques:(orcs[oi].cheques||[]).filter(x=>x.id!==id)};
+        let payload={...atualizado};delete payload.numero;delete payload._cloudId;
+        let{error:oErr}=await cloud.from('orcamentos').update({dados:payload,updated_at:new Date().toISOString()}).eq('id',orcs[oi]._cloudId);
+        if(oErr)throw oErr;
+        orcs[oi]=atualizado;
+      }
+    }else if(oi>=0){
+      orcs[oi]={...orcs[oi],cheques:(orcs[oi].cheques||[]).filter(x=>x.id!==id)};
+    }
+    if(oi>=0)guarda(orcs);
+    guardaCheques(chequesLista().filter(x=>x.id!==id));
+    chequesOrcamento=chequesOrcamento.filter(x=>x.id!==id);
+    renderCheques();renderChequesOrcamento();renderChequesDestinados();avisarChequesHoje();
+    await registrarLog('cheque_cliente_excluido',{id,numero:ch.numero_cheque,cliente:ch.cliente_nome});mostrarAviso('Cheque compensado excluído.');
+  }catch(e){alert('Erro ao excluir cheque: '+e.message)}
+}
+function statusChequeProprioLabel(s){return{a_compensar:'A compensar',compensado:'Compensado',cancelado:'Cancelado'}[s]||s}
+function limparChequeProprioForm(){
+  chequeProprioEditandoId=null;
+  ['cpNumero','cpBanco','cpAgenciaConta','cpDestinatario','cpValor','cpDescricao'].forEach(id=>{if($(id))$(id).value=''});
+  if($('cpEmissao'))$('cpEmissao').value=hoje();
+  if($('cpCompensacao'))$('cpCompensacao').value='';
+  if($('cpSalvarBtn'))$('cpSalvarBtn').textContent='Adicionar cheque';
+  if($('cpCancelarBtn'))$('cpCancelarBtn').style.display='none';
+}
+async function salvarChequeProprio(){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let item={
+    numero_cheque:$('cpNumero').value.trim(),
+    banco:$('cpBanco').value.trim(),
+    agencia_conta:$('cpAgenciaConta').value.trim(),
+    destinatario:$('cpDestinatario').value.trim(),
+    valor:parse($('cpValor').value),
+    data_emissao:$('cpEmissao').value||null,
+    data_compensacao:$('cpCompensacao').value,
+    descricao:$('cpDescricao').value.trim()
+  };
+  if(!item.numero_cheque)return alert('Informe o número do cheque.');
+  if(!item.banco)return alert('Informe o banco.');
+  if(!item.destinatario)return alert('Informe para quem o cheque foi entregue.');
+  if(item.valor<=0)return alert('Informe o valor do cheque.');
+  if(!item.data_compensacao)return alert('Informe a data de compensação.');
+
+  let a=chequesPropriosLista(),agora=new Date().toISOString();
+  try{
+    if(chequeProprioEditandoId){
+      let i=a.findIndex(x=>x.id===chequeProprioEditandoId);if(i<0)return alert('Cheque não encontrado.');
+      let atualizado={...a[i],...item,updated_at:agora};
+      if(cloudReady){
+        let{error}=await cloud.from('cheques_proprios').update({
+          numero_cheque:item.numero_cheque,banco:item.banco,agencia_conta:item.agencia_conta||null,
+          destinatario:item.destinatario,valor:item.valor,data_emissao:item.data_emissao,
+          data_compensacao:item.data_compensacao,descricao:item.descricao||null,updated_at:agora
+        }).eq('id',chequeProprioEditandoId);
+        if(error)throw error;
+      }
+      a[i]=atualizado;
+    }else{
+      let novo={id:novoIdCheque(),...item,status:'a_compensar',created_at:agora,updated_at:agora};
+      if(cloudReady){
+        let{error}=await cloud.from('cheques_proprios').insert({
+          id:novo.id,user_id:cloudUser.id,numero_cheque:novo.numero_cheque,banco:novo.banco,
+          agencia_conta:novo.agencia_conta||null,destinatario:novo.destinatario,valor:novo.valor,
+          data_emissao:novo.data_emissao,data_compensacao:novo.data_compensacao,status:novo.status,
+          descricao:novo.descricao||null
+        });
+        if(error)throw error;
+      }
+      a.push(novo);
+    }
+    guardaChequesProprios(a);
+    await registrarLog('cheque_proprio_salvo',{numero:item.numero_cheque,banco:item.banco,destinatario:item.destinatario,valor:item.valor});
+    limparChequeProprioForm();renderChequesProprios();avisarChequesPropriosHoje();
+    mostrarAviso('Cheque próprio salvo.');
+  }catch(e){alert('Erro ao salvar cheque próprio: '+e.message)}
+}
+function editarChequeProprio(id){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let ch=chequesPropriosLista().find(x=>x.id===id);if(!ch)return;
+  chequeProprioEditandoId=id;
+  $('cpNumero').value=ch.numero_cheque||'';$('cpBanco').value=ch.banco||'';$('cpAgenciaConta').value=ch.agencia_conta||'';
+  $('cpDestinatario').value=ch.destinatario||'';$('cpValor').value=String(Number(ch.valor)||0).replace('.',',');
+  $('cpEmissao').value=ch.data_emissao||'';$('cpCompensacao').value=ch.data_compensacao||'';$('cpDescricao').value=ch.descricao||'';
+  $('cpSalvarBtn').textContent='Salvar alterações';$('cpCancelarBtn').style.display='';
+  window.scrollTo({top:$('view-cheques-proprios').offsetTop,behavior:'smooth'});focarCampo($('cpNumero'));
+}
+function cancelarEdicaoChequeProprio(){limparChequeProprioForm()}
+async function atualizarStatusChequeProprio(id,status){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let a=chequesPropriosLista(),i=a.findIndex(x=>x.id===id);if(i<0)return;
+  let antigo=a[i].status;a[i].status=status;a[i].updated_at=new Date().toISOString();
+  try{
+    if(cloudReady){let{error}=await cloud.from('cheques_proprios').update({status,updated_at:a[i].updated_at}).eq('id',id);if(error)throw error}
+    guardaChequesProprios(a);await registrarLog('cheque_proprio_status',{id,status});renderChequesProprios();avisarChequesPropriosHoje();
+  }catch(e){a[i].status=antigo;guardaChequesProprios(a);renderChequesProprios();alert('Erro ao atualizar status: '+e.message)}
+}
+async function excluirChequeProprio(id){if(!pode('financeiro_editar'))return negar('financeiro_editar');
+  let ch=chequesPropriosLista().find(x=>x.id===id);if(!ch)return;
+  if(ch.status!=='compensado'&&ch.status!=='cancelado')return alert('Marque o cheque como compensado ou cancelado antes de excluí-lo.');
+  if(!(await confirmar('Excluir este cheque próprio do controle?')))return;
+  try{
+    if(cloudReady){let{error}=await cloud.from('cheques_proprios').delete().eq('id',id);if(error)throw error}
+    guardaChequesProprios(chequesPropriosLista().filter(x=>x.id!==id));await registrarLog('cheque_proprio_excluido',{id,numero:ch.numero_cheque});renderChequesProprios();avisarChequesPropriosHoje();
+    mostrarAviso('Cheque próprio excluído.');
+  }catch(e){alert('Erro ao excluir cheque próprio: '+e.message)}
+}
+function avisarChequesPropriosHoje(){
+  let hojeLista=chequesPropriosLista().filter(ch=>ch.status==='a_compensar'&&ch.data_compensacao===hoje());
+  let badge=$('chequeProprioBadge');if(badge){badge.textContent=hojeLista.length;badge.classList.toggle('show',hojeLista.length>0)}
+  if(hojeLista.length){
+    let key='aviso_cheques_proprios_'+hoje();
+    if(!sessionStorage.getItem(key)){
+      let total=hojeLista.reduce((s,ch)=>s+(Number(ch.valor)||0),0);
+      mostrarAviso(hojeLista.length+' cheque'+(hojeLista.length===1?'':'s')+' próprio'+(hojeLista.length===1?'':'s')+' para compensar hoje. Total: '+BRL.format(total));
+      sessionStorage.setItem(key,'1');
+    }
+  }
+}
+function renderChequesProprios(){
+  if(!$('chequesPropriosLista'))return;
+  let fin=pode('financeiro_editar');
+  if(!$('cpDataResumo').value)$('cpDataResumo').value=hoje();
+  if(!$('cpEmissao').value&&!chequeProprioEditandoId)$('cpEmissao').value=hoje();
+
+  let todos=chequesPropriosLista().slice().sort((a,b)=>String(a.data_compensacao||'').localeCompare(String(b.data_compensacao||'')));
+  let data=$('cpDataResumo').value||hoje();
+  let dia=todos.filter(ch=>ch.status==='a_compensar'&&ch.data_compensacao===data);
+  let total=dia.reduce((s,ch)=>s+(Number(ch.valor)||0),0),porBanco={};
+  dia.forEach(ch=>{let b=ch.banco||'Banco não informado';porBanco[b]=(porBanco[b]||0)+(Number(ch.valor)||0)});
+  $('cpStatQtd').textContent=dia.length;$('cpStatTotal').textContent=BRL.format(total);$('cpStatBancos').textContent=Object.keys(porBanco).length;
+  $('cpResumoBancos').innerHTML=Object.entries(porBanco).length?Object.entries(porBanco).sort((a,b)=>b[1]-a[1]).map(([b,v])=>`<div class="proprio-bank-item"><span class="muted">${esc(b)}</span><b>${BRL.format(v)}</b></div>`).join(''):'<div class="muted">Nenhum valor necessário para esta data.</div>';
+
+  let hojeQtd=todos.filter(ch=>ch.status==='a_compensar'&&ch.data_compensacao===hoje()).length;
+  let aviso=$('chequeProprioHojeAviso');
+  if(aviso){aviso.classList.toggle('show',hojeQtd>0);aviso.textContent=hojeQtd?('Atenção: '+hojeQtd+' cheque'+(hojeQtd===1?'':'s')+' próprio'+(hojeQtd===1?'':'s')+' será'+(hojeQtd===1?'':'ão')+' compensado'+(hojeQtd===1?'':'s')+' hoje.') : ''}
+  let badge=$('chequeProprioBadge');if(badge){badge.textContent=hojeQtd;badge.classList.toggle('show',hojeQtd>0)}
+
+  let busca=($('cpBusca').value||'').trim().toLowerCase(),filtro=$('cpFiltroStatus').value||'todos';
+  let lista=todos.filter(ch=>{
+    let ok=filtro==='todos'||ch.status===filtro;
+    let txt=[ch.numero_cheque,ch.banco,ch.agencia_conta,ch.destinatario,ch.descricao].join(' ').toLowerCase();
+    return ok&&(!busca||txt.includes(busca));
+  });
+  $('chequesPropriosLista').innerHTML=lista.length?lista.map(ch=>{
+    let cls=ch.status==='a_compensar'?(ch.data_compensacao===hoje()?'hoje':ch.data_compensacao<hoje()?'atrasado':''):'';
+    let controls=fin?`<div class="cheque-actions"><select onchange="atualizarStatusChequeProprio('${ch.id}',this.value)"><option value="a_compensar" ${ch.status==='a_compensar'?'selected':''}>A compensar</option><option value="compensado" ${ch.status==='compensado'?'selected':''}>Compensado</option><option value="cancelado" ${ch.status==='cancelado'?'selected':''}>Cancelado</option></select><button class="btn" onclick="editarChequeProprio('${ch.id}')">Editar</button>${(ch.status==='compensado'||ch.status==='cancelado')?`<button class="btn danger" onclick="excluirChequeProprio('${ch.id}')">Excluir</button>`:''}</div>`:'<div class="muted" style="margin-top:10px">Somente visualização.</div>';
+    return `<div class="proprio-card"><div class="proprio-card-head"><div><b>Cheque ${esc(ch.numero_cheque)}</b><div class="muted">${esc(ch.banco)}${ch.agencia_conta?' • '+esc(ch.agencia_conta):''}</div></div><b>${BRL.format(Number(ch.valor)||0)}</b></div><div class="cheque-meta"><span class="cheque-tag ${cls}">${esc(statusChequeProprioLabel(ch.status))}</span><span class="cheque-tag">Compensação: ${fmtDataBR(ch.data_compensacao)}</span><span class="cheque-tag">Entregue para: ${esc(ch.destinatario)}</span></div>${ch.descricao?`<div class="muted" style="margin-top:8px">${esc(ch.descricao)}</div>`:''}${controls}</div>`;
+  }).join(''):'<div class="card muted">Nenhum cheque próprio encontrado.</div>';
+  aplicarPermissoesUI();
+}
+function novo(){itens=[];itemEditandoIndex=null;chequesOrcamento=[];editandoNumero=null;vendaRealizadaAtual=false;dataVendaAtual=null;reembolsadaAtual=false;dataReembolsoAtual=null;valorReembolsoAtual=0;motivoReembolsoAtual='';['nome','telefone','email','doc','endereco','cidade'].forEach(x=>$(x).value='');$('numero').value=cloudReady?'AUTO':prox();$('data').value=hoje();$('desconto').value='0';$('descontoTipo').value='reais';$('frete').value='0';$('pagamentoMetodo').value='combinar';limparFormularioItem();renderItens();renderChequesOrcamento();pagamentoMudou();atualizarStatusVendaEditor();calc()}
+function limparFormularioItem(){
+  if($('itemDesc'))$('itemDesc').value='';
+  if($('itemCor'))$('itemCor').value='';
+  if($('itemQtd'))$('itemQtd').value=1;
+  if($('itemValor'))$('itemValor').value='';
+  itemEditandoIndex=null;
+  if($('itemSalvarBtn'))$('itemSalvarBtn').textContent='Adicionar item';
+  if($('itemCancelarBtn'))$('itemCancelarBtn').style.display='none';
+}
+function addItem(){
+  if(!pode('orcamentos_editar'))return negar('orcamentos_editar');
+  let d=$('itemDesc').value.trim(),cor=$('itemCor').value.trim(),q=Math.max(1,Number($('itemQtd').value)||1),v=parse($('itemValor').value);
+  if(!d){alert('Digite a descrição.');focarCampo($('itemDesc'));return}
+  let item={d,cor,q,v};
+  if(itemEditandoIndex!==null&&itens[itemEditandoIndex]){
+    itens[itemEditandoIndex]=item;
+    mostrarAviso('Item atualizado.');
+  }else{
+    itens.push(item);
+  }
+  limparFormularioItem();renderItens();calc();focarCampo($('itemDesc'));
+}
+function editarItem(i){
+  if(!pode('orcamentos_editar'))return negar('orcamentos_editar');
+  let x=itens[i];if(!x)return;
+  itemEditandoIndex=i;
+  $('itemDesc').value=x.d||'';
+  $('itemCor').value=x.cor||'';
+  $('itemQtd').value=x.q||1;
+  $('itemValor').value=String(Number(x.v)||0).replace('.',',');
+  $('itemSalvarBtn').textContent='Salvar alteração';
+  $('itemCancelarBtn').style.display='';
+  focarCampo($('itemDesc'));
+}
+function cancelarEdicaoItem(){limparFormularioItem();focarCampo($('itemDesc'))}
+function delItem(i){
+  if(!pode('orcamentos_editar'))return negar('orcamentos_editar');
+  itens.splice(i,1);
+  if(itemEditandoIndex===i)limparFormularioItem();
+  else if(itemEditandoIndex!==null&&itemEditandoIndex>i)itemEditandoIndex--;
+  renderItens();calc();focarCampo($('itemDesc'));
+}
+function renderItens(){
+  let ed=pode('orcamentos_editar');
+  $('itens').innerHTML=itens.length?itens.map((x,i)=>`<tr><td>${esc(x.d)}</td><td>${esc(x.cor||'-')}</td><td>${x.q}</td><td class="money-col">${BRL.format(x.v)}</td><td class="money-col">${BRL.format(x.q*x.v)}</td><td>${ed?`<button class="btn" onclick="editarItem(${i})">Editar item</button> <button class="btn danger" onclick="delItem(${i})">×</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6" class="muted">Nenhum item.</td></tr>';
+}
+function calc(){let sub=itens.reduce((s,x)=>s+x.q*x.v,0),d=parse($('desconto').value),desc=$('descontoTipo').value==='percentual'?sub*d/100:d,frete=parse($('frete').value),t=Math.max(0,sub-desc+frete);$('subtotal').value=BRL.format(sub);$('total').textContent=BRL.format(t);return{sub,desc,frete,total:t}}
+function pagamentoMudou(){let metodo=$('pagamentoMetodo').value;if(metodo==='pix'){$('descontoTipo').value='percentual';if(parse($('desconto').value)===0)$('desconto').value='5'}let ed=$('chequeEditor');if(ed)ed.classList.toggle('show',metodo==='cheque');calc()}
+function dados(){let t=calc(),anterior=editandoNumero?lista().find(x=>x.numero===$('numero').value):null;return{contratos:anterior?.contratos||[],numero:$('numero').value,data:$('data').value,validade:$('validade').value,prazo:$('prazo').value,cliente:{nome:$('nome').value,telefone:$('telefone').value,email:$('email').value,doc:$('doc').value,endereco:$('endereco').value,cidade:$('cidade').value},itens:[...itens],metodo:$('pagamentoMetodo').value,cheques:$('pagamentoMetodo').value==='cheque'?chequesOrcamento.map(ch=>({...ch})):[],descontoTipo:$('descontoTipo').value,desconto:parse($('desconto').value),frete:t.frete,total:t.total,subtotal:t.sub,condicoes:$('condicoes').value,obs:$('obs').value,vendaRealizada:!!vendaRealizadaAtual,dataVenda:dataVendaAtual||null,reembolsada:!!reembolsadaAtual,dataReembolso:dataReembolsoAtual||null,valorReembolso:Number(valorReembolsoAtual)||0,motivoReembolso:motivoReembolsoAtual||''}}
+async function salvar(){if(!pode('orcamentos_editar'))return negar('orcamentos_editar');if(!$('nome').value.trim())return alert('Informe o cliente.');if(!itens.length)return alert('Adicione pelo menos um item.');if($('pagamentoMetodo').value==='cheque'&&!chequesOrcamento.length)return alert('Adicione pelo menos um cheque para este pagamento.');let reativado=reativarClienteSeNecessario({nome:$('nome').value,doc:$('doc').value});if(reativado)await salvarEstado();if(cloudReady)return salvarCloud();let a=lista(),o=dados();if(!editandoNumero){o.numero=prox();$('numero').value=o.numero;localStorage.setItem('cav_seq',String(parseInt(o.numero)+1));a.unshift(o);editandoNumero=o.numero}else{let i=a.findIndex(x=>x.numero===editandoNumero);if(i>=0)a[i]=o}guarda(a);salvarChequesLocaisDoOrcamento(o.numero,o.cliente,o.cheques);renderHistorico();renderVendas();renderClientes();renderCheques();avisarChequesHoje();registrarLog('orcamento_salvo',{numero:o.numero,cliente:o.cliente.nome,total:o.total});alert((o.vendaRealizada?'Venda ':'Orçamento ')+o.numero+' salvo.')}
+async function salvarCloud(){try{if($('pagamentoMetodo').value==='cheque'&&!chequesOrcamento.length)return alert('Adicione pelo menos um cheque para este pagamento.');let o=dados(),numeroAtual=$('numero').value;delete o.numero;if(editandoNumero&&String(editandoNumero).startsWith('cloud:')){let id=editandoNumero.slice(6);let{data:atual,error:leituraErro}=await cloud.from('orcamentos').select('dados').eq('id',id).eq('user_id',cloudUser.id).single();if(leituraErro)throw leituraErro;o.contratos=atual.dados?.contratos||[];let{error}=await cloud.from('orcamentos').update({dados:o,updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error}else{let{data,error}=await cloud.from('orcamentos').insert({user_id:cloudUser.id,dados:o}).select('id,numero').single();if(error)throw error;numeroAtual=String(data.numero).padStart(4,'0');$('numero').value=numeroAtual;editandoNumero='cloud:'+data.id}await salvarChequesCloud(numeroAtual,o.cliente,o.cheques);await registrarLog('orcamento_salvo',{numero:numeroAtual,cliente:o.cliente.nome,total:o.total});await sincronizar();alert('Orçamento sincronizado!')}catch(e){alert('Erro ao salvar na nuvem: '+e.message)}}
+function abrir(n){let o=lista().find(x=>x.numero===n);if(!o)return;editandoNumero=o._cloudId?'cloud:'+o._cloudId:o.numero;vendaRealizadaAtual=!!o.vendaRealizada;dataVendaAtual=o.dataVenda||null;reembolsadaAtual=!!o.reembolsada;dataReembolsoAtual=o.dataReembolso||null;valorReembolsoAtual=Number(o.valorReembolso)||0;motivoReembolsoAtual=o.motivoReembolso||'';$('numero').value=o.numero;$('data').value=o.data;$('validade').value=o.validade;$('prazo').value=o.prazo;Object.entries(o.cliente).forEach(([k,v])=>{let map={nome:'nome',telefone:'telefone',email:'email',doc:'doc',endereco:'endereco',cidade:'cidade'};$(map[k]).value=v||''});itens=(o.itens||[]).map(x=>({...x,cor:x.cor||''}));itemEditandoIndex=null;limparFormularioItem();let canon=chequesDoOrcamento(o.numero);chequesOrcamento=(canon.length?canon:(o.cheques||[])).map(ch=>({...ch}));$('pagamentoMetodo').value=o.metodo||'combinar';$('descontoTipo').value=o.descontoTipo||'reais';$('desconto').value=String(o.desconto||0).replace('.',',');$('frete').value=o.frete||0;$('condicoes').value=o.condicoes||'';$('obs').value=o.obs||'';renderItens();renderChequesOrcamento();pagamentoMudou();atualizarStatusVendaEditor();calc();document.querySelector('[data-view="novo"]').click()}
+async function excluir(n){if(!pode('orcamentos_editar'))return negar('orcamentos_editar');if(lista().find(o=>o.numero===n)?.vendaRealizada)return alert('Este orçamento está vinculado a uma venda e deve ser preservado no histórico.');if(!(await confirmar('Excluir orçamento '+n+'?')))return;let a=lista(),o=a.find(x=>x.numero===n);if(cloudReady&&o?._cloudId){let{error}=await cloud.from('orcamentos').delete().eq('id',o._cloudId);if(error)return alert(error.message);await sincronizar()}else{guarda(a.filter(x=>x.numero!==n));renderHistorico();renderVendas();renderClientes()}}
+function renderHistorico(){
+  let a=lista(),ed=pode('orcamentos_editar');
+  $('historico').innerHTML=a.length?a.map(o=>`<div class="list-item"><div><b>#${o.numero} • ${esc(o.cliente.nome)}</b><div class="muted">${BRL.format(o.total)} • ${fmtDataBR(o.data)}</div>${o.vendaRealizada?`<span class="venda-badge ${o.reembolsada?'reembolso':''}">${o.reembolsada?'Venda reembolsada':'Vinculado à venda realizada'}</span>`:''}</div><div><button class="btn" onclick="abrir('${o.numero}')">${ed?'Abrir / editar':'Abrir'}</button>${ed&&!o.vendaRealizada?` <button class="btn danger" onclick="excluir('${o.numero}')">Excluir</button>`:''}</div></div>`).join(''):'<div class="muted">Nenhum orçamento salvo.</div>';
+}
+function atualizarStatusVendaEditor(){
+  let el=$('editorVendaStatus'),btn=$('btnLancarVenda');
+  if(el){
+    el.classList.toggle('show',vendaRealizadaAtual);
+    el.textContent=reembolsadaAtual?'Venda reembolsada em '+fmtDataBR(dataReembolsoAtual):vendaRealizadaAtual?'Venda realizada em '+fmtDataBR(dataVendaAtual):'Venda realizada';
+    el.style.borderColor=reembolsadaAtual?'#7d3d45':'';
+    el.style.background=reembolsadaAtual?'#3a2027':'';
+    el.style.color=reembolsadaAtual?'#ffdede':'';
+  }
+  if(btn){btn.style.display=vendaRealizadaAtual?'none':''}
+}
+function mostrarAbaVendas(aba){
+  let listaAtiva=aba==='lista',recibosAtiva=aba==='recibos',resumoAtiva=aba==='resumo';
+  $('vendaPaneLista').classList.toggle('active',listaAtiva);
+  $('vendaPaneRecibos').classList.toggle('active',recibosAtiva);
+  $('vendaPaneResumo').classList.toggle('active',resumoAtiva);
+  $('vendaTabLista').classList.toggle('active',listaAtiva);
+  $('vendaTabRecibos').classList.toggle('active',recibosAtiva);
+  $('vendaTabResumo').classList.toggle('active',resumoAtiva);
+  if(resumoAtiva)renderResumoMensal();
+}
+let cancelandoVendas=new Set();
+async function cancelarVenda(numero){
+  if(!pode('vendas_lancar'))return negar('vendas_lancar');
+  numero=String(numero);if(cancelandoVendas.has(numero))return;
+  let o=lista().find(x=>String(x.numero)===numero&&x.vendaRealizada&&!x.reembolsada);
+  if(!o)return alert('Venda não encontrada ou já retirada das vendas realizadas.');
+  if(!(await confirmar('Cancelar a venda #'+numero+' sem reembolso? Use esta opção quando não houve recebimento de dinheiro. O orçamento continuará salvo e poderá ser editado ou lançado como venda novamente.')))return;
+  cancelandoVendas.add(numero);
+  try{
+    let atualizado;
+    const cancelar=d=>{if(!d.vendaRealizada||d.reembolsada)throw Error('Esta venda foi alterada. Sincronize e tente novamente.');return{...d,vendaRealizada:false,dataVenda:null,reembolsada:false,dataReembolso:null,valorReembolso:0,motivoReembolso:''}};
+    if(o._cloudId){
+      if(!cloudReady)throw Error('Conecte-se à nuvem para cancelar esta venda.');
+      let {data:r,error}=await cloud.from('orcamentos').select('dados,updated_at').eq('id',o._cloudId).eq('user_id',cloudUser.id).single();if(error)throw error;
+      let payload=cancelar(r.dados);
+      let {data:gravado,error:err}=await cloud.from('orcamentos').update({dados:payload,updated_at:new Date().toISOString()}).eq('id',o._cloudId).eq('user_id',cloudUser.id).eq('updated_at',r.updated_at).select('dados').single();if(err)throw err;if(!gravado||gravado.dados.vendaRealizada||gravado.dados.reembolsada)throw Error('O cancelamento não foi confirmado. Sincronize e tente novamente.');
+      atualizado={...gravado.dados,numero:o.numero,_cloudId:o._cloudId};
+    }else atualizado=cancelar(o);
+    guarda(lista().map(x=>String(x.numero)===numero?atualizado:x));
+    if(String($('numero').value)===numero&&editandoNumero){vendaRealizadaAtual=false;dataVendaAtual=null;reembolsadaAtual=false;dataReembolsoAtual=null;valorReembolsoAtual=0;motivoReembolsoAtual='';atualizarStatusVendaEditor()}
+    renderHistorico();renderVendas();renderResumoMensal();renderReembolsos();renderClientes();renderContratos();
+    await registrarLog('venda_cancelada_sem_reembolso',{numero,cliente:atualizado.cliente?.nome,total:atualizado.total});
+    mostrarAviso('Venda cancelada sem reembolso. O orçamento continua salvo.');
+  }catch(e){alert('Erro ao cancelar venda: '+e.message)}finally{cancelandoVendas.delete(numero)}
+}
+
+function renderVendas(){
+  let a=lista().filter(o=>o.vendaRealizada&&!o.reembolsada).sort((x,y)=>String(y.dataVenda||y.data||'').localeCompare(String(x.dataVenda||x.data||'')));
+  let total=a.reduce((s,o)=>s+(Number(o.total)||0),0);
+  if($('vendasQtd'))$('vendasQtd').textContent=a.length;
+  if($('vendasTotal'))$('vendasTotal').textContent=BRL.format(total);
+  if($('vendasLista'))$('vendasLista').innerHTML=a.length?a.map(o=>`<div class="list-item"><div><b>#${o.numero} • ${esc(o.cliente.nome)}</b><div class="muted">${BRL.format(o.total)} • venda em ${fmtDataBR(o.dataVenda||o.data)} • ${esc(metodoPagamentoNome(o.metodo))}</div><span class="venda-badge">Venda concretizada</span></div><div><button class="btn" onclick="abrir('${o.numero}')">Abrir</button> <button class="btn primary" onclick="gerarReciboVenda('${o.numero}')">Recibo</button> <button class="btn" onclick="abrirContratoVenda('${o.numero}')">Contrato</button> ${pode('vendas_lancar')?`<button class="btn danger" onclick="cancelarVenda('${o.numero}')">Cancelar venda</button>`:''} ${pode('reembolsos_editar')?`<button class="btn danger" onclick="registrarReembolso('${o.numero}')">Registrar reembolso</button>`:''}</div></div>`).join(''):'<div class="muted">Nenhuma venda realizada.</div>';
+  if($('recibosLista'))$('recibosLista').innerHTML=a.length?a.map(o=>`<div class="list-item"><div><b>Recibo da venda #${o.numero}</b><div class="muted">${esc(o.cliente.nome)} • ${BRL.format(o.total)} • ${fmtDataBR(o.dataVenda||o.data)}</div></div><button class="btn primary" onclick="gerarReciboVenda('${o.numero}')">Emitir recibo</button></div>`).join(''):'<div class="muted">Nenhuma venda disponível para recibo.</div>';
+}
+function mesAtual(){return hoje().slice(0,7)}
+function nomeMesAno(mes){
+  if(!mes)return '-';
+  let [a,m]=mes.split('-').map(Number);
+  if(!a||!m)return mes;
+  let txt=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(new Date(a,m-1,1));
+  return txt.charAt(0).toUpperCase()+txt.slice(1);
+}
+function dadosResumoMensal(mes){
+  let todas=lista();
+  let vendas=todas.filter(o=>o.vendaRealizada&&String(o.dataVenda||o.data||'').slice(0,7)===mes);
+  let reembolsos=todas.filter(o=>o.vendaRealizada&&o.reembolsada&&String(o.dataReembolso||'').slice(0,7)===mes);
+  let bruto=vendas.reduce((s,o)=>s+(Number(o.total)||0),0);
+  let reembolsado=reembolsos.reduce((s,o)=>s+(Number(o.valorReembolso)||Number(o.total)||0),0);
+  let pagamentos={};
+  vendas.forEach(o=>{
+    let nome=metodoPagamentoNome(o.metodo);
+    pagamentos[nome]=(pagamentos[nome]||0)+(Number(o.total)||0);
+  });
+  let movimentos=[
+    ...vendas.map(o=>({data:o.dataVenda||o.data,tipo:'Venda',numero:o.numero,cliente:o.cliente?.nome||'',metodo:metodoPagamentoNome(o.metodo),valor:Number(o.total)||0})),
+    ...reembolsos.map(o=>({data:o.dataReembolso,tipo:'Reembolso',numero:o.numero,cliente:o.cliente?.nome||'',metodo:metodoPagamentoNome(o.metodo),valor:-(Number(o.valorReembolso)||Number(o.total)||0)}))
+  ].sort((a,b)=>String(a.data).localeCompare(String(b.data))||String(a.numero).localeCompare(String(b.numero)));
+  return{mes,vendas,reembolsos,bruto,reembolsado,liquido:bruto-reembolsado,pagamentos,movimentos};
+}
+function renderResumoMensal(){
+  if(!$('vendaMes'))return;
+  if(!$('vendaMes').value)$('vendaMes').value=mesAtual();
+  let r=dadosResumoMensal($('vendaMes').value);
+  $('mesVendasQtd').textContent=r.vendas.length;
+  $('mesVendasBruto').textContent=BRL.format(r.bruto);
+  $('mesReembolsos').textContent=BRL.format(r.reembolsado);
+  $('mesLiquido').textContent=BRL.format(r.liquido);
+  $('mesMovimentacoes').innerHTML=r.movimentos.length?r.movimentos.map(m=>`<div class="list-item"><div><b>${m.tipo} #${m.numero} • ${esc(m.cliente)}</b><div class="muted">${fmtDataBR(m.data)} • ${esc(m.metodo)}</div></div><b>${m.valor<0?'- ':''}${BRL.format(Math.abs(m.valor))}</b></div>`).join(''):'<div class="muted">Nenhuma movimentação neste mês.</div>';
+  let pags=Object.entries(r.pagamentos).sort((a,b)=>b[1]-a[1]);
+  $('mesPagamentos').innerHTML=pags.length?pags.map(([nome,valor])=>`<div class="list-item"><div><b>${esc(nome)}</b></div><b>${BRL.format(valor)}</b></div>`).join(''):'<div class="muted">Nenhuma venda neste mês.</div>';
+}
+async function gerarExtratoMensalPDF(){
+  if(!window.jspdf)return alert('Conecte-se à internet para gerar o extrato.');
+  if(!$('vendaMes').value)$('vendaMes').value=mesAtual();
+  let r=dadosResumoMensal($('vendaMes').value),co=cfg(),{jsPDF}=window.jspdf,p=new jsPDF(),az=[27,49,62],linha=[185,197,204],logo=await logoPng();
+
+  p.setFillColor(...az);p.roundedRect(12,11,43,25,3,3,'F');
+  if(logo){p.addImage(logo,'PNG',12,11,43,25)}else{p.setTextColor(238,242,244);p.setFont('times','bold');p.setFontSize(11);p.text(nomeCurtoMarca(co).toUpperCase(),33.5,27,{align:'center'})}
+  p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(15);p.text(nomeCurtoMarca(co).toUpperCase(),60,23);
+  p.setTextColor(170,178,183);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text(subtituloMarca(co).toUpperCase(),60,31);
+  p.setTextColor(...az);p.setFontSize(9.2);
+  let cx=196,cy=14;
+  [co.empresa||'Minha Marcenaria',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
+  p.setDrawColor(...linha);p.line(12,44,198,44);
+
+  p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(22);p.text('EXTRATO MENSAL DE VENDAS',12,61);
+  p.setFont('helvetica','normal');p.setFontSize(10);p.text('Período: '+nomeMesAno(r.mes),12,70);
+  p.setFontSize(8.5);p.text('Emitido em '+new Date().toLocaleString('pt-BR'),196,70,{align:'right'});
+
+  let y=84;
+  const caixa=(x,w,titulo,valor)=>{
+    p.setFillColor(239,243,246);p.roundedRect(x,y,w,20,2,2,'F');
+    p.setTextColor(95,111,121);p.setFont('helvetica','normal');p.setFontSize(8);p.text(titulo,x+4,y+7);
+    p.setTextColor(...az);p.setFont('helvetica','bold');p.setFontSize(11);p.text(valor,x+4,y+15);
+  };
+  caixa(12,43,'Vendas',String(r.vendas.length));
+  caixa(59,43,'Vendas brutas',BRL.format(r.bruto));
+  caixa(106,43,'Reembolsos',BRL.format(r.reembolsado));
+  caixa(153,45,'Resultado líquido',BRL.format(r.liquido));
+  y+=30;
+
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('MOVIMENTAÇÕES',12,y);p.line(12,y+4,198,y+4);y+=10;
+  const cab=()=>{
+    p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.setFontSize(8);
+    p.text('DATA',14,y+6);p.text('TIPO',34,y+6);p.text('REF.',61,y+6);p.text('CLIENTE',80,y+6);p.text('PAGAMENTO',137,y+6);p.text('VALOR',196,y+6,{align:'right'});
+    p.setTextColor(...az);p.setFont('helvetica','normal');y+=9;
+  };
+  cab();
+  for(let m of r.movimentos){
+    let cliente=p.splitTextToSize(m.cliente||'-',52),h=Math.max(9,cliente.length*4+3);
+    if(y+h>270){p.addPage();y=20;cab()}
+    p.setDrawColor(...linha);p.line(12,y,198,y);p.line(12,y+h,198,y+h);
+    p.setFontSize(8.2);p.text(fmtDataBR(m.data),14,y+6);p.text(m.tipo,34,y+6);p.text('#'+String(m.numero).padStart(4,'0'),61,y+6);p.text(cliente,80,y+6);p.text(p.splitTextToSize(m.metodo,38),137,y+6);p.text((m.valor<0?'- ':'')+BRL.format(Math.abs(m.valor)),196,y+6,{align:'right'});y+=h;
+  }
+  if(!r.movimentos.length){p.setFontSize(9);p.text('Nenhuma movimentação no período.',14,y+7);y+=13}
+
+  y+=8;if(y>245){p.addPage();y=22}
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('TOTAIS POR FORMA DE PAGAMENTO',12,y);p.line(12,y+4,198,y+4);y+=12;
+  p.setFont('helvetica','normal');p.setFontSize(9);
+  let pagamentos=Object.entries(r.pagamentos).sort((a,b)=>b[1]-a[1]);
+  if(!pagamentos.length){p.text('Nenhuma venda no período.',12,y);y+=7}
+  for(let [nome,valor] of pagamentos){
+    if(y>274){p.addPage();y=22}
+    p.text(nome,12,y);p.setFont('helvetica','bold');p.text(BRL.format(valor),198,y,{align:'right'});p.setFont('helvetica','normal');y+=7;
+  }
+
+  if(y>268){p.addPage();y=270}else y=Math.max(y+12,270);
+  p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co)+' • Extrato mensal de vendas.',105,293,{align:'center'});
+
+  let arq='Extrato_Vendas_'+r.mes+'.pdf';
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);
+  else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);
+  else p.save(arq);
+}
+function renderReembolsos(){
+  let reemb=lista().filter(o=>o.vendaRealizada&&o.reembolsada).sort((x,y)=>String(y.dataReembolso||'').localeCompare(String(x.dataReembolso||'')));
+  let total=reemb.reduce((s,o)=>s+(Number(o.valorReembolso)||Number(o.total)||0),0);
+  let itensQtd=reemb.reduce((s,o)=>s+(o.itens||[]).reduce((n,it)=>n+(Number(it.q)||0),0),0);
+  if($('reembolsosQtd'))$('reembolsosQtd').textContent=reemb.length;
+  if($('reembolsosTotal'))$('reembolsosTotal').textContent=BRL.format(total);
+  if($('reembolsosItensQtd'))$('reembolsosItensQtd').textContent=itensQtd;
+
+  if($('reembolsosLista'))$('reembolsosLista').innerHTML=reemb.length?reemb.map(o=>`<div class="list-item"><div><b>#${o.numero} • ${esc(o.cliente.nome)}</b><div class="muted">Reembolso em ${fmtDataBR(o.dataReembolso)} • ${BRL.format(Number(o.valorReembolso)||Number(o.total)||0)}</div><span class="venda-badge reembolso">Venda reembolsada</span>${o.motivoReembolso?`<div class="muted" style="margin-top:6px">Motivo: ${esc(o.motivoReembolso)}</div>`:''}</div><div><button class="btn" onclick="abrir('${o.numero}')">Abrir</button> <button class="btn primary" onclick="gerarDeclaracaoReembolso('${o.numero}')">Declaração de reembolso</button></div></div>`).join(''):'<div class="muted">Nenhum reembolso registrado.</div>';
+
+  let itens=[];
+  reemb.forEach(o=>(o.itens||[]).forEach(it=>itens.push({o,it})));
+  if($('reembolsosItensLista'))$('reembolsosItensLista').innerHTML=itens.length?itens.map(({o,it})=>`<div class="list-item"><div><b>${esc(it.d)}</b><div class="muted">${it.cor?'Cor: '+esc(it.cor)+' • ':''}Cliente: ${esc(o.cliente?.nome||'-')} • Venda #${o.numero} • Qtd. ${it.q} • ${BRL.format(Number(it.v)||0)} cada</div></div><div><b>${BRL.format((Number(it.q)||0)*(Number(it.v)||0))}</b></div></div>`).join(''):'<div class="muted">Nenhum item reembolsado.</div>';
+}
+function metodoPagamentoNome(m){return{combinar:'A combinar',pix:'Pix',dinheiro:'Dinheiro',credito:'Cartão de crédito',debito:'Cartão de débito',transferencia:'Transferência',boleto:'Boleto',cheque:'Cheque'}[m]||m||'A combinar'}
+function solicitarDadosReembolso(o){
+  return new Promise(resolve=>{
+    let modal=document.getElementById('modalReembolso');
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id='modalReembolso';
+      modal.className='modal-app';
+      modal.innerHTML='<div class="modal-app-box"><h2 style="font-size:18px;margin-bottom:14px">Registrar reembolso</h2><div class="reembolso-modal-grid"><label>Data do reembolso<input id="reembolsoData" type="date"></label><label>Valor reembolsado<input id="reembolsoValor" inputmode="decimal"></label><label>Motivo / observação<textarea id="reembolsoMotivo" placeholder="Ex.: cancelamento solicitado pelo cliente"></textarea></label></div><p class="muted" style="margin-top:10px">A venda sairá da lista de vendas realizadas, mas ficará registrada em Reembolsos.</p><div class="modal-app-actions"><button class="btn" id="reembolsoCancelar">Cancelar</button><button class="btn danger" id="reembolsoConfirmar">Confirmar reembolso</button></div></div>';
+      document.body.appendChild(modal);
+    }
+    $('reembolsoData').value=hoje();
+    $('reembolsoValor').value=String(Number(o.total)||0).replace('.',',');
+    $('reembolsoMotivo').value='';
+    modal.classList.add('show');
+    const fechar=valor=>{
+      modal.classList.remove('show');
+      $('reembolsoCancelar').onclick=null;$('reembolsoConfirmar').onclick=null;
+      resolve(valor);
+    };
+    $('reembolsoCancelar').onclick=()=>fechar(null);
+    $('reembolsoConfirmar').onclick=()=>{
+      let data=$('reembolsoData').value,valor=parse($('reembolsoValor').value),motivo=$('reembolsoMotivo').value.trim();
+      if(!data)return alert('Informe a data do reembolso.');
+      if(valor<=0)return alert('Informe o valor reembolsado.');
+      fechar({data,valor,motivo});
+    };
+    $('reembolsoData').focus();
+  });
+}
+async function registrarReembolso(numero){if(!pode('reembolsos_editar'))return negar('reembolsos_editar');
+  let a=lista(),i=a.findIndex(o=>String(o.numero)===String(numero)&&o.vendaRealizada&&!o.reembolsada);
+  if(i<0)return alert('Venda não encontrada ou já reembolsada.');
+  let o=a[i],info=await solicitarDadosReembolso(o);
+  if(!info)return;
+  if(!(await confirmar('Confirmar o reembolso desta venda? Ela será retirada do total de vendas realizadas e ficará no histórico de reembolsos.')))return;
+  let atualizado={...o,reembolsada:true,dataReembolso:info.data,valorReembolso:info.valor,motivoReembolso:info.motivo};
+  try{
+    if(cloudReady&&o._cloudId){
+      let payload={...atualizado};delete payload.numero;delete payload._cloudId;
+      let{error}=await cloud.from('orcamentos').update({dados:payload,updated_at:new Date().toISOString()}).eq('id',o._cloudId);
+      if(error)throw error;
+      await sincronizar();
+    }else{
+      a[i]=atualizado;guarda(a);renderHistorico();renderVendas();renderReembolsos();renderClientes();
+    }
+    agendarBackupAutomatico();
+    await registrarLog('reembolso_registrado',{numero:o.numero,cliente:o.cliente?.nome,valor:info.valor});
+    mostrarAviso('Reembolso registrado. A venda foi removida das vendas realizadas.');
+    document.querySelector('[data-view="reembolsos"]').click();
+  }catch(e){alert('Erro ao registrar reembolso: '+e.message)}
+}
+async function lancarVendaRealizada(){if(!pode('vendas_lancar'))return negar('vendas_lancar');
+  if(!editandoNumero)return alert('Salve o orçamento antes de lançar a venda.');
+  if(reembolsadaAtual)return alert('Esta venda foi reembolsada e não pode ser lançada novamente sem criar um novo orçamento.');if(vendaRealizadaAtual)return alert('Este orçamento já está lançado como venda.');
+  if($('pagamentoMetodo').value==='combinar')return alert('Escolha o meio de pagamento antes de lançar a venda.');
+  if($('pagamentoMetodo').value==='cheque'&&!chequesOrcamento.length)return alert('Adicione pelo menos um cheque para este pagamento.');
+  if(!(await confirmar('Confirmar esta venda como realizada? Ela aparecerá na aba Vendas e o orçamento continuará disponível para edição na aba Orçamentos.')))return;
+  let antigo=vendaRealizadaAtual,dataAntiga=dataVendaAtual;
+  vendaRealizadaAtual=true;dataVendaAtual=hoje();atualizarStatusVendaEditor();
+  try{
+    let o=dados(),numero=$('numero').value;
+    if(cloudReady&&String(editandoNumero).startsWith('cloud:')){
+      let id=String(editandoNumero).slice(6),payload={...o};delete payload.numero;
+      let{error}=await cloud.from('orcamentos').update({dados:payload,updated_at:new Date().toISOString()}).eq('id',id);
+      if(error)throw error;
+      await salvarChequesCloud(numero,o.cliente,o.cheques);
+      await sincronizar();
+    }else{
+      let a=lista(),i=a.findIndex(x=>String(x.numero)===String(numero));
+      if(i<0)throw new Error('Orçamento salvo não encontrado.');
+      a[i]=o;guarda(a);salvarChequesLocaisDoOrcamento(numero,o.cliente,o.cheques);
+      renderHistorico();renderVendas();renderClientes();renderCheques();
+    }
+    agendarBackupAutomatico();
+    await registrarLog('venda_lancada',{numero,cliente:o.cliente?.nome,total:o.total});
+    mostrarAviso('Venda realizada. O orçamento continua disponível para edição em Orçamentos.');
+    document.querySelector('[data-view="vendas"]').click();
+  }catch(e){
+    vendaRealizadaAtual=antigo;dataVendaAtual=dataAntiga;atualizarStatusVendaEditor();
+    alert('Erro ao lançar venda: '+e.message);
+  }
+}
+function verChequesCliente(nome){$('chequeBusca').value=nome;document.querySelector('[data-view="cheques"]').click();renderCheques()}
+function clienteKey(cli){
+  let doc=String(cli?.doc||'').replace(/\D/g,'');
+  if(doc)return 'doc:'+doc;
+  return 'nome:'+String(cli?.nome||'').trim().toLowerCase();
+}
+function clientesExcluidos(){let c=cfg();return Array.isArray(c.clientesExcluidos)?c.clientesExcluidos:[]}
+function clientesManuais(){let c=cfg();return Array.isArray(c.clientesManuais)?c.clientesManuais:[]}
+function salvarClientesExcluidos(arr){let c=cfg();c.clientesExcluidos=[...new Set(arr)];localStorage.setItem('cav_cfg',JSON.stringify(c));agendarBackupAutomatico()}
+function salvarClientesManuais(arr){let c=cfg();c.clientesManuais=arr;localStorage.setItem('cav_cfg',JSON.stringify(c));agendarBackupAutomatico()}
+function mapaClientes(){
+  let m={};
+  clientesManuais().forEach(cli=>{if(cli?.nome)m[clienteKey(cli)]={...cli,_manual:true}});
+  lista().forEach(o=>{if(o.cliente?.nome){let k=clienteKey(o.cliente);m[k]={...m[k],...o.cliente,_manual:!!m[k]?._manual}}});
+  return m;
+}
+async function adicionarClienteDireto(){if(!pode('clientes_editar'))return negar('clientes_editar');
+  let cli={
+    nome:$('cliNome').value.trim(),
+    telefone:$('cliTelefone').value.trim(),
+    email:$('cliEmail').value.trim(),
+    doc:$('cliDoc').value.trim(),
+    endereco:$('cliEndereco').value.trim(),
+    cidade:$('cliCidade').value.trim()
+  };
+  if(!cli.nome)return alert('Informe o nome do cliente.');
+  let key=clienteKey(cli),m=mapaClientes(),manuais=clientesManuais(),idx=manuais.findIndex(x=>clienteKey(x)===key);
+  let excluidos=clientesExcluidos();
+  if(excluidos.includes(key))salvarClientesExcluidos(excluidos.filter(x=>x!==key));
+  if(idx>=0)manuais[idx]=cli;
+  else if(m[key])return alert('Este cliente já está cadastrado.');
+  else manuais.push(cli);
+  salvarClientesManuais(manuais);
+  await salvarEstado();
+  ['cliNome','cliTelefone','cliEmail','cliDoc','cliEndereco','cliCidade'].forEach(id=>$(id).value='');
+  renderClientes();
+  await registrarLog(idx>=0?'cliente_atualizado':'cliente_adicionado',{cliente:cli.nome});
+  mostrarAviso(idx>=0?'Cliente atualizado.':'Cliente adicionado.');
+}
+function usarClienteNovoOrcamento(key){
+  let cli=mapaClientes()[key];if(!cli)return;
+  novo();
+  $('nome').value=cli.nome||'';
+  $('telefone').value=cli.telefone||'';
+  $('email').value=cli.email||'';
+  $('doc').value=cli.doc||'';
+  $('endereco').value=cli.endereco||'';
+  $('cidade').value=cli.cidade||'';
+  document.querySelector('[data-view="novo"]').click();
+  focarCampo($('itemDesc'));
+}
+async function excluirCliente(key){if(!pode('clientes_editar'))return negar('clientes_editar');
+  let clientes=mapaClientes(),cli=clientes[key];if(!cli)return;
+  let temHistorico=lista().some(o=>o.cliente?.nome&&clienteKey(o.cliente)===key);
+  if(!(await confirmar('Excluir '+cli.nome+' da lista de clientes? '+(temHistorico?'Os orçamentos, vendas, recibos, reembolsos e cheques continuarão preservados no histórico.':'Este cadastro será removido.'))))return;
+  let manuais=clientesManuais().filter(x=>clienteKey(x)!==key);
+  salvarClientesManuais(manuais);
+  if(temHistorico){
+    let a=clientesExcluidos();if(!a.includes(key))a.push(key);salvarClientesExcluidos(a);
+  }else{
+    salvarClientesExcluidos(clientesExcluidos().filter(x=>x!==key));
+  }
+  await salvarEstado();await registrarLog('cliente_removido',{cliente:cli.nome});renderClientes();mostrarAviso('Cliente removido da lista.');
+}
+function reativarClienteSeNecessario(cli){
+  let key=clienteKey(cli),a=clientesExcluidos();
+  if(!a.includes(key))return false;
+  salvarClientesExcluidos(a.filter(x=>x!==key));
+  return true;
+}
+function renderClientes(){
+  let m=mapaClientes(),excluidos=new Set(clientesExcluidos()),clientes=Object.entries(m).filter(([k])=>!excluidos.has(k)).map(([,cli])=>cli);
+  clientes.sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+  let chs=chequesLista();
+  $('clientes').innerHTML=clientes.length?clientes.map(cli=>{
+    let cCliente=chs.filter(ch=>clienteKey({nome:ch.cliente_nome,doc:ch.cliente_doc})===clienteKey(cli)),abertos=cCliente.filter(ch=>ch.status==='a_depositar'),valor=abertos.reduce((s,ch)=>s+(Number(ch.valor)||0),0),key=clienteKey(cli);
+    let detalhes=[cli.telefone||'',cli.email||'',cli.doc||'',cli.cidade||''].filter(Boolean).map(esc).join(' • ');
+    return `<div class="list-item"><div><b>${esc(cli.nome)}</b><div class="muted">${detalhes}${abertos.length?(detalhes?' • ':'')+abertos.length+' cheque'+(abertos.length===1?'':'s')+' em aberto ('+BRL.format(valor)+')':''}</div></div><div>${pode('orcamentos_editar')?`<button class="btn primary" onclick="usarClienteNovoOrcamento(decodeURIComponent('${encodeURIComponent(key)}'))">Novo orçamento</button> `:''}${cCliente.length?`<button class="btn" onclick="verChequesCliente(decodeURIComponent('${encodeURIComponent(cli.nome)}'))">Ver cheques</button> `:''}${pode('clientes_editar')?`<button class="btn danger" onclick="excluirCliente(decodeURIComponent('${encodeURIComponent(key)}'))">Excluir cliente</button>`:''}</div></div>`;
+  }).join(''):'<div class="muted">Nenhum cliente.</div>';
+}
+
+function produtosLista(){return JSON.parse(localStorage.getItem('cav_prods')||'[]')}function addProduto(){if(!pode('produtos_editar'))return negar('produtos_editar');let d=$('prodDesc').value.trim(),v=parse($('prodValor').value);if(!d)return;let a=produtosLista();a.push({d,v});localStorage.setItem('cav_prods',JSON.stringify(a));$('prodDesc').value='';$('prodValor').value='';renderProdutos();salvarEstado()}
+function usarProd(i){if(!pode('orcamentos_editar'))return negar('orcamentos_editar');let p=produtosLista()[i];$('itemDesc').value=p.d;$('itemCor').value='';$('itemValor').value=String(p.v).replace('.',',');document.querySelector('[data-view="novo"]').click()}function delProd(i){if(!pode('produtos_editar'))return negar('produtos_editar');let a=produtosLista();a.splice(i,1);localStorage.setItem('cav_prods',JSON.stringify(a));renderProdutos();salvarEstado()}
+function renderProdutos(){let a=produtosLista();$('produtos').innerHTML=a.length?a.map((p,i)=>`<div class="list-item"><div><b>${esc(p.d)}</b><div class="muted">${BRL.format(p.v)}</div></div><div>${pode('orcamentos_editar')?`<button class="btn" onclick="usarProd(${i})">Usar</button> `:''}${pode('produtos_editar')?`<button class="btn danger" onclick="delProd(${i})">Excluir</button>`:''}</div></div>`).join(''):'<div class="muted">Nenhum produto.</div>'}
+function cfg(){return JSON.parse(localStorage.getItem('cav_cfg')||'{}')}
+function salvarConfig(){if(!pode('config_editar'))return negar('config_editar');let c={...cfg(),empresa:$('cfgEmpresa').value,telefone:$('cfgTelefone').value,email:$('cfgEmail').value,instagram:$('cfgInstagram').value,endereco:$('cfgEndereco').value,cnpj:$('cfgCnpj').value,ie:$('cfgIe').value.trim()};localStorage.setItem('cav_cfg',JSON.stringify(c));salvarEstado();registrarLog('config_empresa_alterada',{});alert('Dados salvos.')}
+function carregarCfg(){let c=cfg();['Empresa','Telefone','Email','Instagram','Endereco','Cnpj','Ie'].forEach(x=>{let k=x.toLowerCase();$('cfg'+x).value=c[k]||$('cfg'+x).value})}
+let backupTimer=null;
+function dadosBackup(){
+  return{
+    formato:'cavazani-backup',
+    versao:5,
+    aplicativo:'Cavazani Orçamentos',
+    criadoEm:new Date().toISOString(),
+    dados:{
+      orcamentos:lista(),
+      cheques:chequesLista(),
+      instituicoesCheque:instituicoesChequeLista(),
+      chequesProprios:chequesPropriosLista(),      produtos:produtosLista(),
+      config:cfg(),
+      tema:temaAtual(),
+      sequencia:localStorage.getItem('cav_seq')||'0'
+    }
+  };
+}
+function fmtDataHora(iso){
+  if(!iso)return 'Ainda não há backup registrado.';
+  try{return new Date(iso).toLocaleString('pt-BR')}catch(_){return iso}
+}
+function agendarBackupAutomatico(){
+  if(!window.WindowsApp||typeof window.WindowsApp.backupLocal!=='function')return;
+  clearTimeout(backupTimer);
+  backupTimer=setTimeout(async()=>{
+    try{
+      let r=await window.WindowsApp.backupLocal(dadosBackup(),false);
+      if($('backupLocalStatus'))$('backupLocalStatus').innerHTML='<span class="backup-ok">Backup automático ativo.</span> Última cópia: '+fmtDataHora(r.lastBackupAt);
+    }catch(e){
+      console.error('Backup automático:',e);
+      if($('backupLocalStatus'))$('backupLocalStatus').innerHTML='<span class="backup-warn">Falha no backup automático:</span> '+esc(e.message||e);
+    }
+  },1200);
+}
+async function carregarInfoBackup(){
+  if(!window.WindowsApp||typeof window.WindowsApp.getBackupInfo!=='function')return;
+  try{
+    let info=await window.WindowsApp.getBackupInfo();
+    if($('backupPath1'))$('backupPath1').textContent=info.localPaths?.[0]||'-';
+    if($('backupPath2'))$('backupPath2').textContent=info.localPaths?.[1]||'-';
+    if($('backupExternalPath'))$('backupExternalPath').textContent=info.externalPath||'Nenhum destino externo escolhido.';
+    if($('backupLocalStatus'))$('backupLocalStatus').innerHTML='<span class="backup-ok">Backup automático ativo.</span> '+(info.lastBackupAt?'Última cópia: '+fmtDataHora(info.lastBackupAt):'A primeira cópia será criada ao salvar dados.');
+    if($('backupExternalStatus')&&info.externalPath)$('backupExternalStatus').textContent=info.externalAvailable?'Destino externo disponível.':'Destino salvo, mas o dispositivo não está conectado agora.';
+  }catch(e){console.error(e)}
+}
+async function fazerBackupLocalAgora(){
+  if(!window.WindowsApp)return;
+  try{
+    let r=await window.WindowsApp.backupLocal(dadosBackup(),true);
+    $('backupLocalStatus').innerHTML='<span class="backup-ok">Backup concluído.</span> '+fmtDataHora(r.lastBackupAt);
+    mostrarAviso('Backup salvo nas duas pastas do computador.');
+  }catch(e){alert('Erro ao fazer backup local: '+e.message)}
+}
+async function abrirPastaBackup(tipo){
+  try{await window.WindowsApp?.openBackupFolder(tipo)}catch(e){alert('Não foi possível abrir a pasta: '+e.message)}
+}
+async function escolherBackupExterno(){
+  if(!window.WindowsApp)return;
+  try{
+    let r=await window.WindowsApp.chooseExternalBackup();
+    if(!r)return;
+    $('backupExternalPath').textContent=r.externalPath;
+    $('backupExternalStatus').textContent='Destino externo selecionado.';
+  }catch(e){alert('Erro ao escolher o destino: '+e.message)}
+}
+async function fazerBackupExterno(){
+  if(!window.WindowsApp)return;
+  try{
+    let r=await window.WindowsApp.backupExternal(dadosBackup());
+    $('backupExternalStatus').innerHTML='<span class="backup-ok">Backup externo concluído.</span> '+r.path;
+    mostrarAviso('Backup externo concluído.');
+  }catch(e){alert('Erro no backup externo: '+e.message)}
+}
+async function restaurarBackupArquivo(){if(!pode('usuarios_gerenciar'))return negar('usuarios_gerenciar');
+  if(!window.WindowsApp)return;
+  try{
+    let r=await window.WindowsApp.restoreBackup();
+    if(!r)return;
+    let b=r.data;
+    if(!b||b.formato!=='cavazani-backup'||!b.dados)throw new Error('O arquivo selecionado não é um backup válido do Cavazani.');
+    if(!(await confirmar('Restaurar este backup? Os dados locais atuais serão substituídos.')))return;
+    localStorage.setItem('cav_orcs',JSON.stringify(b.dados.orcamentos||[]));
+    localStorage.setItem('cav_cheques',JSON.stringify(b.dados.cheques||[]));
+    localStorage.setItem('cav_cheque_instituicoes',JSON.stringify(b.dados.instituicoesCheque||[]));
+    localStorage.setItem('cav_cheques_proprios',JSON.stringify(b.dados.chequesProprios||[]));    localStorage.setItem('cav_prods',JSON.stringify(b.dados.produtos||[]));
+    localStorage.setItem('cav_cfg',JSON.stringify(b.dados.config||{}));
+    if(b.dados.tema)localStorage.setItem('cav_theme',b.dados.tema==='light'?'light':'dark');
+    localStorage.setItem('cav_seq',String(b.dados.sequencia||'0'));
+    carregarTema();renderHistorico();renderVendas();renderResumoMensal();renderReembolsos();renderClientes();renderProdutos();renderCheques();renderChequesDestinados();renderChequesProprios();carregarCfg();avisarChequesHoje();avisarChequesPropriosHoje();
+    agendarBackupAutomatico();
+    mostrarAviso('Backup restaurado no computador.');
+    if(cloudReady)$('backupExternalStatus').textContent='Backup restaurado localmente. A nuvem não foi sobrescrita automaticamente.';
+  }catch(e){alert('Erro ao restaurar backup: '+e.message)}
+}
+function inicializarBackupWindows(){
+  if(!window.WindowsApp)return;
+  let nav=$('backupNav');if(nav)nav.style.display='';
+  carregarInfoBackup();
+  agendarBackupAutomatico();
+}
+const SUPABASE_URL='https://vssbgmzkprhsbpxdtald.supabase.co';
+const SUPABASE_KEY='sb_publishable_ljcrxLGYHRkDCX9vH9_Byg_oYfU7Qo6';
+const SUPABASE_STORAGE_KEY='cavazani-auth-session-v1';
+let authListenerAtivo=false,syncRetryTimer=null;
+function carregarCloud(){}
+function criarCloudClient(){
+  return window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+    auth:{
+      persistSession:true,
+      autoRefreshToken:true,
+      detectSessionInUrl:false,
+      storage:window.localStorage,
+      storageKey:SUPABASE_STORAGE_KEY
+    }
+  });
+}
+function sessaoPersistivel(sessao){
+  if(!sessao?.access_token||!sessao?.refresh_token)return null;
+  return JSON.stringify({access_token:sessao.access_token,refresh_token:sessao.refresh_token});
+}
+async function salvarSessaoNativa(sessao){
+  let json=sessaoPersistivel(sessao);if(!json)return;
+  try{
+    if(window.WindowsApp?.saveAuthSession)await window.WindowsApp.saveAuthSession(json);
+    else if(window.AndroidApp?.saveAuthSession)window.AndroidApp.saveAuthSession(json);
+    localStorage.setItem('cav_auth_session_backup',json);
+  }catch(e){console.error('Falha ao persistir sessão:',e)}
+}
+async function carregarSessaoNativa(){
+  try{
+    let json=null;
+    if(window.WindowsApp?.loadAuthSession)json=await window.WindowsApp.loadAuthSession();
+    else if(window.AndroidApp?.loadAuthSession)json=window.AndroidApp.loadAuthSession();
+    if(!json)json=localStorage.getItem('cav_auth_session_backup');
+    if(!json)return null;
+    let obj=JSON.parse(json);
+    return obj?.access_token&&obj?.refresh_token?obj:null;
+  }catch(e){console.error('Falha ao carregar sessão persistida:',e);return null}
+}
+async function limparSessaoNativa(){
+  try{
+    if(window.WindowsApp?.clearAuthSession)await window.WindowsApp.clearAuthSession();
+    else if(window.AndroidApp?.clearAuthSession)window.AndroidApp.clearAuthSession();
+  }catch(e){console.error('Falha ao limpar sessão persistida:',e)}
+  localStorage.removeItem('cav_auth_session_backup');
+}
+function ouvirAuth(){
+  if(!cloud||authListenerAtivo)return;
+  authListenerAtivo=true;
+  cloud.auth.onAuthStateChange((evento,sessao)=>{
+    cloudUser=sessao?.user||null;
+    cloudReady=!!cloudUser;
+    if(sessao)salvarSessaoNativa(sessao);
+    else if(evento==='SIGNED_OUT')limparSessaoNativa();
+    status();
+  });
+}
+async function initCloud(){
+  if(!cloud)cloud=criarCloudClient();
+  ouvirAuth();
+  let{data,error}=await cloud.auth.getSession();
+  if(error)throw error;
+  cloudUser=data.session?.user||null;
+  cloudReady=!!cloudUser;
+  status();
+}
+function status(){let ok=cloudReady;$('syncTop').textContent=ok?'Nuvem':'Local';$('syncTop').classList.toggle('ok',ok);$('cloudStatus').textContent=ok?'Sincronização ativa: '+cloudUser.email:'Nuvem pronta. Entre com a mesma conta no celular e no Windows.'}
+async function criarConta(){try{await initCloud();localStorage.setItem('cav_cloud_email',$('cloudEmail').value.trim());let{data,error}=await cloud.auth.signUp({email:$('cloudEmail').value.trim(),password:$('cloudPass').value});if(error)throw error;if(data.session)await salvarSessaoNativa(data.session);alert(data.session?'Conta criada e conectada.':'Conta criada. Confirme o e-mail e depois conecte.')}catch(e){alert(e.message)}}
+async function entrar(){try{await initCloud();localStorage.setItem('cav_cloud_email',$('cloudEmail').value.trim());let{data,error}=await cloud.auth.signInWithPassword({email:$('cloudEmail').value.trim(),password:$('cloudPass').value});if(error)throw error;cloudUser=data.user;cloudReady=true;if(data.session)await salvarSessaoNativa(data.session);status();novo();await sincronizarComTolerancia(0)}catch(e){alert(e.message)}}
+async function sair(){if(cloud)await cloud.auth.signOut();await limparSessaoNativa();cloudReady=false;cloudUser=null;usuarioInternoAtual=null;sessionStorage.removeItem('cav_active_internal_user');status();novo();if(usuariosInternosCache.length)mostrarLoginInterno()}
+async function sincronizar(){
+  if(!cloudReady)return alert('Conecte-se primeiro.');
+  let{data,error}=await cloud.from('orcamentos').select('id,numero,dados').eq('user_id',cloudUser.id).order('numero',{ascending:false});
+  if(error)throw error;
+  let a=(data||[]).map(r=>({...r.dados,numero:String(r.numero).padStart(4,'0'),_cloudId:r.id}));
+  guarda(a);
+  let proximaSeq=a.length?Math.max(...a.map(x=>parseInt(x.numero)||0))+1:0;
+  localStorage.setItem('cav_seq',String(proximaSeq));
+  if(!editandoNumero&&$('numero'))$('numero').value=String(proximaSeq).padStart(4,'0');
+
+  let{data:chs,error:chErr}=await cloud.from('cheques').select('*').eq('user_id',cloudUser.id).order('data_deposito',{ascending:true});
+  if(chErr)throw chErr;
+  guardaCheques((chs||[]).map(ch=>({...ch,valor:Number(ch.valor)||0})));
+
+  let{data:insts,error:instErr}=await cloud.from('instituicoes_cheque').select('*').eq('user_id',cloudUser.id).order('nome',{ascending:true});
+  if(instErr)throw instErr;
+  guardaInstituicoesCheque((insts||[]).map(x=>({id:x.id,nome:x.nome,descricao:x.descricao||'',created_at:x.created_at,updated_at:x.updated_at})));
+
+  let{data:proprios,error:propErr}=await cloud.from('cheques_proprios').select('*').eq('user_id',cloudUser.id).order('data_compensacao',{ascending:true});
+  if(propErr)throw propErr;
+  guardaChequesProprios((proprios||[]).map(ch=>({...ch,valor:Number(ch.valor)||0})));  let st=await cloud.from('estado_app').select('produtos,config').maybeSingle();
+  if(st.data){
+    localStorage.setItem('cav_prods',JSON.stringify(st.data.produtos||[]));
+    if(st.data.config)localStorage.setItem('cav_cfg',JSON.stringify(st.data.config));
+  }
+  renderHistorico();renderVendas();renderResumoMensal();renderReembolsos();renderClientes();renderProdutos();renderCheques();renderChequesDestinados();renderChequesProprios();carregarCfg();status();avisarChequesHoje();avisarChequesPropriosHoje();
+  await carregarUsuariosInternos(false);
+}
+async function salvarEstado(){agendarBackupAutomatico();if(!cloudReady)return;await cloud.from('estado_app').upsert({user_id:cloudUser.id,produtos:produtosLista(),config:cfg(),updated_at:new Date().toISOString()},{onConflict:'user_id'})}
+async function sincronizarComTolerancia(tentativa=0){
+  if(!cloudReady)return;
+  try{
+    await sincronizar();
+    clearTimeout(syncRetryTimer);
+    syncRetryTimer=null;
+  }catch(e){
+    console.error('Falha de sincronização mantendo a sessão conectada:',e);
+    status();
+    if($('cloudStatus'))$('cloudStatus').textContent='Conta conectada: '+(cloudUser?.email||'')+' • sincronização pendente';
+    if(tentativa<3){
+      clearTimeout(syncRetryTimer);
+      syncRetryTimer=setTimeout(()=>sincronizarComTolerancia(tentativa+1),5000*(tentativa+1));
+    }else{
+      mostrarAviso('Conta conectada. A sincronização será tentada novamente quando houver conexão.');
+    }
+  }
+}
+async function restaurar(){
+  try{
+    if(!window.supabase)return;
+    if(!cloud)cloud=criarCloudClient();
+    ouvirAuth();
+
+    let sessao=null;
+    try{
+      let{data,error}=await cloud.auth.getSession();
+      if(error)throw error;
+      sessao=data.session||null;
+    }catch(e){
+      console.warn('Não foi possível ler a sessão normal:',e);
+    }
+
+    if(!sessao){
+      let salva=await carregarSessaoNativa();
+      if(salva){
+        let r=await cloud.auth.setSession({access_token:salva.access_token,refresh_token:salva.refresh_token});
+        if(!r.error)sessao=r.data.session||null;
+        else console.warn('Não foi possível restaurar pela sessão segura:',r.error);
+      }
+    }
+
+    if(!sessao){
+      cloudReady=false;
+      cloudUser=null;
+      status();
+      return;
+    }
+
+    cloudUser=sessao.user||null;
+    cloudReady=!!cloudUser;
+    status();
+    await salvarSessaoNativa(sessao);
+
+    // A sessão autenticada não é derrubada se algum módulo falhar ao sincronizar.
+    if(cloudReady)await sincronizarComTolerancia(0);
+  }catch(e){
+    console.error('Erro ao restaurar autenticação:',e);
+    // Só mostra desconectado quando realmente não existe uma sessão utilizável.
+    if(!cloudUser){
+      cloudReady=false;
+      status();
+    }
+  }
+}
+async function logoPng(){
+  try{
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 105">'+
+      '<rect width="180" height="105" rx="12" fill="#1E2B34"/>'+
+      '<g transform="translate(47,-7) scale(0.80)">'+
+      '<path d="M31.67,25.47 L24.03,34.98 L20.12,46.19 L20.97,60.96 L26.41,71.66 L21.65,81.85 L20.12,89.49 L24.88,89.32 L26.92,81.85 L29.97,76.75 L40.50,83.21 L52.05,85.92 L66.48,83.72 L78.20,76.75 L81.42,82.02 L83.46,89.49 L88.05,89.49 L86.01,80.32 L81.08,71.83 L75.65,66.40 L65.63,60.79 L56.63,58.92 L45.93,59.77 L29.63,67.92 L24.88,55.87 L25.05,46.19 L27.08,39.74 L35.58,28.70 L42.54,24.45 L50.18,22.42 L50.35,21.23 L48.31,18.00 L39.65,20.38 Z M33.88,72.00 L36.93,69.28 L42.37,66.06 L47.97,64.36 L53.58,63.68 L59.52,64.19 L62.92,65.04 L66.82,66.57 L72.08,69.79 L74.29,71.83 L74.46,72.68 L71.41,75.57 L65.29,78.96 L58.84,80.83 L53.41,81.17 L47.12,80.32 L40.67,77.94 L34.56,73.70 L33.88,72.85 Z" fill="#E8EAEC" fill-rule="evenodd"/>'+
+      '</g>'+
+      '<text x="90" y="95" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="12" letter-spacing="1" fill="#E8EAEC">MARCENARIA PRO</text>'+
+      '</svg>';
+    const src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+    return await new Promise(resolve=>{
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const cv=document.createElement('canvas');
+          cv.width=900; cv.height=525;
+          const ctx=cv.getContext('2d');
+          ctx.drawImage(img,0,0,900,525);
+          resolve(cv.toDataURL('image/png',1));
+        }catch(e){console.error(e);resolve(null)}
+      };
+      img.onerror=()=>resolve(null);
+      img.src=src;
+    });
+  }catch(e){console.error(e);return null}
+}
+
+async function gerarDeclaracaoReembolso(numero){
+  let o=lista().find(x=>String(x.numero)===String(numero)&&x.vendaRealizada&&x.reembolsada);
+  if(!o)return alert('Reembolso não encontrado.');
+  if(!window.jspdf)return alert('Conecte-se à internet para gerar a declaração.');
+  let co=cfg(),{jsPDF}=window.jspdf,p=new jsPDF(),az=[27,49,62],linha=[185,197,204],logo=await logoPng();
+  p.setFillColor(...az);p.roundedRect(12,11,43,25,3,3,'F');
+  if(logo){p.addImage(logo,'PNG',12,11,43,25)}else{p.setTextColor(238,242,244);p.setFont('times','bold');p.setFontSize(11);p.text(nomeCurtoMarca(co).toUpperCase(),33.5,27,{align:'center'})}
+  p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(15);p.text(nomeCurtoMarca(co).toUpperCase(),60,23);
+  p.setTextColor(170,178,183);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text(subtituloMarca(co).toUpperCase(),60,31);
+  p.setTextColor(...az);p.setFontSize(9.5);
+  let cx=196,cy=14;
+  [co.empresa||'Minha Marcenaria',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
+  p.setDrawColor(...linha);p.line(12,44,198,44);
+
+  p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(22);p.text('DECLARAÇÃO DE REEMBOLSO',12,61);
+  p.setFont('helvetica','normal');p.setFontSize(9.5);p.text('Data do reembolso: '+fmtDataBR(o.dataReembolso),12,70);
+  p.setFont('times','bold');p.setFontSize(12);p.text('Venda nº '+String(o.numero).padStart(4,'0'),196,69,{align:'right'});
+
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('DADOS DO CLIENTE',12,86);p.line(12,90,198,90);
+  let y=100,campos=[['Nome:',o.cliente?.nome],['Telefone:',o.cliente?.telefone],['E-mail:',o.cliente?.email],['CPF/CNPJ:',o.cliente?.doc],['Endereço:',o.cliente?.endereco],['Cidade/UF:',o.cliente?.cidade]];
+  campos.forEach(([l,v])=>{p.setFont('helvetica','bold');p.text(l,12,y);p.setFont('helvetica','normal');p.text(String(v||'-'),45,y);y+=7});
+
+  y+=5;p.setFont('helvetica','bold');p.setFontSize(10);p.text('DADOS DO REEMBOLSO',12,y);p.line(12,y+4,198,y+4);y+=14;
+  p.setFont('helvetica','bold');p.text('Valor reembolsado:',12,y);p.setFont('helvetica','normal');p.text(BRL.format(Number(o.valorReembolso)||Number(o.total)||0),48,y);y+=8;
+  p.setFont('helvetica','bold');p.text('Forma de pagamento original:',12,y);p.setFont('helvetica','normal');p.text(metodoPagamentoNome(o.metodo),65,y);y+=8;
+  p.setFont('helvetica','bold');p.text('Venda original:',12,y);p.setFont('helvetica','normal');p.text(fmtDataBR(o.dataVenda||o.data),45,y);y+=10;
+
+  p.setFont('helvetica','bold');p.text('ITENS DA VENDA',12,y);p.line(12,y+4,198,y+4);y+=12;
+  p.setFont('helvetica','normal');p.setFontSize(9);
+  for(let i=0;i<(o.itens||[]).length;i++){
+    let it=o.itens[i],txt=(i+1)+'. '+it.d+(it.cor?' • Cor: '+it.cor:'')+' — '+it.q+' x '+BRL.format(it.v)+' = '+BRL.format(it.q*it.v),linhas=p.splitTextToSize(txt,184);
+    if(y+linhas.length*5>245){p.addPage();y=24}
+    p.text(linhas,12,y);y+=linhas.length*5+3;
+  }
+
+  y+=6;if(y>238){p.addPage();y=26}
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('DECLARAÇÃO',12,y);p.line(12,y+4,198,y+4);y+=14;
+  p.setFont('helvetica','normal');p.setFontSize(10);
+  let texto='Declaramos que foi realizado o reembolso no valor de '+BRL.format(Number(o.valorReembolso)||Number(o.total)||0)+' ao cliente '+(o.cliente?.nome||'')+', referente à venda nº '+String(o.numero).padStart(4,'0')+'.';
+  let linhas=p.splitTextToSize(texto,184);p.text(linhas,12,y);y+=linhas.length*5+7;
+  if(o.motivoReembolso){let motivo=p.splitTextToSize('Motivo/observação: '+o.motivoReembolso,184);p.text(motivo,12,y);y+=motivo.length*5+7}
+
+  if(y>255){p.addPage();y=245}else y=Math.max(y+18,245);
+  p.setDrawColor(120,137,146);p.line(12,y,82,y);p.line(128,y,198,y);
+  p.setFontSize(8.5);p.text(co.empresa||'Minha Marcenaria',47,y+6,{align:'center'});p.text(o.cliente?.nome||'Cliente',163,y+6,{align:'center'});
+  p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
+
+  let nome=(o.cliente?.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Declaracao_Reembolso_'+String(o.numero).padStart(4,'0')+'_'+nome+'.pdf';
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);
+  else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);
+  else p.save(arq);
+}
+// Contratos são preservados no JSON da venda e sincronizados junto ao orçamento.
+function podeContratos(){return !ehColaborador()&&pode('vendas_lancar')}
+function renderContratos(){
+  if(!$('contratoVenda'))return;
+  let liberado=podeContratos();
+  document.querySelectorAll('[data-view="contrato"],[data-view="contratos-salvos"]').forEach(b=>b.style.display=liberado?'':'none');
+  if(!liberado){$('contratoVenda').innerHTML='';$('contratosLista').innerHTML='';$('contratoPreview').innerHTML='';return}
+  let atual=$('contratoVenda').value,vendas=lista().filter(o=>o.vendaRealizada&&!o.reembolsada);
+  $('contratoVenda').innerHTML='<option value="">Selecione a venda</option>'+vendas.map(o=>`<option value="${esc(o.numero)}">#${esc(o.numero)} • ${esc(o.cliente?.nome)} • ${BRL.format(Number(o.total)||0)}</option>`).join('');
+  if(vendas.some(o=>String(o.numero)===atual))$('contratoVenda').value=atual;
+  if(!$('contratoData').value)$('contratoData').value=hoje();
+  let busca=($('contratosBusca').value||'').trim().toLowerCase();
+  let registros=lista().flatMap(o=>(o.contratos||[]).map(c=>({o,c}))).filter(({o,c})=>[o.numero,c.venda?.cliente?.nome,c.numero].join(' ').toLowerCase().includes(busca)).sort((a,b)=>String(b.c.criadoEm).localeCompare(String(a.c.criadoEm)));
+  $('contratosLista').innerHTML=registros.length?registros.map(({o,c})=>`<div class="list-item"><div><b>${esc(c.numero)} • ${esc(c.venda?.cliente?.nome)}</b><div class="muted">Orçamento #${esc(o.numero)} • ${fmtDataBR(c.data)} • ${BRL.format(Number(c.venda?.total)||0)}</div>${o.reembolsada?'<span class="venda-badge reembolso">Venda reembolsada</span>':''}</div><div><button class="btn primary" onclick="gerarContratoSalvo('${esc(o.numero)}','${esc(c.id)}')">Gerar PDF</button> <button class="btn danger" onclick="excluirContratoVenda('${esc(o.numero)}','${esc(c.id)}')">Excluir</button></div></div>`).join(''):'<div class="card muted">Nenhum contrato salvo encontrado.</div>';
+  previewContrato();
+}
+function abrirContratoVenda(numero){
+  if(!podeContratos())return negar('vendas_lancar');
+  document.querySelector('[data-view="contrato"]').click();$('contratoVenda').value=String(numero);$('contratoData').value=hoje();$('contratoRg').value='';previewContrato();
+}
+function montarContrato(){
+  let o=lista().find(o=>String(o.numero)===$('contratoVenda').value&&o.vendaRealizada&&!o.reembolsada);
+  if(!o)return null;
+  let {contratos,_cloudId,...venda}=o;
+  return{id:novoIdCheque(),numero:'C-'+String(o.numero).padStart(4,'0'),data:$('contratoData').value,local:$('contratoLocal').value.trim(),rg:$('contratoRg').value.trim(),criadoEm:new Date().toISOString(),modelo:1,empresa:Object.fromEntries(['empresa','cnpj','ie','endereco','telefone','email','instagram'].map(k=>[k,cfg()[k]||''])),venda:JSON.parse(JSON.stringify(venda))};
+}
+function textoClausulasContrato(){return[
+ ['Cláusula 1ª','O contratado executará os serviços diretamente à contratante.'],
+ ['Cláusula 2ª','O contratado prestará os serviços descritos na relação de itens deste contrato, conforme o orçamento vinculado, pelos valores, meios de pagamento e condições nele estabelecidos.'],
+ ['Cláusula 3ª','Fica estabelecido que são obrigações da contratante:\n- Efetuar o pagamento de acordo com o estabelecido no presente contrato;\n- Fornecer ao contratado informações indispensáveis ao seu serviço, facilitando a prospecção dos negócios.'],
+ ['Cláusula 4ª','Ficam estabelecidas as seguintes obrigações do contratado:\n- Cumprir o prazo de entrega estipulado nos termos do presente instrumento contratual;\n- Prestar informações à contratante, sempre que esta lhe solicitar, informando sobre a execução de seus serviços.'],
+ ['Cláusula 5ª','São motivos para que a contratante rescinda o presente instrumento:\n- Desídia do contratado no cumprimento das obrigações assumidas para com a contratante;\n- Deixar o contratado de cumprir qualquer das cláusulas dispostas no presente instrumento.'],
+ ['Cláusula 6ª','São motivos para que o contratado rescinda o presente instrumento:\n- Solicitar a contratante atividade que exceda o previsto neste instrumento de contrato;\n- Deixar a contratante de observar quaisquer obrigações que constem no presente contrato;\n- Deixar a contratante de cumprir o disposto na cláusula terceira deste contrato.'],
+ ['Cláusula 7ª','O presente contrato terá vigência por prazo indeterminado. Porém, havendo interesse em sua rescisão, a parte interessada notificará a parte contrária, por escrito, com antecedência mínima de sessenta (60) dias úteis.']
+]}
+function previewContrato(){
+  if(!podeContratos())return;
+  let c=montarContrato();if(!c){$('contratoPreview').innerHTML='<p class="muted">Selecione uma venda para visualizar o contrato.</p>';return}
+  let o=c.venda,co=c.empresa;
+  $('contratoPreview').innerHTML=`<h2>Contrato de prestação de serviços ${esc(c.numero)}</h2><p><b>Contratante:</b> ${esc(o.cliente?.nome)} • CPF/CNPJ: ${esc(o.cliente?.doc||'-')}${c.rg?' • RG: '+esc(c.rg):''}<br>${esc(o.cliente?.endereco||'')} • ${esc(o.cliente?.cidade||'')}</p><p><b>Contratado:</b> ${esc(co.empresa||'Minha Marcenaria')} • CNPJ: ${esc(co.cnpj||'-')} • IE: ${esc(co.ie||'-')}<br>${esc(co.endereco||'')}</p><div class="table-wrap"><table><thead><tr><th>Descrição</th><th>Cor</th><th>Qtd.</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${(o.itens||[]).map(i=>`<tr><td>${esc(i.d)}</td><td>${esc(i.cor||'-')}</td><td>${esc(i.q)}</td><td>${BRL.format(i.v)}</td><td>${BRL.format(i.q*i.v)}</td></tr>`).join('')}</tbody></table></div><p><b>Total:</b> ${BRL.format(Number(o.total)||0)}<br><b>Prazo de entrega:</b> ${esc(o.prazo||'-')}<br><b>Pagamento:</b> ${esc(metodoPagamentoNome(o.metodo))}<br>${esc(o.condicoes||'').replace(/\n/g,'<br>')}</p>${o.obs?'<p><b>Observações:</b> '+esc(o.obs).replace(/\n/g,'<br>')+'</p>':''}${textoClausulasContrato().map(([t,v])=>'<p><b>'+t+':</b><br>'+esc(v).replace(/\n/g,'<br>')+'</p>').join('')}<p>As partes elegem o foro de Morro Agudo - São Paulo, para dirimirem quaisquer dúvidas decorrentes do presente contrato.</p><p>Contratante e contratado concordam e estão ajustados com todas as normas e cláusulas estipuladas neste contrato e assim assinam o presente termo em 02 (duas) vias de igual teor, os quais passam a ter força legal entre as partes.</p><p>${esc(c.local)} • ${fmtDataBR(c.data)}</p>`;
+}
+async function alterarContratosVenda(numero,transformar){
+  let a=lista(),i=a.findIndex(o=>String(o.numero)===String(numero));if(i<0)throw Error('Venda não encontrada.');
+  let o=a[i];
+  if(o._cloudId&&!cloudReady)throw Error('Conecte-se à nuvem para alterar o contrato desta venda.');
+  if(cloudReady){
+    if(!o._cloudId)throw Error('Sincronize esta venda antes de salvar seu contrato na nuvem.');
+    let {data:r,error}=await cloud.from('orcamentos').select('dados,updated_at').eq('id',o._cloudId).eq('user_id',cloudUser.id).single();if(error)throw error;
+    let novo=transformar(r.dados),payload={...r.dados,contratos:novo};
+    let {data:gravado,error:err}=await cloud.from('orcamentos').update({dados:payload,updated_at:new Date().toISOString()}).eq('id',o._cloudId).eq('user_id',cloudUser.id).eq('updated_at',r.updated_at).select('id').single();if(err)throw err;if(!gravado)throw Error('A venda foi alterada em outro dispositivo. Sincronize e tente novamente.');
+    a[i]={...payload,numero:o.numero,_cloudId:o._cloudId};
+  }else a[i]={...o,contratos:transformar(o)};
+  guarda(a);renderContratos();
+}
+let contratoSalvando=false;
+async function salvarContratoVenda(){
+  if(!podeContratos())return negar('vendas_lancar');if(contratoSalvando)return;
+  let c=montarContrato();if(!c)return alert('Selecione uma venda realizada.');if(!c.data||!c.local)return alert('Informe a data e o local da assinatura.');
+  contratoSalvando=true;$('contratoSalvarBtn').disabled=true;
+  try{
+    c.clausulas=textoClausulasContrato();
+    await alterarContratosVenda(c.venda.numero,o=>{if(!o.vendaRealizada||o.reembolsada)throw Error('Esta venda não está mais disponível para um novo contrato.');
+      let {contratos,_cloudId,...venda}=o;c.venda=JSON.parse(JSON.stringify({...venda,numero:c.venda.numero}));
+      return [...(o.contratos||[]),c];});
+    await registrarLog('contrato_salvo',{numero:c.numero,venda:c.venda.numero});mostrarAviso('Contrato salvo e vinculado à venda.');document.querySelector('[data-view="contratos-salvos"]').click();
+  }catch(e){alert('Erro ao salvar contrato: '+e.message)}finally{contratoSalvando=false;$('contratoSalvarBtn').disabled=false}
+}
+async function excluirContratoVenda(numero,id){
+  if(!podeContratos())return negar('vendas_lancar');if(!(await confirmar('Excluir este contrato salvo? A venda e o orçamento serão preservados.')))return;
+  try{await alterarContratosVenda(numero,o=>(o.contratos||[]).filter(c=>c.id!==id));await registrarLog('contrato_excluido',{numero,id});mostrarAviso('Contrato excluído.')}catch(e){alert('Erro ao excluir contrato: '+e.message)}
+}
+async function gerarContratoAtual(){if(!podeContratos())return negar('vendas_lancar');let c=montarContrato();if(!c)return alert('Selecione uma venda realizada.');if(!c.data||!c.local)return alert('Informe a data e o local.');await gerarPDFContrato(c)}
+async function gerarContratoSalvo(numero,id){if(!podeContratos())return negar('vendas_lancar');let c=lista().find(o=>String(o.numero)===String(numero))?.contratos?.find(c=>c.id===id);if(!c)return alert('Contrato não encontrado.');await gerarPDFContrato(c)}
+async function gerarPDFContrato(c){
+  if(!window.jspdf)return alert('Conecte-se à internet para gerar o PDF.');
+  let o=c.venda,co=c.empresa,{jsPDF}=window.jspdf,p=new jsPDF(),az=[27,49,62],linha=[185,197,204],logo=await logoPng(),y=0;
+  function cabecalho(){
+    p.setFillColor(...az);p.roundedRect(12,11,43,25,3,3,'F');if(logo)p.addImage(logo,'PNG',12,11,43,25);else{p.setTextColor(238,242,244);p.setFont('times','bold');p.setFontSize(11);p.text(nomeCurtoMarca(co).toUpperCase(),33.5,27,{align:'center'})}
+    p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(15);p.text(nomeCurtoMarca(co).toUpperCase(),60,23);p.setTextColor(170,178,183);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text(subtituloMarca(co).toUpperCase(),60,31);
+    p.setTextColor(...az);p.setDrawColor(...linha);p.line(12,44,198,44);p.setFont('times','bold');p.setFontSize(21);p.text('CONTRATO DE SERVIÇO',12,57);p.setFont('helvetica','normal');p.setFontSize(9);p.text(c.numero+' • Orçamento nº '+o.numero,12,65);p.text('Data: '+fmtDataBR(c.data),198,65,{align:'right'});y=75;
+  }
+  function espaco(h){if(y+h>276){p.addPage();cabecalho()}}
+  function texto(v,bold=false){p.setFont('helvetica',bold?'bold':'normal');p.setFontSize(9.5);p.setTextColor(...az);let linhas=p.splitTextToSize(String(v||'-'),184);for(let l of linhas){espaco(5);p.text(l,12,y);y+=4.7}y+=3}
+  function titulo(t){espaco(18);p.setFont('helvetica','bold');p.setFontSize(10);p.setTextColor(...az);p.text(t,12,y);p.setDrawColor(...linha);p.line(12,y+3,198,y+3);y+=11}
+  cabecalho();
+  titulo('CONTRATANTE');texto(o.cliente?.nome,true);texto('CPF/CNPJ: '+(o.cliente?.doc||'-')+(c.rg?' • RG: '+c.rg:''));texto('Endereço: '+(o.cliente?.endereco||'-')+' • '+(o.cliente?.cidade||'-'));texto('Telefone: '+(o.cliente?.telefone||'-')+' • E-mail: '+(o.cliente?.email||'-'));
+  titulo('CONTRATADO');texto(co.empresa||'Minha Marcenaria',true);texto('CNPJ: '+(co.cnpj||'-')+' • Inscrição estadual: '+(co.ie||'-'));texto('Endereço: '+(co.endereco||'-'));texto([co.telefone,co.email,co.instagram].filter(Boolean).join(' • '));
+  texto('Decidem as partes, na melhor forma de direito, celebrar o presente CONTRATO DE PRESTAÇÃO DE SERVIÇOS, que reger-se-á mediante as cláusulas e condições adiante estipuladas.');
+  let clausulas=c.clausulas||textoClausulasContrato();
+  function clausula(t,v){let h=p.splitTextToSize(String(v),184).length*4.7+14;if(h<195)espaco(h);titulo(t);texto(v)}
+  clausula(clausulas[0][0],clausulas[0][1]);clausula(clausulas[1][0],clausulas[1][1]);
+  function tabelaCab(){espaco(16);p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.setFontSize(9);p.text('ITEM',14,y+6);p.text('DESCRIÇÃO',29,y+6);p.text('QTD.',119,y+6);p.text('UNIT.',139,y+6);p.text('TOTAL',175,y+6);y+=9;p.setTextColor(...az)}
+  tabelaCab();
+  for(let [i,it] of (o.itens||[]).entries()){
+    p.setFont('helvetica','normal');p.setFontSize(9);let descricaoContrato=String(it.d||'')+(it.cor?' • Cor: '+it.cor:'');let ls=p.splitTextToSize(descricaoContrato,85),primeira=true;
+    while(ls.length){let disponivel=Math.floor((276-y-4)/4.3);if(disponivel<1){p.addPage();cabecalho();tabelaCab();disponivel=Math.floor((276-y-4)/4.3)}let parte=ls.splice(0,disponivel),h=Math.max(10,parte.length*4.3+4);p.setDrawColor(...linha);p.rect(12,y,186,h);[27,117,137,170].forEach(x=>p.line(x,y,x,y+h));p.setTextColor(...az);p.setFont('helvetica','normal');p.setFontSize(9);p.text(parte,29,y+6);if(primeira){p.text(String(i+1).padStart(2,'0'),14,y+6);p.text(String(it.q),119,y+6);p.text(BRL.format(Number(it.v)||0),168,y+6,{align:'right'});p.text(BRL.format(it.q*it.v),196,y+6,{align:'right'});primeira=false}y+=h;if(ls.length){p.addPage();cabecalho();tabelaCab()}}
+  }
+  y+=8;espaco(40);let desconto=o.descontoTipo==='percentual'?(Number(o.subtotal)||0)*(Number(o.desconto)||0)/100:Number(o.desconto)||0;
+  espaco(44);p.setFont('helvetica','normal');p.setFontSize(9.5);p.setTextColor(...az);
+  for(let [t,v] of [['Subtotal:',Number(o.subtotal)||0],['Desconto'+(o.descontoTipo==='percentual'?' ('+o.desconto+'%)':'')+':',desconto],['Frete/Instalação:',Number(o.frete)||0]]){p.text(t,102,y);p.setFont('helvetica','bold');p.text(BRL.format(v),196,y,{align:'right'});p.setFont('helvetica','normal');y+=8}
+  p.setFillColor(235,240,243);p.rect(102,y-5,96,18,'F');p.setFont('helvetica','bold');p.setFontSize(14);p.text('TOTAL:',106,y+7);p.setFontSize(16);p.text(BRL.format(Number(o.total)||0),194,y+7,{align:'right'});y+=24;
+  titulo('PAGAMENTO E PRAZO');texto('Meio de pagamento: '+metodoPagamentoNome(o.metodo));texto('Condições de pagamento: '+(o.condicoes||'-'));texto('Prazo de entrega: '+(o.prazo||'-'),true);
+  for(let ch of o.cheques||[])texto('Cheque '+(ch.numero_cheque||'s/n')+' • '+(ch.banco||'Banco não informado')+' • Agência/conta: '+(ch.agencia_conta||'-')+' • '+BRL.format(Number(ch.valor)||0)+' • Depósito: '+fmtDataBR(ch.data_deposito)+(ch.observacao?' • '+ch.observacao:''));
+  if(o.obs){titulo('OBSERVAÇÕES E CONDIÇÕES DO ORÇAMENTO');texto(o.obs)}
+  for(let [t,v] of clausulas.slice(2))clausula(t,v);
+  texto('As partes elegem o foro de Morro Agudo - São Paulo, para dirimirem quaisquer dúvidas decorrentes do presente contrato.');
+  texto('Contratante e contratado concordam e estão ajustados com todas as normas e cláusulas estipuladas neste contrato e assim assinam o presente termo em 02 (duas) vias de igual teor, os quais passam a ter força legal entre as partes.');texto('Local e data: '+c.local+', '+fmtDataBR(c.data));
+  espaco(36);y+=18;p.setDrawColor(120,137,146);p.line(12,y,98,y);p.line(112,y,198,y);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text('ASSINATURA DO CONTRATANTE',55,y+6,{align:'center'});p.text('ASSINATURA DO CONTRATADO',155,y+6,{align:'center'});
+  let paginas=p.getNumberOfPages();for(let i=1;i<=paginas;i++){p.setPage(i);p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFont('helvetica','normal');p.setFontSize(8);p.text(rodapeMarca(co),12,293);p.text(i+' / '+paginas,198,293,{align:'right'})}
+  let nome=(o.cliente?.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Contrato_'+o.numero+'_'+nome+'.pdf';
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);else p.save(arq);
+  return p;
+}
+
+async function gerarReciboVenda(numero){
+  let o=lista().find(x=>String(x.numero)===String(numero)&&x.vendaRealizada&&!x.reembolsada);
+  if(!o)return alert('Venda não encontrada.');
+  if(!window.jspdf)return alert('Conecte-se à internet para gerar o recibo.');
+  let co=cfg(),{jsPDF}=window.jspdf,p=new jsPDF(),az=[27,49,62],linha=[185,197,204],logo=await logoPng();
+  let dataVenda=fmtDataBR(o.dataVenda||o.data);
+
+  p.setFillColor(...az);p.roundedRect(12,11,43,25,3,3,'F');
+  if(logo){p.addImage(logo,'PNG',12,11,43,25)}else{p.setTextColor(238,242,244);p.setFont('times','bold');p.setFontSize(11);p.text(nomeCurtoMarca(co).toUpperCase(),33.5,27,{align:'center'})}
+  p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(15);p.text(nomeCurtoMarca(co).toUpperCase(),60,23);
+  p.setTextColor(170,178,183);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text(subtituloMarca(co).toUpperCase(),60,31);
+
+  p.setTextColor(...az);p.setFontSize(9.5);
+  let cx=196,cy=14;
+  [co.empresa||'Minha Marcenaria',co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4});
+  p.setDrawColor(...linha);p.line(12,44,198,44);
+
+  p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(24);p.text('RECIBO DE VENDA',12,61);
+  p.setFont('helvetica','normal');p.setFontSize(9.5);p.text('Data da venda: '+dataVenda,12,69);
+  p.setFont('times','bold');p.setFontSize(13);p.text('Nº R-'+String(o.numero).padStart(4,'0'),196,68,{align:'right'});
+  p.setFont('helvetica','normal');p.setFontSize(9);p.text('Referente ao orçamento nº '+String(o.numero).padStart(4,'0'),196,75,{align:'right'});
+
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('DADOS DO CLIENTE',12,87);p.line(12,91,198,91);
+  let y=101,campos=[['Nome:',o.cliente?.nome],['Telefone:',o.cliente?.telefone],['E-mail:',o.cliente?.email],['CPF/CNPJ:',o.cliente?.doc],['Endereço:',o.cliente?.endereco],['Cidade/UF:',o.cliente?.cidade]];
+  campos.forEach(([l,v])=>{p.setFont('helvetica','bold');p.text(l,12,y);p.setFont('helvetica','normal');p.text(String(v||'-'),45,y);y+=7});
+
+  y+=3;
+  let col=[12,28,78,108,125,160,198];
+  p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.setFontSize(8.5);
+  p.text('ITEM',14,y+6);p.text('DESCRIÇÃO',30,y+6);p.text('COR',80,y+6);p.text('QTD.',110,y+6);p.text('UNIT.',127,y+6);p.text('TOTAL',162,y+6);
+  p.setTextColor(...az);y+=9;p.setFont('helvetica','normal');p.setFontSize(8.5);
+  for(let i=0;i<(o.itens||[]).length;i++){
+    let it=o.itens[i],desc=p.splitTextToSize(it.d,44),cor=p.splitTextToSize(it.cor||'-',26),h=Math.max(10,Math.max(desc.length,cor.length)*4+4);
+    if(y+h>210){p.addPage();y=20;p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.setFontSize(8.5);p.text('ITEM',14,y+6);p.text('DESCRIÇÃO',30,y+6);p.text('COR',80,y+6);p.text('QTD.',110,y+6);p.text('UNIT.',127,y+6);p.text('TOTAL',162,y+6);p.setTextColor(...az);p.setFont('helvetica','normal');y+=9}
+    p.setDrawColor(...linha);for(let j=0;j<col.length;j++)p.line(col[j],y,col[j],y+h);p.line(12,y,198,y);p.line(12,y+h,198,y+h);
+    p.text(String(i+1).padStart(2,'0'),14,y+6);p.text(desc,30,y+6);p.text(cor,80,y+6);p.text(String(it.q),110,y+6);p.text(BRL.format(it.v),127,y+6);p.text(BRL.format(it.q*it.v),162,y+6);y+=h;
+  }
+
+  y+=7;if(y>225){p.addPage();y=22}
+  let descReais=o.descontoTipo==='percentual'?(Number(o.subtotal)||0)*(Number(o.desconto)||0)/100:(Number(o.desconto)||0);
+  p.setFont('helvetica','normal');p.setFontSize(9.5);p.text('Subtotal:',102,y);p.setFont('helvetica','bold');p.text(BRL.format(Number(o.subtotal)||0),196,y,{align:'right'});
+  y+=8;p.setFont('helvetica','normal');p.text('Desconto:',102,y);p.setFont('helvetica','bold');p.text('- '+BRL.format(descReais),196,y,{align:'right'});
+  y+=8;p.setFont('helvetica','normal');p.text('Frete/Instalação:',102,y);p.setFont('helvetica','bold');p.text(BRL.format(Number(o.frete)||0),196,y,{align:'right'});
+  y+=8;p.setFillColor(235,240,243);p.rect(102,y-5,96,18,'F');p.setFont('helvetica','bold');p.setFontSize(14);p.text('TOTAL:',106,y+7);p.setFontSize(16);p.text(BRL.format(Number(o.total)||0),194,y+7,{align:'right'});
+  y+=24;
+
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('FORMA DE PAGAMENTO',12,y);p.line(12,y+4,198,y+4);
+  y+=12;p.setFont('helvetica','normal');p.setFontSize(9.5);p.text(metodoPagamentoNome(o.metodo),12,y);
+  if(o.metodo==='cheque'&&(o.cheques||[]).length){
+    y+=7;
+    for(let ch of o.cheques){
+      if(y>260){p.addPage();y=22}
+      let txt='Cheque '+(ch.numero_cheque||'s/n')+' • '+(ch.banco||'Banco não informado')+' • '+BRL.format(Number(ch.valor)||0)+' • depósito '+fmtDataBR(ch.data_deposito);
+      p.text(p.splitTextToSize(txt,184),12,y);y+=9;
+    }
+  }
+
+  y+=10;if(y>245){p.addPage();y=30}
+  p.setFont('helvetica','normal');p.setFontSize(10);
+  let declaracao='Recebemos de '+(o.cliente?.nome||'cliente')+' o valor total de '+BRL.format(Number(o.total)||0)+' referente à venda dos itens descritos neste recibo.';
+  let linhas=p.splitTextToSize(declaracao,184);p.text(linhas,12,y);y+=linhas.length*5+18;
+
+  if(y>265){p.addPage();y=245}
+  p.setDrawColor(120,137,146);p.line(12,y,82,y);p.line(128,y,198,y);
+  p.setFontSize(8.5);p.text(co.empresa||'Minha Marcenaria',47,y+6,{align:'center'});p.text('Cliente',163,y+6,{align:'center'});
+  p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
+
+  let nome=(o.cliente?.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Recibo_Venda_'+String(o.numero).padStart(4,'0')+'_'+nome+'.pdf';
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);
+  else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);
+  else p.save(arq);
+}
+async function gerarPDFColaborador(){
+  if(!itens.length)return alert('Adicione itens primeiro.');
+  if(!window.jspdf)return alert('Conecte-se à internet para gerar o PDF.');
+  let o=dados(),co=cfg(),{jsPDF}=window.jspdf,p=new jsPDF(),az=[27,49,62],linha=[185,197,204],logo=await logoPng();
+  let dataBR=o.data?o.data.split('-').reverse().join('/'):'-';
+
+  p.setFillColor(...az);p.roundedRect(12,11,43,25,3,3,'F');
+  if(logo){p.addImage(logo,'PNG',12,11,43,25)}else{p.setTextColor(238,242,244);p.setFont('times','bold');p.setFontSize(11);p.text(nomeCurtoMarca(co).toUpperCase(),33.5,27,{align:'center'})}
+  p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(15);p.text(nomeCurtoMarca(co).toUpperCase(),60,23);
+  p.setTextColor(170,178,183);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text(subtituloMarca(co).toUpperCase(),60,31);
+  p.setTextColor(...az);p.setFontSize(9.5);
+  let cx=196,cy=16;
+  [co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(String(t),cx,cy,{align:'right'});cy+=4.5});
+  p.setDrawColor(...linha);p.line(12,44,198,44);
+
+  p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(24);p.text('ORÇAMENTO',12,61);
+  p.setFont('helvetica','normal');p.setFontSize(9.5);p.text('Data: '+dataBR,12,68);p.text('Validade: '+o.validade,12,75);
+  p.setFont('times','bold');p.setFontSize(13);p.text('Nº  '+o.numero,196,68,{align:'right'});
+  p.setFont('helvetica','normal');p.setFontSize(9.5);p.text('Prazo de entrega: '+o.prazo,196,75,{align:'right'});
+
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('DADOS DO CLIENTE',12,87);p.line(12,91,198,91);
+  let y=101,campos=[['Nome:',o.cliente.nome],['Telefone:',o.cliente.telefone],['E-mail:',o.cliente.email],['CPF/CNPJ:',o.cliente.doc],['Endereço:',o.cliente.endereco],['Cidade/UF:',o.cliente.cidade]];
+  campos.forEach(([l,v])=>{p.setFont('helvetica','bold');p.text(l,12,y);p.setFont('helvetica','normal');p.text(String(v||'-'),45,y);y+=7});
+
+  y+=3;p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.setFontSize(9);
+  p.text('ITEM',14,y+6);p.text('DESCRIÇÃO',37,y+6);p.text('QTD.',180,y+6,{align:'right'});
+  p.setTextColor(...az);y+=9;p.setFont('helvetica','normal');
+
+  for(let i=0;i<o.itens.length;i++){
+    let it=o.itens[i],desc=p.splitTextToSize(it.d,135),h=Math.max(10,desc.length*4+4);
+    if(y+h>245){p.addPage();y=20;p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.text('ITEM',14,y+6);p.text('DESCRIÇÃO',37,y+6);p.text('QTD.',180,y+6,{align:'right'});p.setTextColor(...az);p.setFont('helvetica','normal');y+=9}
+    p.setDrawColor(...linha);p.line(12,y,198,y);p.line(12,y+h,198,y+h);p.line(12,y,12,y+h);p.line(34,y,34,y+h);p.line(176,y,176,y+h);p.line(198,y,198,y+h);
+    p.text(String(i+1).padStart(2,'0'),14,y+6);p.text(desc,37,y+6);p.text(String(it.q),188,y+6,{align:'right'});y+=h;
+  }
+
+  y+=12;if(y>245){p.addPage();y=22}
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('OBSERVAÇÕES',12,y);p.line(12,y+4,198,y+4);
+  p.setFont('helvetica','normal');p.setFontSize(9.5);let obs=p.splitTextToSize(o.obs||'-',184);p.text(obs,12,y+12);y+=18+obs.length*4;
+  if(y<270){p.setFontSize(8.5);p.setTextColor(105,120,129);p.text('Documento emitido pelo perfil Colaborador sem exibição de valores.',12,280)}
+  p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
+
+  let nome=(o.cliente.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Orcamento_'+o.numero+'_'+nome+'.pdf';
+  if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function')window.AndroidApp.savePdf(p.output('datauristring'),arq);
+  else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function')window.WindowsApp.savePdf(p.output('datauristring'),arq);
+  else p.save(arq);
+}
+async function gerarPDF(){
+if(!itens.length)return alert('Adicione itens primeiro.');
+if(!window.jspdf)return alert('Conecte-se à internet para gerar o PDF.');
+let o=dados(),co=cfg(),{jsPDF}=window.jspdf,p=new jsPDF(),az=[27,49,62],cinza=[228,235,239],linha=[185,197,204],logo=await logoPng();
+let metodoMap={combinar:'A combinar',pix:'Pix',dinheiro:'Dinheiro',credito:'Cartão de crédito',debito:'Cartão de débito',transferencia:'Transferência',boleto:'Boleto',cheque:'Cheque'};
+let dataBR=o.data?o.data.split('-').reverse().join('/'):'-';
+
+// Cabeçalho no mesmo estilo do PDF de referência
+p.setFillColor(...az);p.roundedRect(12,11,43,25,3,3,'F');
+if(logo){p.addImage(logo,'PNG',12,11,43,25)}else{
+  p.setTextColor(238,242,244);
+  p.setFont('times','bold');p.setFontSize(11);
+  p.text(nomeCurtoMarca(co).toUpperCase(),33.5,27,{align:'center'});
+}
+
+p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(15);p.text(nomeCurtoMarca(co).toUpperCase(),60,23);
+p.setTextColor(170,178,183);p.setFont('helvetica','normal');p.setFontSize(8.5);p.text(subtituloMarca(co).toUpperCase(),60,31);
+
+p.setTextColor(...az);p.setFontSize(9.5);
+let cx=196,cy=16;
+[co.cnpj?'CNPJ: '+co.cnpj:'',co.ie?'IE: '+co.ie:'',co.telefone||'',co.email||'',co.instagram||'',co.endereco||''].filter(Boolean).forEach(t=>{p.text(t,cx,cy,{align:'right'});cy+=4.5});
+p.setDrawColor(...linha);p.line(12,44,198,44);
+
+// Título / identificação
+p.setTextColor(...az);p.setFont('times','bold');p.setFontSize(24);p.text('ORÇAMENTO',12,61);
+p.setFont('helvetica','normal');p.setFontSize(9.5);p.text('Data: '+dataBR,12,68);p.text('Validade: '+o.validade,12,75);
+p.setFont('times','bold');p.setFontSize(13);p.text('Nº  '+o.numero,196,68,{align:'right'});
+p.setFont('helvetica','normal');p.setFontSize(9.5);p.text('Prazo de entrega: '+o.prazo,196,75,{align:'right'});
+
+// Cliente
+p.setFont('helvetica','bold');p.setFontSize(10);p.text('DADOS DO CLIENTE',12,87);
+p.setDrawColor(...linha);p.line(12,91,198,91);
+let y=101,labX=12,valX=45;
+let campos=[['Nome:',o.cliente.nome],['Telefone:',o.cliente.telefone],['E-mail:',o.cliente.email],['CPF/CNPJ:',o.cliente.doc],['Endereço:',o.cliente.endereco],['Cidade/UF:',o.cliente.cidade]];
+campos.forEach(([l,v])=>{p.setFont('helvetica','bold');p.text(l,labX,y);p.setFont('helvetica','normal');p.text(v||'-',valX,y);y+=7});
+
+// Tabela
+y+=3;
+let col=[12,28,78,108,125,160,198];
+p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.setFontSize(8.5);
+p.text('ITEM',14,y+6);p.text('DESCRIÇÃO',30,y+6);p.text('COR',80,y+6);p.text('QTD.',110,y+6);p.text('UNIT.',127,y+6);p.text('TOTAL',162,y+6);
+p.setTextColor(...az);y+=9;p.setFont('helvetica','normal');p.setFontSize(8.5);
+
+for(let i=0;i<o.itens.length;i++){
+  let it=o.itens[i],desc=p.splitTextToSize(it.d,44),cor=p.splitTextToSize(it.cor||'-',26),h=Math.max(10,Math.max(desc.length,cor.length)*4+4);
+  if(y+h>190){p.addPage();y=20;p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.setFontSize(8.5);p.text('ITEM',14,y+6);p.text('DESCRIÇÃO',30,y+6);p.text('COR',80,y+6);p.text('QTD.',110,y+6);p.text('UNIT.',127,y+6);p.text('TOTAL',162,y+6);p.setTextColor(...az);p.setFont('helvetica','normal');y+=9}
+  p.setDrawColor(...linha);for(let j=0;j<col.length;j++)p.line(col[j],y,col[j],y+h);p.line(12,y,198,y);p.line(12,y+h,198,y+h);
+  p.text(String(i+1).padStart(2,'0'),14,y+6);p.text(desc,30,y+6);p.text(cor,80,y+6);p.text(String(it.q),110,y+6);p.text(BRL.format(it.v),127,y+6);p.text(BRL.format(it.q*it.v),162,y+6);y+=h;
+}
+
+// Totais do lado direito, igual ao modelo
+y+=5;
+let descReais=o.descontoTipo==='percentual'?o.subtotal*o.desconto/100:o.desconto;
+let tx=102;
+p.setFont('helvetica','normal');p.setFontSize(9.5);
+p.text('Subtotal:',tx,y+6);p.setFont('helvetica','bold');p.text(BRL.format(o.subtotal),196,y+6,{align:'right'});
+p.setFont('helvetica','normal');p.text('Desconto:',tx,y+14);p.setFont('helvetica','bold');p.text('- '+BRL.format(descReais),196,y+14,{align:'right'});
+p.setFont('helvetica','normal');p.text('Frete/Instalação:',tx,y+22);p.setFont('helvetica','bold');p.text(BRL.format(o.frete),196,y+22,{align:'right'});
+p.setFillColor(235,240,243);p.rect(102,y+26,96,18,'F');p.setFont('helvetica','bold');p.setFontSize(14);p.text('TOTAL:',106,y+38);p.setFontSize(16);p.text(BRL.format(o.total),194,y+38,{align:'right'});
+
+// Condições
+y+=54;if(y>225){p.addPage();y=22}
+p.setFont('helvetica','bold');p.setFontSize(10);p.text('CONDIÇÕES DE PAGAMENTO',12,y);
+p.setDrawColor(...linha);p.line(12,y+4,198,y+4);
+p.setFont('helvetica','bold');p.setFontSize(9.5);p.text('Método:',12,y+12);
+p.setFont('helvetica','normal');p.text(metodoMap[o.metodo]||'A combinar',31,y+12);
+let cond=p.splitTextToSize(o.condicoes||'-',184);p.text(cond,12,y+19);y+=23+cond.length*4;
+if(o.metodo==='cheque'&&(o.cheques||[]).length){
+  if(y>238){p.addPage();y=22}
+  p.setFont('helvetica','bold');p.setFontSize(10);p.text('CHEQUES',12,y);
+  p.line(12,y+4,198,y+4);y+=11;
+  p.setFont('helvetica','normal');p.setFontSize(9);
+  for(let ch of o.cheques){
+    if(y>272){p.addPage();y=22}
+    let linhaCheque='Cheque '+(ch.numero_cheque||'s/n')+' • '+(ch.banco||'Banco não informado')+' • '+BRL.format(Number(ch.valor)||0)+' • depósito '+fmtDataBR(ch.data_deposito);
+    let partes=p.splitTextToSize(linhaCheque,184);p.text(partes,12,y);y+=partes.length*4+3;
+  }
+  y+=3;
+}
+
+// Observações
+p.setFont('helvetica','bold');p.setFontSize(10);p.text('OBSERVAÇÕES',12,y);
+p.line(12,y+4,198,y+4);
+p.setFont('helvetica','normal');p.setFontSize(9.5);
+let ob=p.splitTextToSize(o.obs||'-',184);p.text(ob,12,y+12);y+=18+ob.length*4;
+
+// Assinatura e rodapé
+let assinaturaY=Math.max(y+14,268);
+if(assinaturaY>278){p.addPage();assinaturaY=250}
+p.setDrawColor(120,137,146);p.line(133,assinaturaY,198,assinaturaY);p.setFontSize(8.5);p.text('Assinatura do Cliente',165.5,assinaturaY+6,{align:'center'});
+p.setDrawColor(...linha);p.line(12,286,198,286);p.setTextColor(105,120,129);p.setFontSize(8.5);p.text(rodapeMarca(co),105,293,{align:'center'});
+
+let nome=(o.cliente.nome||'cliente').replace(/[^a-z0-9áéíóúãõç]+/gi,'_'),arq='Orcamento_'+o.numero+'_'+nome+'.pdf';
+if(window.AndroidApp&&typeof window.AndroidApp.savePdf==='function'){
+  window.AndroidApp.savePdf(p.output('datauristring'),arq);
+}else if(window.WindowsApp&&typeof window.WindowsApp.savePdf==='function'){
+  window.WindowsApp.savePdf(p.output('datauristring'),arq);
+}else{
+  p.save(arq);
+}
+}
+async function iniciarAplicativo(){
+  if(window.AndroidApp)document.body.classList.add('android-app');
+  carregarTema();
+  novo();
+  if($('vendaMes'))$('vendaMes').value=mesAtual();
+  if($('cpDataResumo'))$('cpDataResumo').value=hoje();
+  if($('cpEmissao'))$('cpEmissao').value=hoje();
+  renderHistorico();renderVendas();renderResumoMensal();renderReembolsos();renderClientes();renderProdutos();renderCheques();renderChequesDestinados();renderChequesProprios();
+  carregarCfg();carregarCloud();
+  if($('cloudEmail'))$('cloudEmail').value=localStorage.getItem('cav_cloud_email')||'';
+  avisarChequesHoje();avisarChequesPropriosHoje();inicializarBackupWindows();
+
+  // Primeiro restaura a conta principal. Só depois decide o login do usuário interno.
+  await restaurar();
+  if(!cloudReady){
+    inicializarUsuariosInternosLocal();
+  }else if(!usuarioInternoAtual){
+    await carregarUsuariosInternos(false);
+  }
+}
+window.__legacyIniciarAplicativo=iniciarAplicativo;
+</script>
+<script src="playstore_features.js"></script>
+<script>PlayStoreFeatures.start();</script>
+</body></html>
