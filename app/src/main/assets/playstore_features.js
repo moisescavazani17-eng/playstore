@@ -119,7 +119,7 @@ function renderPlans(){
   e.innerHTML=
     '<h2>Planos e assinatura</h2>'+
     '<div class="ps-current">'+h(planDetail())+'</div>'+
-    '<p class="muted">O aplicativo funciona sem conta e sem internet. A Google Play processa a compra, renovação e os meios de pagamento disponíveis para sua conta.</p>'+
+    '<p class="muted">O aplicativo funciona sem conta e sem internet. A Google Play processa a compra e os meios de pagamento disponíveis para sua conta. As assinaturas mensal e anual têm renovação automática até o cancelamento na Google Play.</p>'+
     '<div class="ps-grid">'+
       '<div class="ps-box '+(t==='free'?'on':'')+'"><h3>Gratuito</h3><p>Dados no aparelho<br>Orçamentos, clientes, vendas e documentos<br>Backup local/manual<br>Sem conta obrigatória</p></div>'+
       '<div class="ps-box '+(t==='professional'?'on':'')+'"><h3>Profissional</h3><p>Tudo do Gratuito<br>Logo própria no app<br>Logo e identidade nos PDFs<br>Cores e slogan personalizados</p><div class="ps-price-grid">'+priceBox('professional','mensal')+priceBox('professional','anual')+'</div></div>'+
