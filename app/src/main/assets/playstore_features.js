@@ -8,7 +8,9 @@ var PS={
   syncing:false,
   applying:false,
   timer:null,
-  pendingLogo:null
+  pendingLogo:null,
+  testBuild:false,
+  testAccountConnected:false
 };
 
 var TRACK=[
@@ -19,6 +21,10 @@ var TRACK=[
 function rank(t){return t==='pro_cloud'?2:t==='professional'?1:0}
 function brandPaid(){return rank(PS.plan.tier)>=1}
 function cloudPaid(){return rank(PS.plan.tier)>=2}
+function testBuild(){
+  try{return !!(PS.testBuild||(window.AndroidApp&&AndroidApp.isTestBuild&&AndroidApp.isTestBuild()))}catch(_){return !!PS.testBuild}
+}
+function testTeamSimulation(){return testBuild()&&cloudPaid()&&PS.testAccountConnected}
 function h(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function co(){try{return cfg()}catch(e){try{return JSON.parse(localStorage.getItem('cav_cfg')||'{}')}catch(_){return{}}}}
 function company(c){c=c||co();return String(c.empresa||'Meu Negócio').trim()||'Meu Negócio'}
@@ -116,9 +122,18 @@ function renderPlans(){
   var e=document.getElementById('psPlans');
   if(!e)return;
   var t=PS.plan.tier;
+  var testPanel=testBuild()?(
+    '<div class="ps-warn" style="margin-bottom:12px"><b>Modo de teste</b><br>Ative qualquer plano sem pagamento para validar os recursos. Isto existe somente no APK de teste.'+
+    '<div class="actions" style="margin-top:10px">'+
+      '<button class="btn '+(t==='free'?'primary':'')+'" onclick="PlayStoreFeatures.setTestPlan(\'free\')">Testar Gratuito</button>'+
+      '<button class="btn '+(t==='professional'?'primary':'')+'" onclick="PlayStoreFeatures.setTestPlan(\'professional\')">Testar Profissional</button>'+
+      '<button class="btn '+(t==='pro_cloud'?'primary':'')+'" onclick="PlayStoreFeatures.setTestPlan(\'pro_cloud\')">Testar Pro + Nuvem</button>'+
+    '</div></div>'
+  ):'';
   e.innerHTML=
     '<h2>Planos e assinatura</h2>'+
     '<div class="ps-current">'+h(planDetail())+'</div>'+
+    testPanel+
     '<p class="muted">O aplicativo funciona sem conta e sem internet. Organize clientes, produtos, serviços, orçamentos e vendas em um só lugar. A Google Play processa a compra e os meios de pagamento disponíveis para sua conta. As assinaturas mensal e anual têm renovação automática até o cancelamento na Google Play.</p>'+
     '<div class="ps-grid">'+
       '<div class="ps-box '+(t==='free'?'on':'')+'"><h3>Gratuito</h3><p>Dados no aparelho<br>1 usuário local obrigatório<br>Acesso protegido por usuário e senha<br>Clientes, produtos e serviços<br>Orçamentos, vendas e documentos<br>Backup local</p></div>'+
@@ -156,6 +171,16 @@ function renderCloud(){
   if(!e)return;
   if(!cloudPaid()){
     e.innerHTML='<h2>Conta Pro, usuários e nuvem 🔒</h2><p class="muted">No Básico você usa um único usuário local protegido por senha. O Pro + Nuvem libera conta por e-mail, usuários adicionais, permissões, histórico de ações, backup online e sincronização.</p><button class="btn primary" onclick="PlayStoreFeatures.buy(\'pro_cloud\',\'mensal\')">Assinar Pro + Nuvem</button>';
+    return;
+  }
+  if(testBuild()){
+    var testEmail=localStorage.getItem('ps_test_account_email')||'';
+    e.innerHTML=
+      '<h2>Conta Pro de teste</h2>'+
+      '<p class="muted">Simulação local exclusiva do APK de teste. Use um e-mail e senha de teste para liberar usuários adicionais e permissões sem cobrança. A nuvem real será validada depois pelo teste interno da Google Play.</p>'+
+      '<div class="grid"><label>E-mail de teste<input id="psTestEmail" type="email" value="'+h(testEmail)+'" placeholder="teste@empresa.com"></label><label>Senha de teste<input id="psTestPass" type="password" placeholder="Mínimo de 6 caracteres"></label></div>'+
+      '<div class="actions"><button class="btn primary" onclick="PlayStoreFeatures.connectTestAccount()">Conectar conta de teste</button><button class="btn" onclick="PlayStoreFeatures.disconnectTestAccount()">Desconectar</button></div>'+
+      '<p class="muted">'+(PS.testAccountConnected?'Conta de teste conectada: '+h(testEmail)+' • usuários extras liberados.':'Conecte a conta de teste para liberar usuários adicionais.')+'</p>';
     return;
   }
   e.innerHTML=
@@ -475,6 +500,12 @@ function schedule(){
 async function restoreAuth(){
   cloudReady=false;
   PS.cloudConnected=false;
+  if(testBuild()){
+    cloudUser=null;
+    PS.testAccountConnected=!!localStorage.getItem('ps_test_account_connected');
+    cloudStatus();
+    return;
+  }
   if(!cloudPaid()){
     cloudUser=null;cloudStatus();return;
   }
@@ -614,6 +645,32 @@ function overrides(){
   window.status=cloudStatus;
 }
 
+function setTestPlan(tier){
+  if(!testBuild()||!window.AndroidApp||!AndroidApp.setTestPlan)return;
+  AndroidApp.setTestPlan(tier);
+}
+function connectTestAccount(){
+  if(!testBuild()||!cloudPaid())return;
+  var email=(document.getElementById('psTestEmail')?.value||'').trim();
+  var pass=document.getElementById('psTestPass')?.value||'';
+  if(!email||!email.includes('@'))return alert('Informe um e-mail de teste válido.');
+  if(pass.length<6)return alert('Use uma senha de teste com pelo menos 6 caracteres.');
+  localStorage.setItem('ps_test_account_email',email);
+  localStorage.setItem('ps_test_account_connected','1');
+  PS.testAccountConnected=true;
+  renderCloud();
+  if(typeof carregarUsuariosInternos==='function')carregarUsuariosInternos(false);
+  if(typeof aplicarPermissoesUI==='function')aplicarPermissoesUI();
+  if(typeof mostrarAviso==='function')mostrarAviso('Conta Pro de teste conectada.');
+}
+function disconnectTestAccount(){
+  if(!testBuild())return;
+  localStorage.removeItem('ps_test_account_connected');
+  PS.testAccountConnected=false;
+  renderCloud();
+  if(typeof aplicarPermissoesUI==='function')aplicarPermissoesUI();
+}
+
 function buy(tier,basePlanId){
   if(!window.AndroidApp||!AndroidApp.buyPlan)return alert('A assinatura só pode ser comprada pela versão instalada através da Google Play.');
   if(PS.plan.tier===tier&&PS.plan.basePlanId===basePlanId)return manage();
@@ -636,6 +693,8 @@ function refreshCatalog(){
 function planChanged(p){
   try{
     PS.plan=typeof p==='string'?JSON.parse(p):p;
+    PS.testBuild=!!PS.plan.testBuild||testBuild();
+    if(!cloudPaid())PS.testAccountConnected=false;
     inject();applyBrand();
     if(typeof aplicarLimiteUsuariosDoPlano==='function')aplicarLimiteUsuariosDoPlano();
     if(!cloudPaid()){
@@ -659,6 +718,8 @@ async function start(){
     localStorage.setItem('playstore_local_updated_at',new Date().toISOString());
   }
   PS.plan=readPlan();
+  PS.testBuild=!!PS.plan.testBuild||testBuild();
+  PS.testAccountConnected=testBuild()&&!!localStorage.getItem('ps_test_account_connected');
   PS.catalog=readCatalog();
   inject();applyBrand();
   if(typeof window.__legacyIniciarAplicativo==='function')await window.__legacyIniciarAplicativo();
@@ -683,8 +744,14 @@ window.PlayStoreFeatures={
   openPrivacy:function(){openExternal(SUPABASE_URL+'/functions/v1/playstore-privacy')},
   openDeletionPage:function(){openExternal(SUPABASE_URL+'/functions/v1/playstore-account-delete')},
   deleteAccount:deleteAccount,
+  setTestPlan:setTestPlan,
+  connectTestAccount:connectTestAccount,
+  disconnectTestAccount:disconnectTestAccount,
+  isTestMode:function(){return testBuild()},
+  isTestTeamSimulation:function(){return testTeamSimulation()},
+  accountEmail:function(){return testTeamSimulation()?(localStorage.getItem('ps_test_account_email')||''):((cloudUser&&cloudUser.email)||localStorage.getItem('cav_cloud_email')||'')},
   allowsAdditionalUsers:function(){return cloudPaid()},
-  isProAccountConnected:function(){return cloudPaid()&&PS.cloudConnected},
+  isProAccountConnected:function(){return cloudPaid()&&(PS.cloudConnected||testTeamSimulation())},
   onNativePlanChanged:planChanged,
   onCatalogChanged:catalogChanged
 };
