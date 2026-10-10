@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+def releaseStoreFile = System.getenv('PLAYSTORE_KEYSTORE_PATH')
+def releaseStorePassword = System.getenv('PLAYSTORE_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('PLAYSTORE_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('PLAYSTORE_KEY_PASSWORD')
+def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
 android {
     namespace 'com.cavazani.orcamentos'
     compileSdk 36
@@ -11,12 +17,26 @@ android {
         minSdk 24
         targetSdk 36
         versionCode 1
-        versionName '0.1.0-PLAYSTORE'
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
