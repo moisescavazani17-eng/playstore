@@ -1524,7 +1524,7 @@ function renderProdutos(){let a=produtosLista();$('produtos').innerHTML=a.length
 function cfg(){return JSON.parse(localStorage.getItem('cav_cfg')||'{}')}
 function salvarConfig(){if(!pode('config_editar'))return negar('config_editar');let c={...cfg(),empresa:$('cfgEmpresa').value,telefone:$('cfgTelefone').value,email:$('cfgEmail').value,instagram:$('cfgInstagram').value,endereco:$('cfgEndereco').value,cnpj:$('cfgCnpj').value,ie:$('cfgIe').value.trim()};localStorage.setItem('cav_cfg',JSON.stringify(c));salvarEstado();registrarLog('config_empresa_alterada',{});alert('Dados salvos.')}
 function carregarCfg(){let c=cfg();['Empresa','Telefone','Email','Instagram','Endereco','Cnpj','Ie'].forEach(x=>{let k=x.toLowerCase();$('cfg'+x).value=c[k]||$('cfg'+x).value})}
-function inicializarBackupWindows(){}
+
 const SUPABASE_URL='https://vssbgmzkprhsbpxdtald.supabase.co';
 const SUPABASE_KEY='sb_publishable_ljcrxLGYHRkDCX9vH9_Byg_oYfU7Qo6';
 const SUPABASE_STORAGE_KEY='orcamentos-gestao-auth-session-v1';
@@ -2113,7 +2113,7 @@ async function iniciarAplicativo(){
   renderHistorico();renderVendas();renderResumoMensal();renderReembolsos();renderClientes();renderProdutos();renderCheques();renderChequesDestinados();renderChequesProprios();
   carregarCfg();carregarCloud();
   if($('cloudEmail'))$('cloudEmail').value=localStorage.getItem('cav_cloud_email')||'';
-  avisarChequesHoje();avisarChequesPropriosHoje();inicializarBackupWindows();
+  avisarChequesHoje();avisarChequesPropriosHoje();
 
   // Primeiro restaura a conta principal. Só depois decide o login do usuário interno.
   await restaurar();
