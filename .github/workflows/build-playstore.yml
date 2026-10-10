@@ -23,7 +23,7 @@ on:
       - ".github/workflows/build-playstore.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: build-playstore-latest
@@ -83,6 +83,24 @@ jobs:
           ls -lh app/build/outputs/bundle/release/app-release.aab
           sha256sum app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/bundle/release/app-release.aab
+
+      - name: Publicar APK de teste mais recente
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk Orcamentos-Gestao-Teste.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if gh release view teste-atual >/dev/null 2>&1; then
+            git tag -f teste-atual "$GITHUB_SHA"
+            git push origin refs/tags/teste-atual --force
+            gh release upload teste-atual Orcamentos-Gestao-Teste.apk --clobber
+            gh release edit teste-atual               --title "APK de teste - versão mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
+          else
+            gh release create teste-atual Orcamentos-Gestao-Teste.apk               --target "$GITHUB_SHA"               --title "APK de teste - versão mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
+          fi
 
       - name: Guardar APK de teste
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_artifacts }}
