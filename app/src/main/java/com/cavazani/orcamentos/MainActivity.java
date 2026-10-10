@@ -70,12 +70,12 @@ public class MainActivity extends Activity {
     private static final int BACKUP_OPEN_CODE = 82;
     private String pendingBackupJson = null;
 
-    private static final String SECURE_PREFS = "marcenaria_pro_secure_state";
+    private static final String SECURE_PREFS = "orcamentos_gestao_secure_state";
     private static final String AUTH_PREF_KEY = "supabase_auth_session";
     private static final String BILLING_TOKEN_PREF_KEY = "billing_purchase_token";
-    private static final String SECURE_KEY_ALIAS = "marcenaria_pro_secure_key";
+    private static final String SECURE_KEY_ALIAS = "orcamentos_gestao_secure_key";
 
-    private static final String PLAN_PREFS = "marcenaria_pro_plan";
+    private static final String PLAN_PREFS = "orcamentos_gestao_plan";
     private static final String PLAN_KEY = "tier";
     private static final String PLAN_TIME_KEY = "verified_at";
     private static final String PLAN_EXPIRY_KEY = "expires_at";
@@ -676,7 +676,7 @@ public class MainActivity extends Activity {
     }
 
     private static class AppDatabaseHelper extends SQLiteOpenHelper {
-        private static final String DB_NAME = "marcenaria_pro_local.db";
+        private static final String DB_NAME = "orcamentos_gestao_local.db";
         private static final int DB_VERSION = 1;
 
         AppDatabaseHelper(Context context) {
@@ -823,7 +823,7 @@ public class MainActivity extends Activity {
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("application/json");
                 intent.putExtra(Intent.EXTRA_TITLE,
-                        (fileName == null || fileName.trim().isEmpty()) ? "MarcenariaPro_Backup.json" : fileName);
+                        (fileName == null || fileName.trim().isEmpty()) ? "Orcamentos_Gestao_Backup.json" : fileName);
                 startActivityForResult(intent, BACKUP_CREATE_CODE);
             });
         }
@@ -851,7 +851,7 @@ public class MainActivity extends Activity {
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
                     values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
-                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/MarcenariaPro");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/OrcamentosGestao");
                     Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                     if (uri == null) throw new Exception("Não foi possível criar o arquivo.");
                     try (OutputStream os = getContentResolver().openOutputStream(uri)) {
@@ -865,14 +865,14 @@ public class MainActivity extends Activity {
                         return;
                     }
                     File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                    File dir = new File(downloads, "MarcenariaPro");
+                    File dir = new File(downloads, "OrcamentosGestao");
                     if (!dir.exists()) dir.mkdirs();
                     try (FileOutputStream fos = new FileOutputStream(new File(dir, fileName))) {
                         fos.write(pdfBytes);
                     }
                 }
                 String savedName = fileName;
-                showToast("PDF salvo em Downloads/MarcenariaPro: " + savedName);
+                showToast("PDF salvo em Downloads/OrcamentosGestao: " + savedName);
             } catch (Exception e) {
                 showToast("Erro ao salvar PDF: " + e.getMessage());
             }
