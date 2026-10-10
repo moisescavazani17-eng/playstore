@@ -168,14 +168,33 @@ function renderCloud(){
   cloudStatus();
 }
 
+function renderLocalBackup(){
+  var e=document.getElementById('psLocalBackup');
+  if(!e)return;
+  e.innerHTML='<h2>Backup local</h2>'+
+    '<p class="muted">Exporte um arquivo com os dados deste aparelho e guarde onde preferir. Este recurso funciona sem conta e não envia o arquivo para nossa nuvem.</p>'+
+    '<div class="actions"><button class="btn primary" onclick="PlayStoreFeatures.exportBackup()">Exportar backup</button><button class="btn" onclick="PlayStoreFeatures.importBackup()">Restaurar arquivo</button></div>';
+}
+
+function renderPrivacy(){
+  var e=document.getElementById('psPrivacy');
+  if(!e)return;
+  e.innerHTML='<h2>Privacidade e conta</h2>'+
+    '<p class="muted">Consulte como os dados são tratados e controle sua conta de nuvem.</p>'+
+    '<div class="actions"><button class="btn" onclick="PlayStoreFeatures.openPrivacy()">Política de privacidade</button><button class="btn" onclick="PlayStoreFeatures.openDeletionPage()">Página de exclusão</button></div>'+
+    (PS.cloudConnected?'<button class="btn danger" style="width:100%;margin-top:9px" onclick="PlayStoreFeatures.deleteAccount()">Excluir conta e dados da nuvem</button>':'');
+}
+
 function inject(){
   addStyles();
   var v=document.getElementById('view-config'),c=document.getElementById('empresaConfigCard');
   if(v&&c&&!document.getElementById('psPlans')){
     var p=document.createElement('div');p.className='card';p.id='psPlans';v.insertBefore(p,c);
     var b=document.createElement('div');b.className='card';b.id='psBrand';c.insertAdjacentElement('afterend',b);
+    var lb=document.createElement('div');lb.className='card';lb.id='psLocalBackup';b.insertAdjacentElement('afterend',lb);
+    var pr=document.createElement('div');pr.className='card';pr.id='psPrivacy';lb.insertAdjacentElement('afterend',pr);
   }
-  renderPlans();renderBrand();renderCloud();
+  renderPlans();renderBrand();renderLocalBackup();renderPrivacy();renderCloud();
 }
 
 function contrast(hex){
@@ -443,7 +462,7 @@ async function signIn(){
     cloudUser=r.data.user;PS.cloudConnected=true;cloudReady=false;
     if(r.data.session&&typeof salvarSessaoNativa==='function')await salvarSessaoNativa(r.data.session);
     await linkCloudEntitlement(r.data.session);
-    cloudStatus();
+    cloudStatus();renderPrivacy();
     await reconcile();
     if(typeof mostrarAviso==='function')mostrarAviso('Conta vinculada ao seu plano Pro + Nuvem.');
   }catch(e){
@@ -476,7 +495,59 @@ async function createAccount(){
 async function signOut(){
   try{if(cloud)await cloud.auth.signOut()}catch(e){}
   if(typeof limparSessaoNativa==='function')await limparSessaoNativa();
-  cloudUser=null;cloudReady=false;PS.cloudConnected=false;cloudStatus();
+  cloudUser=null;cloudReady=false;PS.cloudConnected=false;cloudStatus();renderPrivacy();
+}
+
+function openExternal(url){
+  if(window.AndroidApp&&AndroidApp.openExternalUrl)AndroidApp.openExternalUrl(url);
+  else window.open(url,'_blank','noopener');
+}
+
+function exportBackup(){
+  if(!window.AndroidApp||!AndroidApp.exportBackup)return alert('Backup local disponível na versão Android.');
+  var payload=snapshot();
+  payload.formato='marcenaria-pro-local-backup-v1';
+  payload.exportado_em=new Date().toISOString();
+  var d=new Date(),date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  AndroidApp.exportBackup(JSON.stringify(payload),'MarcenariaPro_Backup_'+date+'.json');
+}
+
+function importBackup(){
+  if(!window.AndroidApp||!AndroidApp.importBackup)return alert('Restauração local disponível na versão Android.');
+  AndroidApp.importBackup();
+}
+
+async function onBackupImported(raw){
+  try{
+    var payload=typeof raw==='string'?JSON.parse(raw):raw;
+    if(!payload||payload.formato!=='marcenaria-pro-local-backup-v1'||!payload.storage)throw new Error('Arquivo de backup inválido.');
+    var ok=typeof confirmar==='function'?await confirmar('Restaurar este backup? Os dados atuais deste aparelho serão substituídos.'):confirm('Restaurar este backup?');
+    if(!ok)return;
+    payload.formato='marcenaria-pro-cloud-v1';
+    applySnapshot(payload);
+  }catch(e){alert('Não foi possível restaurar o backup: '+e.message)}
+}
+
+async function deleteAccount(){
+  if(!PS.cloudConnected||!cloud)return alert('Entre na conta de nuvem que deseja excluir.');
+  var ok=typeof confirmar==='function'?await confirmar('Excluir permanentemente sua conta e todos os dados armazenados na nuvem? Sua assinatura Google Play não será cancelada automaticamente.'):confirm('Excluir permanentemente a conta de nuvem?');
+  if(!ok)return;
+  try{
+    var sess=await currentSession();
+    if(!sess||!sess.access_token)throw new Error('Sessão expirada. Entre novamente.');
+    var r=await fetch(SUPABASE_URL+'/functions/v1/playstore-account-delete',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+sess.access_token},
+      body:'{}'
+    });
+    var body=await r.json().catch(function(){return{}});
+    if(!r.ok)throw new Error(body.detail||body.error||'Falha ao excluir a conta.');
+    try{await limparSessaoNativa()}catch(_){}
+    localStorage.removeItem('cav_cloud_email');
+    PS.cloudConnected=false;cloudUser=null;cloudReady=false;cloud=null;
+    renderCloud();renderPrivacy();cloudStatus();
+    alert('Conta e dados da nuvem excluídos. Os dados locais deste aparelho foram mantidos.');
+  }catch(e){alert('Não foi possível excluir a conta: '+e.message)}
 }
 
 function overrides(){
@@ -548,6 +619,12 @@ window.PlayStoreFeatures={
   removeLogo:removeLogo,
   backup:function(){backup(false).catch(function(e){alert(e.message)})},
   restoreCloud:restoreCloud,
+  exportBackup:exportBackup,
+  importBackup:importBackup,
+  onBackupImported:onBackupImported,
+  openPrivacy:function(){openExternal(SUPABASE_URL+'/functions/v1/playstore-privacy')},
+  openDeletionPage:function(){openExternal(SUPABASE_URL+'/functions/v1/playstore-account-delete')},
+  deleteAccount:deleteAccount,
   onNativePlanChanged:planChanged,
   onCatalogChanged:catalogChanged
 };
