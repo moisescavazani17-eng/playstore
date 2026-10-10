@@ -306,19 +306,69 @@ function applySnapshot(p){
     Object.keys(p.storage).forEach(function(k){if(TRACK.indexOf(k)>=0)localStorage.setItem(k,p.storage[k])});
     localStorage.setItem('playstore_local_updated_at',p.updated_at||new Date().toISOString());
   }finally{PS.applying=false}
+  persistAllNative();
   location.reload();
+}
+
+function nativeStoreAvailable(){
+  return !!(window.AndroidApp&&AndroidApp.loadLocalState&&AndroidApp.saveLocalValue);
+}
+
+function persistNativeKey(k,v){
+  try{if(nativeStoreAvailable())AndroidApp.saveLocalValue(String(k),String(v))}catch(e){console.warn('SQLite save:',e)}
+}
+
+function removeNativeKey(k){
+  try{if(window.AndroidApp&&AndroidApp.removeLocalValue)AndroidApp.removeLocalValue(String(k))}catch(e){console.warn('SQLite remove:',e)}
+}
+
+function persistAllNative(){
+  if(!nativeStoreAvailable())return;
+  TRACK.forEach(function(k){
+    var v=localStorage.getItem(k);
+    if(v===null)removeNativeKey(k);else persistNativeKey(k,v);
+  });
+}
+
+function hydrateNativeStorage(){
+  if(!nativeStoreAvailable())return;
+  try{
+    var raw=AndroidApp.loadLocalState();
+    var state=raw?JSON.parse(raw):{};
+    var keys=Object.keys(state||{}).filter(function(k){return TRACK.indexOf(k)>=0});
+    if(keys.length){
+      PS.applying=true;
+      try{
+        keys.forEach(function(k){localStorage.setItem(k,String(state[k]))});
+      }finally{PS.applying=false}
+    }else{
+      persistAllNative();
+    }
+  }catch(e){console.warn('SQLite load:',e)}
 }
 
 function watchStorage(){
   if(window.__psWatch)return;
   window.__psWatch=true;
-  var orig=Storage.prototype.setItem;
+  var originalSet=Storage.prototype.setItem;
+  var originalRemove=Storage.prototype.removeItem;
+
   Storage.prototype.setItem=function(k,v){
-    orig.apply(this,arguments);
+    originalSet.apply(this,arguments);
     if(this===localStorage&&TRACK.indexOf(String(k))>=0&&!PS.applying){
-      orig.call(localStorage,'playstore_local_updated_at',new Date().toISOString());
+      persistNativeKey(k,v);
+      originalSet.call(localStorage,'playstore_local_updated_at',new Date().toISOString());
       schedule();
       if(k==='cav_cfg')setTimeout(applyBrand,0);
+    }
+  };
+
+  Storage.prototype.removeItem=function(k){
+    originalRemove.apply(this,arguments);
+    if(this===localStorage&&TRACK.indexOf(String(k))>=0&&!PS.applying){
+      removeNativeKey(k);
+      originalSet.call(localStorage,'playstore_local_updated_at',new Date().toISOString());
+      schedule();
     }
   };
 }
@@ -596,6 +646,7 @@ function catalogChanged(c){
 }
 
 async function start(){
+  hydrateNativeStorage();
   watchStorage();
   overrides();
   if(!localStorage.getItem('playstore_local_updated_at')&&localHasData()){
