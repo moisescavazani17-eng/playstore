@@ -233,9 +233,9 @@ function applyBrand(){
   var c=co(),on=brandPaid()&&c.marcaNoApp!==false,br=document.querySelector('.brand');
   if(br){
     var im=br.querySelector('img'),bt=br.querySelector('b'),sm=br.querySelector('small');
-    if(im)im.src=on&&c.logoDataUrl?c.logoDataUrl:'logo-app.svg';
-    if(bt)bt.textContent=on?company(c):'ORÇAMENTOS & GESTÃO';
-    if(sm)sm.textContent=on?subtitle(c):'Orçamentos e gestão';
+    if(im)im.src=on&&c.logoDataUrl?c.logoDataUrl:'logo-app.webp';
+    if(bt)bt.textContent=on?company(c):'VEZORA';
+    if(sm)sm.textContent=on?subtitle(c):'Orçamentos e Gestão';
   }
   if(on){
     document.documentElement.style.setProperty('--accent',c.corPrincipal||'#dce7ed');
@@ -595,7 +595,7 @@ function exportBackup(){
   payload.formato='orcamentos-gestao-local-backup-v1';
   payload.exportado_em=new Date().toISOString();
   var d=new Date(),date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  AndroidApp.exportBackup(JSON.stringify(payload),'Orcamentos_Gestao_Backup_'+date+'.json');
+  AndroidApp.exportBackup(JSON.stringify(payload),'Vezora_Backup_'+date+'.json');
 }
 
 function importBackup(){
