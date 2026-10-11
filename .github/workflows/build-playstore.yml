@@ -97,23 +97,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          cp app/build/outputs/apk/debug/app-debug.apk Vezora-Teste.apk
           cp app/build/outputs/apk/debug/app-debug.apk Orcamentos-Gestao-Teste.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if gh release view teste-atual >/dev/null 2>&1; then
             git tag -f teste-atual "$GITHUB_SHA"
             git push origin refs/tags/teste-atual --force
-            gh release upload teste-atual Orcamentos-Gestao-Teste.apk --clobber
-            gh release edit teste-atual               --title "APK de teste - versão mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
+            gh release upload teste-atual Vezora-Teste.apk Orcamentos-Gestao-Teste.apk --clobber
+            gh release edit teste-atual               --title "Vezora - APK de teste mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
           else
-            gh release create teste-atual Orcamentos-Gestao-Teste.apk               --target "$GITHUB_SHA"               --title "APK de teste - versão mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
+            gh release create teste-atual Vezora-Teste.apk Orcamentos-Gestao-Teste.apk               --target "$GITHUB_SHA"               --title "Vezora - APK de teste mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
           fi
 
       - name: Guardar APK de teste
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_artifacts }}
         uses: actions/upload-artifact@v4
         with:
-          name: Orcamentos-Gestao-Android-Debug
+          name: Vezora-Android-Debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 1
@@ -122,7 +123,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_artifacts }}
         uses: actions/upload-artifact@v4
         with:
-          name: Orcamentos-Gestao-PlayStore-AAB
+          name: Vezora-PlayStore-AAB
           path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 1
