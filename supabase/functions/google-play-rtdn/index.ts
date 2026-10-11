@@ -1,7 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@6";
 
-const PACKAGE_NAME = "com.cavazani.orcamentos.playstore";
+const PACKAGE_NAME = "com.cavazani.gestao";
 const PRODUCTS: Record<string, string> = {
   plano_profissional: "professional",
   plano_pro_nuvem: "pro_cloud",
