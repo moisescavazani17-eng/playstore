@@ -120,7 +120,7 @@ O workflow `.github/workflows/build-playstore.yml` pode validar builds sem chave
 ## Aplicativo
 
 - Nome oficial: `Vezora: Orçamentos e Gestão`
-- Package name atual (ainda provisório até a migração final da marca): `com.cavazani.orcamentos.playstore`
+- Package name definitivo: `com.cavazani.gestao`
 - targetSdk: 36
 - versionCode: 1
 - versionName: 1.0.0
@@ -129,7 +129,7 @@ O workflow `.github/workflows/build-playstore.yml` pode validar builds sem chave
 ## Antes de produção
 
 Itens que dependem de configuração externa e não ficam no código:
-1. Criar o app na Play Console com o package name definitivo.
+1. Criar o app na Play Console usando `com.cavazani.gestao`.
 2. Criar os 2 produtos de assinatura e os 4 base plans acima, com preços.
 3. Conectar a service account à Play Console e habilitar Android Publisher API.
 4. Cadastrar `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` no Supabase.
