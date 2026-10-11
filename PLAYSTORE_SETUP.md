@@ -1,4 +1,4 @@
-# Orçamentos & Gestão — configuração de produção da Google Play
+# Vezora: Orçamentos e Gestão — configuração de produção da Google Play
 
 Este repositório contém somente a versão Android destinada à Google Play.
 
@@ -119,8 +119,8 @@ O workflow `.github/workflows/build-playstore.yml` pode validar builds sem chave
 
 ## Aplicativo
 
-- Nome provisório: `Orçamentos & Gestão`
-- Package name atual (provisório até definirmos a marca): `com.cavazani.orcamentos.playstore`
+- Nome oficial: `Vezora: Orçamentos e Gestão`
+- Package name atual (ainda provisório até a migração final da marca): `com.cavazani.orcamentos.playstore`
 - targetSdk: 36
 - versionCode: 1
 - versionName: 1.0.0
