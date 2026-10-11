@@ -1,4 +1,4 @@
-# Orçamentos & Gestão - Play Store
+# Vezora: Orçamentos e Gestão - Android
 
 Repositório exclusivo da versão Android destinada à Google Play, voltada a autônomos, prestadores de serviço e pequenos negócios.
 
