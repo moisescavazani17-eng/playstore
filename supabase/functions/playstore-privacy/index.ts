@@ -2,15 +2,15 @@ function page() {
   return `<!doctype html>
 <html lang="pt-BR"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Política de Privacidade - Orçamentos & Gestão</title>
+<title>Política de Privacidade - Vezora</title>
 <style>
 body{font-family:Arial,sans-serif;background:#071722;color:#f4f7f9;margin:0;padding:24px}
 main{max-width:780px;margin:auto;background:#0d2634;border:1px solid #29495a;border-radius:16px;padding:24px}
 h1,h2{color:#fff}p,li{color:#c6d4dc;line-height:1.6}a{color:#b9ddf0}.box{background:#0a202c;border:1px solid #29495a;border-radius:10px;padding:12px}
 </style></head><body><main>
-<h1>Política de Privacidade — Orçamentos & Gestão</h1>
+<h1>Política de Privacidade — Vezora</h1>
 <p><strong>Última atualização: 10 de outubro de 2026.</strong></p>
-<p>Orçamentos & Gestão é um aplicativo geral de orçamento e gestão para autônomos, prestadores de serviço e pequenos negócios, com funcionamento local como padrão. Esta política explica quais dados podem ser processados, para quais finalidades e quais opções de controle estão disponíveis.</p>
+<p>Vezora: Orçamentos e Gestão é um aplicativo geral de orçamento e gestão para autônomos, prestadores de serviço e pequenos negócios, com funcionamento local como padrão. Esta política explica quais dados podem ser processados, para quais finalidades e quais opções de controle estão disponíveis.</p>
 
 <h2>1. Dados armazenados somente no aparelho</h2>
 <p>Sem ativar a nuvem, os dados de uso do aplicativo — como clientes, produtos, orçamentos, vendas, recibos, configurações e identidade visual — são armazenados localmente no dispositivo. Esses dados não são enviados ao nosso servidor apenas pelo uso normal do plano local.</p>
@@ -19,7 +19,7 @@ h1,h2{color:#fff}p,li{color:#c6d4dc;line-height:1.6}a{color:#b9ddf0}.box{backgro
 <p>O recurso Pro + Nuvem é opcional. Quando o usuário cria uma conta, processamos o endereço de e-mail utilizado no cadastro e o conteúdo que ele decide sincronizar, como backup dos dados do aplicativo. Esses dados são usados somente para autenticação, backup, restauração e sincronização entre dispositivos.</p>
 
 <h2>3. Assinaturas e pagamentos</h2>
-<p>Assinaturas digitais são processadas pela Google Play. O Orçamentos & Gestão não recebe nem armazena número de cartão, senha bancária ou dados completos do meio de pagamento. Para liberar e manter os recursos pagos, processamos informações técnicas da assinatura, como produto contratado, período do plano, situação da assinatura, data de validade e uma referência técnica protegida da compra.</p>
+<p>Assinaturas digitais são processadas pela Google Play. O Vezora não recebe nem armazena número de cartão, senha bancária ou dados completos do meio de pagamento. Para liberar e manter os recursos pagos, processamos informações técnicas da assinatura, como produto contratado, período do plano, situação da assinatura, data de validade e uma referência técnica protegida da compra.</p>
 
 <h2>4. Como usamos os dados</h2>
 <ul>
@@ -51,7 +51,7 @@ h1,h2{color:#fff}p,li{color:#c6d4dc;line-height:1.6}a{color:#b9ddf0}.box{backgro
 <p>Esta política pode ser atualizada para refletir mudanças do aplicativo, serviços utilizados ou requisitos legais. A versão publicada nesta página será a vigente.</p>
 
 <h2>11. Contato</h2>
-<p>Dúvidas sobre privacidade podem ser encaminhadas pelo canal de suporte informado na ficha oficial do Orçamentos & Gestão na Google Play.</p>
+<p>Dúvidas sobre privacidade podem ser encaminhadas pelo canal de suporte informado na ficha oficial do Vezora na Google Play.</p>
 
 <div class="box"><strong>Resumo:</strong> o app funciona localmente sem conta. A nuvem é opcional e paga. Os pagamentos são processados pela Google Play.</div>
 </main></body></html>`;
