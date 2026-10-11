@@ -9,7 +9,7 @@ main{max-width:780px;margin:auto;background:#0d2634;border:1px solid #29495a;bor
 h1,h2{color:#fff}p,li{color:#c6d4dc;line-height:1.6}a{color:#b9ddf0}.box{background:#0a202c;border:1px solid #29495a;border-radius:10px;padding:12px}
 </style></head><body><main>
 <h1>Política de Privacidade — Vezora</h1>
-<p><strong>Última atualização: 10 de outubro de 2026.</strong></p>
+<p><strong>Última atualização: 11 de outubro de 2026.</strong></p>
 <p>Vezora: Orçamentos e Gestão é um aplicativo geral de orçamento e gestão para autônomos, prestadores de serviço e pequenos negócios, com funcionamento local como padrão. Esta política explica quais dados podem ser processados, para quais finalidades e quais opções de controle estão disponíveis.</p>
 
 <h2>1. Dados armazenados somente no aparelho</h2>
