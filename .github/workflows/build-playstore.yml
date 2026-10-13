@@ -81,6 +81,9 @@ jobs:
       - name: Compilar APK de teste e AAB
         run: gradle assembleDebug bundleRelease
 
+      - name: Analisar configuração do R8
+        run: gradle :app:analyzeReleaseR8Config
+
       - name: Validar arquivos gerados
         shell: bash
         run: |
