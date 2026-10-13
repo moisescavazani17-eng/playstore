@@ -91,6 +91,15 @@ jobs:
           sha256sum app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/bundle/release/app-release.aab
 
+      - name: Disponibilizar AAB para assinatura local
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vezora-Unsigned-AAB-For-Signing
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Publicar APK de teste mais recente
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         env:
