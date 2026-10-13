@@ -98,15 +98,16 @@ jobs:
         shell: bash
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk Vezora-Teste.apk
+          cp app/build/outputs/bundle/release/app-release.aab Vezora-Unsigned.aab
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if gh release view teste-atual >/dev/null 2>&1; then
             git tag -f teste-atual "$GITHUB_SHA"
             git push origin refs/tags/teste-atual --force
-            gh release upload teste-atual Vezora-Teste.apk --clobber
+            gh release upload teste-atual Vezora-Teste.apk Vezora-Unsigned.aab --clobber
             gh release edit teste-atual               --title "Vezora - APK de teste mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
           else
-            gh release create teste-atual Vezora-Teste.apk               --target "$GITHUB_SHA"               --title "Vezora - APK de teste mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
+            gh release create teste-atual Vezora-Teste.apk Vezora-Unsigned.aab               --target "$GITHUB_SHA"               --title "Vezora - APK de teste mais recente"               --prerelease               --notes "APK de teste gerado automaticamente a partir do commit $GITHUB_SHA. Não é o AAB de produção da Google Play."
           fi
 
       - name: Guardar APK de teste
