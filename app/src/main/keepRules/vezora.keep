@@ -1,0 +1,9 @@
+# Vezora R8 keep rules
+# JavaScript calls these methods by name through WebView.addJavascriptInterface.
+# Keep the exposed method names while allowing the rest of the app to be optimized.
+
+-keepattributes RuntimeVisibleAnnotations,RuntimeInvisibleAnnotations,AnnotationDefault
+
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
