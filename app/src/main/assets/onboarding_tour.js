@@ -19,75 +19,44 @@ function irPara(view){
 function criarPassos(){
   return [
     {
-      titulo:'Bem-vindo ao aplicativo',
-      texto:'Aqui você organiza seu negócio de um jeito simples. Vou mostrar rapidamente onde fica cada função.',
+      titulo:'Bem-vindo ao Vezora',
+      texto:'Em poucos passos você já consegue criar seu primeiro orçamento e entender o essencial do aplicativo.',
       alvo:'header .brand',
       view:null
     },
     {
-      titulo:'Novo orçamento',
-      texto:'É aqui que você monta um orçamento: escolhe o cliente, adiciona itens, valores, forma de pagamento e depois pode gerar o PDF.',
+      titulo:'Crie seu primeiro orçamento',
+      texto:'Comece por aqui. Escolha o cliente, adicione produtos ou serviços, informe os valores e gere o PDF para enviar.',
       alvo:'#view-novo',
       view:'novo'
     },
     {
-      titulo:'Orçamentos',
-      texto:'Nesta aba ficam os orçamentos já salvos. Você pode abrir, editar e acompanhar cada um.',
-      alvo:'#view-historico',
-      view:'historico'
-    },
-    {
-      titulo:'Vendas',
-      texto:'Quando um orçamento vira venda, ele aparece aqui. Esta área ajuda a acompanhar o que realmente foi vendido e recebido.',
-      alvo:'#view-vendas',
-      view:'vendas'
-    },
-    {
-      titulo:'Contratos',
-      texto:'Aqui você cria contratos usando os dados de uma venda e também consulta os contratos que já foram salvos.',
-      alvo:'#view-contrato',
-      view:'contrato'
-    },
-    {
-      titulo:'Reembolsos',
-      texto:'Use esta área quando precisar registrar a devolução de uma venda. O valor é descontado dos resultados.',
-      alvo:'#view-reembolsos',
-      view:'reembolsos'
-    },
-    {
-      titulo:'Clientes',
-      texto:'Aqui fica sua lista de clientes. Você pode cadastrar os dados e começar um novo orçamento para um cliente rapidamente.',
+      titulo:'Cadastre seus clientes',
+      texto:'Salve os dados dos clientes para não precisar preencher tudo novamente a cada novo orçamento.',
       alvo:'#view-clientes',
       view:'clientes'
     },
     {
-      titulo:'Cheques',
-      texto:'Se você trabalha com cheques, estas abas ajudam a controlar recebimentos, destinos e os cheques emitidos pelo próprio negócio.',
-      alvo:'#view-cheques',
-      view:'cheques'
-    },
-    {
-      titulo:'Produtos e serviços',
-      texto:'Cadastre o que você vende ou presta. Você pode informar preço à vista e a prazo e depois adicionar esses itens ao orçamento com mais rapidez.',
+      titulo:'Deixe produtos e serviços prontos',
+      texto:'Cadastre o que você vende ou presta e reutilize esses itens nos próximos orçamentos com muito mais rapidez.',
       alvo:'#view-produtos',
       view:'produtos'
     },
     {
-      titulo:'Máquinas de cartão',
-      texto:'Cadastre suas maquininhas e as taxas de débito e crédito de 1x até 24x. O app calcula o valor líquido que realmente entra no caixa.',
-      alvo:'#view-maquinas-cartao',
-      view:'maquinas-cartao',
-      opcional:true
+      titulo:'Acompanhe suas vendas',
+      texto:'Quando um orçamento virar venda, acompanhe por aqui o histórico do que realmente foi vendido.',
+      alvo:'#view-vendas',
+      view:'vendas'
     },
     {
-      titulo:'Configurações',
-      texto:'Aqui você configura os dados do negócio, backup, aparência, planos e, quando disponível, conta por e-mail e usuários adicionais.',
+      titulo:'Configure do seu jeito',
+      texto:'Em Configurações você encontra backup, aparência, planos e os recursos de conta e nuvem disponíveis para seu plano.',
       alvo:'#view-config',
       view:'config'
     },
     {
-      titulo:'Tudo pronto',
-      texto:'Você já conhece o básico. Comece criando um orçamento. Se quiser ver este guia novamente, use o botão “Refazer tour do aplicativo” em Configurações.',
+      titulo:'Pronto para começar',
+      texto:'Agora crie seu primeiro orçamento. Os outros recursos continuam disponíveis no menu e você pode refazer este guia quando quiser em Configurações.',
       alvo:'#view-novo',
       view:'novo'
     }
