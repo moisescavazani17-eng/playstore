@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const PACKAGE_NAME = "com.vezora.gestao";
+const PACKAGE_NAME = "com.vezora.app";
 const PRODUCTS: Record<string, string> = {
   plano_profissional: "professional",
   plano_pro_nuvem: "pro_cloud",
