@@ -39,7 +39,9 @@ android {
         }
 
         release {
-            minifyEnabled false
+            optimization {
+                enable = true
+            }
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release
             }
