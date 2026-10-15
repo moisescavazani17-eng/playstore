@@ -551,18 +551,74 @@ function mostrarSetupAdmin(){
 function biometriaDisponivel(){
   try{return !!(window.AndroidApp&&AndroidApp.isBiometricAvailable&&AndroidApp.isBiometricAvailable())}catch(_){return false}
 }
+let authBiometricPurpose='login',usuarioRecuperacaoPendenteId=null;
+
 function entrarComBiometria(){
   let ultimoId=localStorage.getItem('cav_last_internal_user');
   let ultimo=usuariosInternosCache.find(x=>x.ativo&&String(x.id)===String(ultimoId));
   if(!ultimo)return alert('Entre com usuário e senha pelo menos uma vez antes de usar a digital.');
+  authBiometricPurpose='login';
+  usuarioRecuperacaoPendenteId=null;
   try{
     if(window.AndroidApp&&AndroidApp.authenticateBiometric)AndroidApp.authenticateBiometric();
     else alert('A biometria não está disponível neste aparelho.');
   }catch(_){alert('Não foi possível iniciar a leitura da digital.')}
 }
+
+function esqueciSenhaInterna(){
+  let digitado=($('loginInternoUsuario')?.value||'').trim().toLowerCase();
+  let ultimoId=localStorage.getItem('cav_last_internal_user');
+  let u=usuariosInternosCache.find(x=>x.ativo&&digitado&&String(x.usuario).toLowerCase()===digitado)
+    ||usuariosInternosCache.find(x=>x.ativo&&String(x.id)===String(ultimoId));
+  if(!u)return alert('Informe seu usuário para recuperar a senha.');
+  if(!u.is_master)return alert('A senha deste usuário deve ser redefinida pelo administrador do aplicativo.');
+  if(!biometriaDisponivel())return alert('Para redefinir a senha com segurança, cadastre uma digital no celular e tente novamente.');
+  authBiometricPurpose='password_reset';
+  usuarioRecuperacaoPendenteId=u.id;
+  try{AndroidApp.authenticateBiometric()}catch(_){alert('Não foi possível iniciar a leitura da digital.')}
+}
+
+function mostrarRedefinicaoSenha(){
+  let u=usuariosInternosCache.find(x=>String(x.id)===String(usuarioRecuperacaoPendenteId));
+  if(!u){mostrarLoginInterno();return}
+  let el=authOverlay();
+  el.innerHTML='<div class="internal-auth-box"><h2>Redefinir senha</h2><p class="muted">Digital confirmada para '+esc(u.nome||u.usuario)+'. Crie uma nova senha.</p><label>Nova senha<input id="novaSenhaRecuperacao" type="password" autocomplete="new-password" placeholder="Mínimo de 6 caracteres"></label><label style="margin-top:10px">Confirmar nova senha<input id="confirmaSenhaRecuperacao" type="password" autocomplete="new-password"></label><button class="btn primary" style="width:100%;margin-top:12px" onclick="salvarSenhaRecuperada()">Salvar nova senha</button><button class="btn" style="width:100%;margin-top:8px" onclick="mostrarLoginInterno()">Cancelar</button></div>';
+  el.classList.add('show');
+  setTimeout(()=>focarCampo($('novaSenhaRecuperacao')),50);
+}
+
+async function salvarSenhaRecuperada(){
+  let u=usuariosInternosCache.find(x=>String(x.id)===String(usuarioRecuperacaoPendenteId));
+  if(!u)return mostrarLoginInterno();
+  let senha=$('novaSenhaRecuperacao')?.value||'',confirma=$('confirmaSenhaRecuperacao')?.value||'';
+  if(senha.length<6)return alert('A nova senha precisa ter pelo menos 6 caracteres.');
+  if(senha!==confirma)return alert('As senhas não coincidem.');
+  try{
+    let salt=novoSalt(),hash=await hashSenhaInterna(senha,salt);
+    let atualizado={...u,password_salt:salt,password_hash:hash,updated_at:new Date().toISOString()};
+    if(contaProUsuariosConectada()&&!contaProTeste()){
+      let r=await cloud.from('playstore_internal_users')
+        .update({password_salt:salt,password_hash:hash,updated_at:new Date().toISOString()})
+        .eq('owner_user_id',cloudUser.id).eq('id',u.id);
+      if(r.error)throw r.error;
+    }
+    guardarUsuariosInternosLocal(usuariosInternosCache.map(x=>String(x.id)===String(u.id)?atualizado:x));
+    localStorage.setItem('cav_last_internal_user',atualizado.id);
+    usuarioRecuperacaoPendenteId=null;
+    authBiometricPurpose='login';
+    mostrarAviso('Senha redefinida com sucesso.');
+    mostrarLoginInterno();
+  }catch(e){alert('Não foi possível redefinir a senha: '+e.message)}
+}
+
 window.onBiometricAuthResult=async function(success,message){
   if(!success){
     if(message&&message!=='Usar senha'&&!/cancel/i.test(message))mostrarAviso(message);
+    return;
+  }
+  if(authBiometricPurpose==='password_reset'){
+    authBiometricPurpose='login';
+    mostrarRedefinicaoSenha();
     return;
   }
   let ultimoId=localStorage.getItem('cav_last_internal_user');
@@ -571,13 +627,16 @@ window.onBiometricAuthResult=async function(success,message){
   definirUsuarioInterno(u);
   await registrarLog('login_biometrico',{});
 };
+
 function mostrarLoginInterno(){
   if(!usuariosInternosCache.length){mostrarSetupAdmin();return}
+  authBiometricPurpose='login';
+  usuarioRecuperacaoPendenteId=null;
   let el=authOverlay();
   let conta=contaProUsuariosConectada()?'<p class="muted" style="margin-top:12px">Conta Pro: '+esc(window.PlayStoreFeatures?.accountEmail?.()||'conectada')+'</p>':'';
   let ultimoId=localStorage.getItem('cav_last_internal_user'),ultimo=usuariosInternosCache.find(x=>x.ativo&&String(x.id)===String(ultimoId));
   let bio=biometriaDisponivel()&&ultimo?'<button class="btn" style="width:100%;margin-top:8px" onclick="entrarComBiometria()">Entrar com digital</button><p class="muted" style="margin-top:7px;text-align:center">Digital vinculada ao último usuário: '+esc(ultimo.nome||ultimo.usuario)+'</p>':'';
-  el.innerHTML='<div class="internal-auth-box"><h2>Entrar no aplicativo</h2><p class="muted">Digite seu usuário e senha para acessar seus dados.</p><label>Usuário<input id="loginInternoUsuario" autocomplete="username" value="'+esc(ultimo?.usuario||'')+'"></label><label style="margin-top:10px">Senha<input id="loginInternoSenha" type="password" autocomplete="current-password"></label><button class="btn primary" style="width:100%;margin-top:12px" onclick="loginUsuarioInterno()">Entrar</button>'+bio+conta+'</div>';
+  el.innerHTML='<div class="internal-auth-box"><h2>Entrar no aplicativo</h2><p class="muted">Digite seu usuário e senha para acessar seus dados.</p><label>Usuário<input id="loginInternoUsuario" autocomplete="username" value="'+esc(ultimo?.usuario||'')+'"></label><label style="margin-top:10px">Senha<input id="loginInternoSenha" type="password" autocomplete="current-password"></label><button class="btn primary" style="width:100%;margin-top:12px" onclick="loginUsuarioInterno()">Entrar</button>'+bio+'<button class="btn" style="width:100%;margin-top:8px" onclick="esqueciSenhaInterna()">Esqueci minha senha</button>'+conta+'</div>';
   el.classList.add('show');
   setTimeout(()=>focarCampo(ultimo?$('loginInternoSenha'):$('loginInternoUsuario')),50);
 }
