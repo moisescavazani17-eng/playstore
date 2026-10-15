@@ -2,7 +2,6 @@ package com.cavazani.orcamentos;
 
 import android.Manifest;
 import android.app.Activity;
-import android.hardware.biometrics.BiometricPrompt;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -15,7 +14,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.CancellationSignal;
 import android.provider.MediaStore;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -28,6 +26,9 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import com.android.billingclient.api.*;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -128,31 +129,29 @@ public class MainActivity extends Activity {
     }
 
     private boolean isBiometricAvailableNative() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false;
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_FINGERPRINT);
+        try {
+            BiometricManager manager = BiometricManager.from(this);
+            int result = manager.canAuthenticate(
+                    BiometricManager.Authenticators.BIOMETRIC_STRONG |
+                    BiometricManager.Authenticators.BIOMETRIC_WEAK
+            );
+            return result == BiometricManager.BIOMETRIC_SUCCESS;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void authenticateBiometricNative() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || !isBiometricAvailableNative()) {
-            sendBiometricResult(false, "Biometria não disponível neste aparelho.");
-            return;
-        }
-
         runOnUiThread(() -> {
+            if (!isBiometricAvailableNative()) {
+                sendBiometricResult(false, "Cadastre uma digital no celular para usar este recurso.");
+                return;
+            }
             try {
-                BiometricPrompt prompt = new BiometricPrompt.Builder(MainActivity.this)
-                        .setTitle("Entrar no Vezora")
-                        .setSubtitle("Use sua digital para acessar o aplicativo")
-                        .setNegativeButton(
-                                "Usar senha",
-                                getMainExecutor(),
-                                (dialog, which) -> sendBiometricResult(false, "Usar senha")
-                        )
-                        .build();
-
-                prompt.authenticate(
-                        new CancellationSignal(),
-                        getMainExecutor(),
+                java.util.concurrent.Executor executor = ContextCompat.getMainExecutor(MainActivity.this);
+                BiometricPrompt prompt = new BiometricPrompt(
+                        MainActivity.this,
+                        executor,
                         new BiometricPrompt.AuthenticationCallback() {
                             @Override
                             public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
@@ -169,11 +168,24 @@ public class MainActivity extends Activity {
                             @Override
                             public void onAuthenticationFailed() {
                                 super.onAuthenticationFailed();
+                                sendBiometricResult(false, "Digital não reconhecida. Tente novamente.");
                             }
                         }
                 );
+
+                BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
+                        .setTitle("Entrar no Vezora")
+                        .setSubtitle("Confirme sua digital")
+                        .setNegativeButtonText("Usar senha")
+                        .setAllowedAuthenticators(
+                                BiometricManager.Authenticators.BIOMETRIC_STRONG |
+                                BiometricManager.Authenticators.BIOMETRIC_WEAK
+                        )
+                        .build();
+
+                prompt.authenticate(info);
             } catch (Exception e) {
-                sendBiometricResult(false, "Não foi possível abrir a biometria.");
+                sendBiometricResult(false, "Não foi possível abrir a leitura da digital.");
             }
         });
     }
