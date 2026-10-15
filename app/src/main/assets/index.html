@@ -548,13 +548,38 @@ function mostrarSetupAdmin(){
   el.innerHTML='<div class="internal-auth-box"><h2>Proteja o acesso ao aplicativo</h2><p class="muted">Crie seu usuário principal. Ele será obrigatório para entrar no aplicativo e terá acesso total.'+(pro?' No Pro + Nuvem você também poderá adicionar outros usuários depois.':' No plano Básico existe apenas este usuário local.')+'</p><div class="grid"><label>Nome<input id="masterNome" placeholder="Seu nome"></label><label>Usuário<input id="masterLogin" autocomplete="username" placeholder="Ex.: administrador"></label><label>Senha<input id="masterSenha" type="password" autocomplete="new-password" placeholder="Mínimo de 6 caracteres"></label></div><button class="btn primary" style="width:100%;margin-top:12px" onclick="criarPrimeiroAdmin()">Criar usuário principal</button><p class="muted" style="margin-top:10px">Guarde sua senha. No plano Básico os dados e o acesso ficam somente neste aparelho.</p></div>';
   el.classList.add('show');
 }
+function biometriaDisponivel(){
+  try{return !!(window.AndroidApp&&AndroidApp.isBiometricAvailable&&AndroidApp.isBiometricAvailable())}catch(_){return false}
+}
+function entrarComBiometria(){
+  let ultimoId=localStorage.getItem('cav_last_internal_user');
+  let ultimo=usuariosInternosCache.find(x=>x.ativo&&String(x.id)===String(ultimoId));
+  if(!ultimo)return alert('Entre com usuário e senha pelo menos uma vez antes de usar a digital.');
+  try{
+    if(window.AndroidApp&&AndroidApp.authenticateBiometric)AndroidApp.authenticateBiometric();
+    else alert('A biometria não está disponível neste aparelho.');
+  }catch(_){alert('Não foi possível iniciar a leitura da digital.')}
+}
+window.onBiometricAuthResult=async function(success,message){
+  if(!success){
+    if(message&&message!=='Usar senha'&&!/cancel/i.test(message))mostrarAviso(message);
+    return;
+  }
+  let ultimoId=localStorage.getItem('cav_last_internal_user');
+  let u=usuariosInternosCache.find(x=>x.ativo&&String(x.id)===String(ultimoId));
+  if(!u)return alert('O último usuário não está mais disponível. Entre com sua senha.');
+  definirUsuarioInterno(u);
+  await registrarLog('login_biometrico',{});
+};
 function mostrarLoginInterno(){
   if(!usuariosInternosCache.length){mostrarSetupAdmin();return}
   let el=authOverlay();
   let conta=contaProUsuariosConectada()?'<p class="muted" style="margin-top:12px">Conta Pro: '+esc(window.PlayStoreFeatures?.accountEmail?.()||'conectada')+'</p>':'';
-  el.innerHTML='<div class="internal-auth-box"><h2>Entrar no aplicativo</h2><p class="muted">Digite seu usuário e senha para acessar seus dados.</p><label>Usuário<input id="loginInternoUsuario" autocomplete="username"></label><label style="margin-top:10px">Senha<input id="loginInternoSenha" type="password" autocomplete="current-password"></label><button class="btn primary" style="width:100%;margin-top:12px" onclick="loginUsuarioInterno()">Entrar</button>'+conta+'</div>';
+  let ultimoId=localStorage.getItem('cav_last_internal_user'),ultimo=usuariosInternosCache.find(x=>x.ativo&&String(x.id)===String(ultimoId));
+  let bio=biometriaDisponivel()&&ultimo?'<button class="btn" style="width:100%;margin-top:8px" onclick="entrarComBiometria()">Entrar com digital</button><p class="muted" style="margin-top:7px;text-align:center">Digital vinculada ao último usuário: '+esc(ultimo.nome||ultimo.usuario)+'</p>':'';
+  el.innerHTML='<div class="internal-auth-box"><h2>Entrar no aplicativo</h2><p class="muted">Digite seu usuário e senha para acessar seus dados.</p><label>Usuário<input id="loginInternoUsuario" autocomplete="username" value="'+esc(ultimo?.usuario||'')+'"></label><label style="margin-top:10px">Senha<input id="loginInternoSenha" type="password" autocomplete="current-password"></label><button class="btn primary" style="width:100%;margin-top:12px" onclick="loginUsuarioInterno()">Entrar</button>'+bio+conta+'</div>';
   el.classList.add('show');
-  setTimeout(()=>focarCampo($('loginInternoUsuario')),50);
+  setTimeout(()=>focarCampo(ultimo?$('loginInternoSenha'):$('loginInternoUsuario')),50);
 }
 async function criarPrimeiroAdmin(){
   let nome=$('masterNome')?.value.trim(),usuario=$('masterLogin')?.value.trim().toLowerCase(),senha=$('masterSenha')?.value||'';
@@ -588,6 +613,7 @@ function definirUsuarioInterno(u){
   usuarioInternoAtual=u;
   document.body.classList.toggle('colaborador-mode',u.role==='colaborador');
   sessionStorage.setItem('cav_active_internal_user',u.id);
+  localStorage.setItem('cav_last_internal_user',u.id);
   authOverlay().classList.remove('show');
   let chip=$('internalUserChip'),trocar=$('trocarUsuarioBtn'),menuBox=$('menuUserBox'),menuName=$('menuUserName');
   if(chip){chip.style.display='inline-flex';chip.textContent=(u.nome||u.usuario)+' • '+perfilNome(u.role)}
