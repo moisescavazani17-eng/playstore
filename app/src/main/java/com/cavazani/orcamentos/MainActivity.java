@@ -2,6 +2,7 @@ package com.cavazani.orcamentos;
 
 import android.Manifest;
 import android.app.Activity;
+import android.hardware.biometrics.BiometricPrompt;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.CancellationSignal;
 import android.provider.MediaStore;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -123,6 +125,65 @@ public class MainActivity extends Activity {
         webView.loadUrl("file:///android_asset/index.html");
 
         initBilling();
+    }
+
+    private boolean isBiometricAvailableNative() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false;
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_FINGERPRINT);
+    }
+
+    private void authenticateBiometricNative() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || !isBiometricAvailableNative()) {
+            sendBiometricResult(false, "Biometria não disponível neste aparelho.");
+            return;
+        }
+
+        runOnUiThread(() -> {
+            try {
+                BiometricPrompt prompt = new BiometricPrompt.Builder(MainActivity.this)
+                        .setTitle("Entrar no Vezora")
+                        .setSubtitle("Use sua digital para acessar o aplicativo")
+                        .setNegativeButton(
+                                "Usar senha",
+                                getMainExecutor(),
+                                (dialog, which) -> sendBiometricResult(false, "Usar senha")
+                        )
+                        .build();
+
+                prompt.authenticate(
+                        new CancellationSignal(),
+                        getMainExecutor(),
+                        new BiometricPrompt.AuthenticationCallback() {
+                            @Override
+                            public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                                super.onAuthenticationSucceeded(result);
+                                sendBiometricResult(true, "");
+                            }
+
+                            @Override
+                            public void onAuthenticationError(int errorCode, CharSequence errString) {
+                                super.onAuthenticationError(errorCode, errString);
+                                sendBiometricResult(false, String.valueOf(errString));
+                            }
+
+                            @Override
+                            public void onAuthenticationFailed() {
+                                super.onAuthenticationFailed();
+                            }
+                        }
+                );
+            } catch (Exception e) {
+                sendBiometricResult(false, "Não foi possível abrir a biometria.");
+            }
+        });
+    }
+
+    private void sendBiometricResult(boolean success, String message) {
+        String safe = JSONObject.quote(message == null ? "" : message);
+        runOnUiThread(() -> webView.evaluateJavascript(
+                "window.onBiometricAuthResult && window.onBiometricAuthResult(" + success + "," + safe + ");",
+                null
+        ));
     }
 
     private void initBilling() {
@@ -788,6 +849,12 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public boolean isTestBuild() { return MainActivity.this.isTestBuild(); }
+
+        @JavascriptInterface
+        public boolean isBiometricAvailable() { return MainActivity.this.isBiometricAvailableNative(); }
+
+        @JavascriptInterface
+        public void authenticateBiometric() { MainActivity.this.authenticateBiometricNative(); }
 
         @JavascriptInterface
         public void setTestPlan(String tier) {
