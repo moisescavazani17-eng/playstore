@@ -29,6 +29,7 @@ import com.android.billingclient.api.*;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -58,7 +59,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
     private WebView webView;
     private BillingClient billingClient;
     private AppDatabaseHelper appDb;
