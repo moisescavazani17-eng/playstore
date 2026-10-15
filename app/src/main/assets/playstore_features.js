@@ -148,24 +148,22 @@ function renderBrand(){
   var e=document.getElementById('psBrand');
   if(!e)return;
   var c=co(),ok=brandPaid(),logo=PS.pendingLogo||c.logoDataUrl||'logo-app.svg';
-  var x='<h2>Marca e aparência '+(ok?'':'🔒')+'</h2><p class="muted">Use a identidade da sua empresa no aplicativo e nos PDFs.</p>';
+  var x='<h2>Personalização dos PDFs '+(ok?'':'🔒')+'</h2><p class="muted">Personalize os orçamentos enviados aos clientes sem alterar a identidade visual do Vezora no celular.</p>';
   if(ok){
-    x+='<div class="ps-brand"><div><div class="ps-logo"><img id="psLogoPreview" src="'+h(logo)+'"></div><label>Logo<input id="psLogoFile" type="file" accept="image/png,image/jpeg,image/webp"></label></div>'+
-      '<div class="grid"><label>Slogan<input id="psSlogan" value="'+h(c.slogan||'')+'"></label><label>Cor principal<input id="psColor" type="color" value="'+h(c.corPrincipal||'#dce7ed')+'"></label><label>Cor do cabeçalho<input id="psHead" type="color" value="'+h(c.corCabecalho||'#061a27')+'"></label></div></div>'+
-      '<label><input id="psInApp" type="checkbox" '+(c.marcaNoApp===false?'':'checked')+'> Aplicar identidade dentro do app</label>'+
+    x+='<div class="ps-brand"><div><div class="ps-logo"><img id="psLogoPreview" src="'+h(logo)+'"></div><label>Logo da empresa<input id="psLogoFile" type="file" accept="image/png,image/jpeg,image/webp"></label></div>'+
+      '<div class="grid"><label>Slogan<input id="psSlogan" value="'+h(c.slogan||'')+'"></label><label>Cor principal do PDF<input id="psColor" type="color" value="'+h(c.corPrincipal||'#dce7ed')+'"></label><label>Cor do cabeçalho do PDF<input id="psHead" type="color" value="'+h(c.corCabecalho||'#061a27')+'"></label></div></div>'+
       '<label><input id="psInPdf" type="checkbox" '+(c.mostrarLogoPdf===false?'':'checked')+'> Mostrar logo nos PDFs</label>'+
-      '<div class="actions"><button class="btn primary" onclick="PlayStoreFeatures.saveBrand()">Salvar identidade</button><button class="btn" onclick="PlayStoreFeatures.removeLogo()">Remover logo</button></div>';
+      '<div class="actions"><button class="btn primary" onclick="PlayStoreFeatures.saveBrand()">Salvar personalização</button><button class="btn" onclick="PlayStoreFeatures.removeLogo()">Remover logo do PDF</button></div>';
   }else{
     x+='<div class="ps-lock">Disponível nos planos Profissional e Pro + Nuvem.</div>';
   }
-  x+='<div class="ps-warn"><b>Ícone do aplicativo:</b> nome e ícone totalmente próprios continuam reservados ao White Label, pois o ícone do pacote publicado não pode ser substituído livremente por uma imagem escolhida no aparelho.</div>';
+  x+='<div class="ps-note" style="margin-top:10px">O nome e o ícone do aplicativo permanecem como Vezora em todos os aparelhos.</div>';
   e.innerHTML=x;
   if(ok){
     var inp=document.getElementById('psLogoFile');
     if(inp)inp.onchange=chooseLogo;
   }
 }
-
 function renderCloud(){
   var e=document.getElementById('cloudAccountCard');
   if(!e)return;
@@ -230,24 +228,21 @@ function contrast(hex){
 }
 
 function applyBrand(){
-  var c=co(),on=brandPaid()&&c.marcaNoApp!==false,br=document.querySelector('.brand');
+  var c=co(),br=document.querySelector('.brand');
   if(br){
     var im=br.querySelector('img'),bt=br.querySelector('b'),sm=br.querySelector('small');
-    if(im)im.src=on&&c.logoDataUrl?c.logoDataUrl:'logo-app.webp';
-    if(bt)bt.textContent=on?company(c):'VEZORA';
-    if(sm)sm.textContent=on?subtitle(c):'Orçamentos e Gestão';
+    if(im)im.src='logo-app.webp';
+    if(bt)bt.textContent='VEZORA';
+    if(sm)sm.textContent='Orçamentos e Gestão';
   }
-  if(on){
-    document.documentElement.style.setProperty('--accent',c.corPrincipal||'#dce7ed');
-    document.documentElement.style.setProperty('--accent-text',contrast(c.corPrincipal||'#dce7ed'));
-    var hd=document.querySelector('header');if(hd)hd.style.background=(c.corCabecalho||'#061a27')+'ef';
-  }else{
-    document.documentElement.style.removeProperty('--accent');
-    document.documentElement.style.setProperty('--accent-text','#0b1f2b');
-    var header=document.querySelector('header');if(header)header.style.background='';
+  document.documentElement.style.removeProperty('--accent');
+  document.documentElement.style.setProperty('--accent-text','#0b1f2b');
+  var header=document.querySelector('header');if(header)header.style.background='';
+  if(c.marcaNoApp!==false){
+    c.marcaNoApp=false;
+    localStorage.setItem('cav_cfg',JSON.stringify(c));
   }
 }
-
 function resize(file){
   return new Promise(function(res,rej){
     var rd=new FileReader();
@@ -279,15 +274,14 @@ function saveBrand(){
   c.slogan=(document.getElementById('psSlogan').value||'').trim();
   c.corPrincipal=document.getElementById('psColor').value;
   c.corCabecalho=document.getElementById('psHead').value;
-  c.marcaNoApp=document.getElementById('psInApp').checked;
+  c.marcaNoApp=false;
   c.mostrarLogoPdf=document.getElementById('psInPdf').checked;
   if(PS.pendingLogo)c.logoDataUrl=PS.pendingLogo;
   localStorage.setItem('cav_cfg',JSON.stringify(c));
   PS.pendingLogo=null;
   applyBrand();renderBrand();
-  if(typeof mostrarAviso==='function')mostrarAviso('Identidade salva.');
+  if(typeof mostrarAviso==='function')mostrarAviso('Personalização dos PDFs salva.');
 }
-
 function removeLogo(){
   if(!brandPaid())return;
   var c=co();delete c.logoDataUrl;
