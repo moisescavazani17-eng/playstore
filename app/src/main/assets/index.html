@@ -530,11 +530,161 @@ header,body.light-theme header{background:linear-gradient(135deg,#092a43 0%,#0d3
 .cheque-stats{gap:12px!important;margin-bottom:18px!important}.cheque-stat{position:relative;overflow:hidden;min-height:106px;display:flex;flex-direction:column;justify-content:center;border:1px solid #dbe8ee!important;border-radius:20px!important;padding:17px 18px!important;background:linear-gradient(145deg,#fff 0%,#f5fafc 100%)!important;box-shadow:0 10px 28px rgba(24,62,84,.08)!important}.cheque-stat:after{content:"";position:absolute;width:72px;height:72px;right:-28px;top:-30px;border-radius:50%;background:rgba(15,167,160,.08)}.cheque-stat .muted{color:#667f8e!important;font-size:12px!important;font-weight:650!important}.cheque-stat b{display:block;margin-top:7px!important;font-size:27px!important;line-height:1.05;color:#0b3c58!important;font-weight:800!important}.cheque-stat:nth-child(1) b{color:#0f8f89!important}.cheque-stat:nth-child(2) b{color:#176786!important}
 body:not(.light-theme) .cheque-stat{border-color:#244b60!important;background:linear-gradient(145deg,#12384b 0%,#0d2d3d 100%)!important;box-shadow:0 12px 28px rgba(0,0,0,.20)!important}body:not(.light-theme) .cheque-stat .muted{color:#b6cbd5!important}body:not(.light-theme) .cheque-stat b{color:#ecf7f8!important}body:not(.light-theme) .cheque-stat:nth-child(1) b{color:#63d8cf!important}body:not(.light-theme) .cheque-stat:nth-child(2) b{color:#8fd7ed!important}
 @media(max-width:620px){header,body.light-theme header{padding:calc(9px + var(--safe-top)) 13px 10px!important}.brand{gap:10px!important;min-height:50px}.brand img{width:38px!important;height:38px!important;border-radius:11px;flex:0 0 38px!important}.brand b{font-size:19px!important;letter-spacing:.04em!important}.brand small{font-size:10.5px!important;margin-top:4px!important}.menu-toggle{width:44px!important;height:44px!important;flex:0 0 44px!important}#syncTop{font-size:10px!important;padding:6px 9px!important}.cheque-stats{grid-template-columns:1fr!important;gap:10px!important;margin-bottom:14px!important}.cheque-stat{min-height:88px;padding:14px 16px!important;border-radius:18px!important}.cheque-stat b{font-size:25px!important;margin-top:5px!important}}
+
+/* ===== Cabeçalho Vezora 2026 - remodelação estrutural ===== */
+.app-header,body.light-theme .app-header{
+  position:sticky;
+  top:0;
+  z-index:30;
+  padding:calc(10px + var(--safe-top)) 14px 10px!important;
+  background:
+    radial-gradient(circle at 82% 12%,rgba(26,190,190,.18),transparent 19rem),
+    linear-gradient(135deg,#082944 0%,#0b3856 58%,#0b5162 100%)!important;
+  border:0!important;
+  border-bottom:1px solid rgba(255,255,255,.07)!important;
+  box-shadow:0 12px 34px rgba(6,31,49,.24)!important;
+  backdrop-filter:blur(16px);
+}
+.app-header-inner{
+  width:100%;
+  max-width:1120px;
+  margin:0 auto;
+  min-height:60px;
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+}
+.app-header .menu-toggle{
+  width:46px!important;
+  height:46px!important;
+  padding:0!important;
+  border-radius:16px!important;
+  border:1px solid rgba(255,255,255,.17)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.06))!important;
+  color:#fff!important;
+  display:grid!important;
+  place-items:center!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 18px rgba(0,0,0,.10)!important;
+}
+.menu-lines,.menu-lines::before,.menu-lines::after{
+  width:21px;
+  height:2px;
+  border-radius:999px;
+  background:#fff;
+  display:block;
+  position:relative;
+}
+.menu-lines::before,.menu-lines::after{content:"";position:absolute;left:0}
+.menu-lines::before{top:-7px}
+.menu-lines::after{top:7px}
+.header-brand-wrap{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:11px;
+}
+.header-mark{
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  font-size:23px;
+  font-weight:900;
+  font-style:italic;
+  letter-spacing:-.08em;
+  background:linear-gradient(145deg,#147cb0 0%,#16b8ad 58%,#64e0d3 100%);
+  box-shadow:0 8px 20px rgba(13,181,174,.24),inset 0 1px 0 rgba(255,255,255,.30);
+}
+.header-brand-copy{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.header-brand-copy b{
+  color:#fff!important;
+  font-size:21px!important;
+  font-weight:850!important;
+  line-height:1!important;
+  letter-spacing:.055em!important;
+}
+.header-brand-copy small{
+  display:block;
+  margin-top:5px!important;
+  color:rgba(233,244,249,.74)!important;
+  font-size:11.5px!important;
+  font-weight:500;
+  line-height:1!important;
+  letter-spacing:.015em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.header-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+.app-header #syncTop{
+  margin:0!important;
+  min-width:58px;
+  text-align:center;
+  padding:7px 11px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  background:rgba(255,255,255,.09)!important;
+  color:#f2fbfc!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+.app-header .internal-user-chip{
+  border-color:rgba(255,255,255,.15)!important;
+  background:rgba(255,255,255,.08)!important;
+  color:#effafa!important;
+}
+
+@media(max-width:620px){
+  .app-header,body.light-theme .app-header{padding:calc(8px + var(--safe-top)) 12px 9px!important}
+  .app-header-inner{min-height:55px;grid-template-columns:45px minmax(0,1fr) auto;gap:9px}
+  .app-header .menu-toggle{width:43px!important;height:43px!important;border-radius:15px!important}
+  .header-brand-wrap{gap:9px}
+  .header-mark{width:38px;height:38px;flex-basis:38px;border-radius:12px;font-size:21px}
+  .header-brand-copy b{font-size:18px!important;letter-spacing:.06em!important}
+  .header-brand-copy small{font-size:10.5px!important;margin-top:4px!important}
+  .app-header #syncTop{min-width:54px;padding:6px 9px!important;font-size:10px!important}
+}
+@media(max-width:390px){
+  .header-mark{display:none}
+  .header-brand-wrap{gap:0}
+  .header-brand-copy b{font-size:18px!important}
+  .header-brand-copy small{font-size:10px!important}
+}
+
 </style>
 </head>
 <body>
-<header>
-  <div class="brand"><button class="menu-toggle" aria-label="Abrir menu" onclick="abrirMenu()">☰</button><img src="logo-app.webp" alt="Vezora"><div><b>VEZORA</b><small>Orçamentos e Gestão</small></div><span id="syncTop" class="status" style="margin-left:auto">Local</span><span id="internalUserChip" class="internal-user-chip" style="display:none"></span><button id="trocarUsuarioBtn" class="btn" style="display:none;padding:6px 9px" onclick="trocarUsuarioInterno()">Trocar usuário</button></div>
+<header class="app-header">
+  <div class="app-header-inner">
+    <button class="menu-toggle" aria-label="Abrir menu" onclick="abrirMenu()"><span class="menu-lines" aria-hidden="true"></span></button>
+    <div class="header-brand-wrap">
+      <div class="header-mark" aria-hidden="true">V</div>
+      <div class="header-brand-copy">
+        <b>VEZORA</b>
+        <small>Orçamentos e Gestão</small>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span id="syncTop" class="status">Local</span>
+      <span id="internalUserChip" class="internal-user-chip" style="display:none"></span>
+      <button id="trocarUsuarioBtn" class="btn" style="display:none;padding:6px 9px" onclick="trocarUsuarioInterno()">Trocar usuário</button>
+    </div>
+  </div>
 </header>
 <div id="menuBackdrop" class="menu-backdrop" onclick="fecharMenu()"></div>
 <nav id="sideNav">
