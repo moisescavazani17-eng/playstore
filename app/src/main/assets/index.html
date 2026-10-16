@@ -2581,7 +2581,7 @@ async function gerarPDFContrato(c){
   function tabelaCab(){espaco(16);p.setFillColor(...az);p.rect(12,y,186,9,'F');p.setTextColor(255,255,255);p.setFont('helvetica','bold');p.setFontSize(9);p.text('ITEM',14,y+6);p.text('DESCRIÇÃO',29,y+6);p.text('QTD.',119,y+6);p.text('UNIT.',139,y+6);p.text('TOTAL',175,y+6);y+=9;p.setTextColor(...az)}
   tabelaCab();
   for(let [i,it] of (o.itens||[]).entries()){
-    p.setFont('helvetica','normal');p.setFontSize(9);let descricaoContrato=String(it.d||'')+(it.cor?' • Cor: '+it.cor:'');let ls=p.splitTextToSize(descricaoContrato,85),primeira=true;
+    p.setFont('helvetica','normal');p.setFontSize(9);let descricaoContrato=String(it.d||'');let ls=p.splitTextToSize(descricaoContrato,85),primeira=true;
     while(ls.length){let disponivel=Math.floor((276-y-4)/4.3);if(disponivel<1){p.addPage();cabecalho();tabelaCab();disponivel=Math.floor((276-y-4)/4.3)}let parte=ls.splice(0,disponivel),h=Math.max(10,parte.length*4.3+4);p.setDrawColor(...linha);p.rect(12,y,186,h);[27,117,137,170].forEach(x=>p.line(x,y,x,y+h));p.setTextColor(...az);p.setFont('helvetica','normal');p.setFontSize(9);p.text(parte,29,y+6);if(primeira){p.text(String(i+1).padStart(2,'0'),14,y+6);p.text(String(it.q),119,y+6);p.text(BRL.format(Number(it.v)||0),168,y+6,{align:'right'});p.text(BRL.format(it.q*it.v),196,y+6,{align:'right'});primeira=false}y+=h;if(ls.length){p.addPage();cabecalho();tabelaCab()}}
   }
   y+=8;espaco(40);let desconto=o.descontoTipo==='percentual'?(Number(o.subtotal)||0)*(Number(o.desconto)||0)/100:Number(o.desconto)||0;
