@@ -204,6 +204,260 @@ body.colaborador-mode .colaborador-note{display:block}
   .brand small{display:none}
   #syncTop{max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+
+/* ===== Vezora UI 2026 — visual premium ===== */
+:root{
+  --vz-navy:#0b2b45;
+  --vz-navy-2:#123a57;
+  --vz-teal:#0fa7a0;
+  --vz-teal-2:#16b8ad;
+  --vz-bg:#f4f8fb;
+  --vz-surface:#ffffff;
+  --vz-surface-2:#f8fbfd;
+  --vz-text:#10243a;
+  --vz-muted:#6d8192;
+  --vz-line:#dce7ee;
+  --vz-danger:#db4c4c;
+  --vz-shadow:0 12px 34px rgba(16,47,72,.09);
+  --vz-radius:20px;
+}
+html{background:var(--vz-bg)}
+body,body.light-theme{
+  background:
+    radial-gradient(circle at 8% 0%,rgba(37,177,205,.10),transparent 28rem),
+    linear-gradient(180deg,#f8fbfd 0%,var(--vz-bg) 100%)!important;
+  color:var(--vz-text)!important;
+  font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif!important;
+}
+header,body.light-theme header{
+  background:linear-gradient(135deg,var(--vz-navy) 0%,#0c3957 100%)!important;
+  border:0!important;
+  box-shadow:0 8px 30px rgba(5,35,56,.18)!important;
+  padding:calc(12px + var(--safe-top)) 16px 12px!important;
+}
+.brand{gap:12px!important;max-width:1180px;margin:auto}
+.brand img{width:46px!important;height:46px!important;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(8,212,201,.18))}
+.brand b{font-size:22px!important;font-weight:800!important;letter-spacing:-.02em;color:#fff!important}
+.brand small{font-size:11.5px!important;color:#c9d7e0!important;letter-spacing:.01em}
+.menu-toggle{
+  width:44px!important;height:44px!important;border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:14px!important;background:rgba(255,255,255,.08)!important;color:#fff!important;
+  box-shadow:none!important
+}
+.status,.internal-user-chip{
+  border:1px solid rgba(255,255,255,.14)!important;background:rgba(255,255,255,.10)!important;
+  color:#e9f7f7!important;border-radius:999px!important
+}
+main{
+  max-width:1120px!important;
+  padding:24px 18px calc(108px + var(--safe-bottom))!important;
+}
+.view>h1{
+  margin:4px 2px 18px!important;
+  color:var(--vz-text)!important;
+  font-size:30px!important;
+  line-height:1.08!important;
+  letter-spacing:-.035em!important;
+  font-weight:800!important;
+}
+.card,body.light-theme .card,
+.cheque-card,.destino-card,.proprio-card,.user-access-card,.month-summary,.venda-card,.reembolso-card{
+  background:rgba(255,255,255,.96)!important;
+  border:1px solid rgba(194,213,225,.75)!important;
+  border-radius:var(--vz-radius)!important;
+  box-shadow:var(--vz-shadow)!important;
+  color:var(--vz-text)!important;
+}
+.card{
+  padding:20px!important;
+  margin-bottom:16px!important;
+}
+.card h2{
+  color:var(--vz-text)!important;
+  font-size:17px!important;
+  margin:0 0 14px!important;
+  font-weight:800!important;
+  letter-spacing:-.01em
+}
+.muted,body.light-theme .muted{color:var(--vz-muted)!important}
+label{color:#4d6577!important;font-weight:700!important;font-size:12px!important}
+input,select,textarea,body.light-theme input,body.light-theme select,body.light-theme textarea{
+  background:var(--vz-surface-2)!important;
+  color:var(--vz-text)!important;
+  border:1px solid #d6e3eb!important;
+  border-radius:13px!important;
+  min-height:46px!important;
+  padding:11px 13px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7)!important;
+  outline:none!important;
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease!important;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--vz-teal)!important;
+  box-shadow:0 0 0 4px rgba(15,167,160,.12)!important;
+  background:#fff!important;
+}
+input[readonly]{background:#eef4f7!important;color:#6c7f8d!important}
+textarea{min-height:94px!important;resize:vertical}
+.btn,body.light-theme .btn{
+  border:1px solid #cadbe5!important;
+  background:#fff!important;
+  color:#173a53!important;
+  border-radius:13px!important;
+  min-height:44px!important;
+  padding:10px 16px!important;
+  font-weight:800!important;
+  box-shadow:0 3px 10px rgba(14,50,73,.06)!important;
+  transition:transform .12s ease,box-shadow .18s ease,background .18s ease!important;
+}
+.btn:active{transform:scale(.985)}
+.btn.primary,body.light-theme .btn.primary{
+  border-color:transparent!important;
+  color:#fff!important;
+  background:linear-gradient(135deg,var(--vz-teal),var(--vz-teal-2))!important;
+  box-shadow:0 8px 18px rgba(15,167,160,.20)!important;
+}
+.btn.danger{
+  background:#fff3f3!important;border-color:#ffd5d5!important;color:#c83b3b!important;box-shadow:none!important
+}
+.actions{
+  gap:10px!important;
+  padding:4px 0 8px!important;
+}
+.total{
+  background:linear-gradient(135deg,#effbfa,#f7fcfd)!important;
+  border:1px solid #caeae7!important;
+  border-radius:16px!important;
+  color:var(--vz-text)!important;
+}
+.total b{color:#079b94!important;font-size:26px!important}
+.row{border-color:#e4edf2!important;color:#4f6575!important}
+.scroll{
+  border:1px solid #e2ebf0!important;
+  border-radius:16px!important;
+  overflow:auto!important;
+  background:#fff!important;
+}
+table{background:#fff!important;color:var(--vz-text)!important;border-collapse:separate!important;border-spacing:0!important}
+thead th{
+  background:#f1f7fa!important;
+  color:#557082!important;
+  font-size:11px!important;
+  text-transform:uppercase!important;
+  letter-spacing:.04em!important;
+  border-bottom:1px solid #dce8ef!important
+}
+td{border-bottom:1px solid #eef3f6!important;color:#213a4d!important}
+tbody tr:last-child td{border-bottom:0!important}
+.list{gap:10px!important}
+.list-item{
+  border:1px solid #e1ebf1!important;
+  background:#fff!important;
+  border-radius:16px!important;
+  padding:14px!important;
+  box-shadow:0 6px 16px rgba(15,46,69,.05)!important
+}
+.colaborador-note{
+  background:#eff9f7!important;border:1px solid #ccebe6!important;color:#24655f!important;
+  border-radius:14px!important;padding:12px 14px!important;margin-bottom:14px!important
+}
+.editor-venda-status{
+  border-radius:999px!important;background:#eef8f6!important;color:#17776f!important;border:1px solid #cde9e5!important
+}
+#sideNav{
+  background:#fff!important;
+  color:var(--vz-text)!important;
+  border-right:1px solid #dfe9ef!important;
+  box-shadow:18px 0 50px rgba(9,36,55,.18)!important;
+}
+.side-nav-head{border-bottom:1px solid #e6eef3!important}
+#sideNav button[data-view]{
+  color:#345064!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:13px!important;
+  font-weight:700!important;
+}
+#sideNav button[data-view].active{
+  color:#087f7a!important;
+  background:#eaf8f6!important;
+  box-shadow:inset 3px 0 0 var(--vz-teal)!important
+}
+.side-nav-close,.theme-options button{
+  background:#f2f7fa!important;color:#254459!important;border:1px solid #dce7ed!important
+}
+.theme-switcher,.menu-user-box{border-top:1px solid #e5edf2!important}
+.toast-app{
+  background:#0e314a!important;color:#fff!important;border:1px solid rgba(255,255,255,.1)!important;
+  border-radius:14px!important;box-shadow:0 14px 40px rgba(5,32,49,.28)!important
+}
+.modal-app{backdrop-filter:blur(5px)}
+.modal-app-box,.internal-auth-box{
+  background:#fff!important;color:var(--vz-text)!important;border:1px solid #dae7ee!important;
+  border-radius:24px!important;box-shadow:0 24px 70px rgba(8,35,54,.22)!important
+}
+.internal-auth-overlay{
+  background:
+    radial-gradient(circle at 15% 10%,rgba(20,180,173,.18),transparent 25rem),
+    linear-gradient(145deg,#08263c,#0b3956)!important;
+}
+.internal-auth-box h2{font-size:25px!important;letter-spacing:-.025em!important;color:#102b40!important}
+.permission-grid label{background:#f7fafc!important;border:1px solid #e2ebf0!important;border-radius:12px!important;padding:10px!important}
+
+/* Navegação principal inferior no celular */
+#vzBottomNav{
+  display:none;
+  position:fixed;
+  left:0;right:0;bottom:0;
+  z-index:28;
+  padding:8px 10px calc(8px + var(--safe-bottom));
+  background:rgba(255,255,255,.96);
+  border-top:1px solid #dde8ee;
+  box-shadow:0 -10px 30px rgba(13,46,68,.08);
+  backdrop-filter:blur(14px);
+}
+#vzBottomNav .vz-nav-inner{
+  width:min(560px,100%);margin:auto;
+  display:grid;grid-template-columns:repeat(5,1fr);gap:3px
+}
+#vzBottomNav button{
+  border:0;background:transparent;color:#748896;
+  min-height:56px;border-radius:13px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font:700 10px/1.05 inherit;padding:3px 2px
+}
+#vzBottomNav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#vzBottomNav button.active{color:#079b94;background:#edf9f7}
+#vzBottomNav button.active:before{
+  content:"";position:absolute;transform:translateY(-30px);
+  width:30px;height:3px;border-radius:999px;background:var(--vz-teal)
+}
+#vzBottomNav button{position:relative}
+
+@media(max-width:620px){
+  #vzBottomNav{display:block}
+  main{padding:18px 12px calc(90px + var(--safe-bottom))!important}
+  header{padding-left:10px!important;padding-right:10px!important}
+  .brand img{width:40px!important;height:40px!important;flex-basis:40px!important}
+  .brand b{font-size:19px!important}
+  .brand small{font-size:10px!important}
+  .view>h1{font-size:25px!important;margin:4px 4px 15px!important}
+  .card{padding:15px!important;border-radius:18px!important;margin-bottom:12px!important}
+  .card h2{font-size:16px!important}
+  .client-grid,.budget-grid{gap:9px!important}
+  input,select,textarea{border-radius:12px!important}
+  .item-add{gap:9px!important}
+  .actions{grid-template-columns:1fr 1fr!important}
+  .actions .primary{grid-column:auto!important}
+  .actions .btn:last-child:nth-child(odd){grid-column:1/-1}
+  .scroll{border-radius:14px!important}
+  table{min-width:620px}
+  .list-item{border-radius:15px!important}
+}
+@media(max-width:380px){
+  .actions{grid-template-columns:1fr!important}
+  .actions .btn:last-child:nth-child(odd){grid-column:auto}
+}
 </style>
 </head>
 <body>
@@ -237,6 +491,25 @@ body.colaborador-mode .colaborador-note{display:block}
     </div>
   </div>
 </nav>
+<div id="vzBottomNav" aria-label="Navegação principal">
+  <div class="vz-nav-inner">
+    <button type="button" data-vz-view="novo" aria-label="Novo orçamento">
+      <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg><span>Início</span>
+    </button>
+    <button type="button" data-vz-view="historico" aria-label="Orçamentos">
+      <svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/></svg><span>Orçamentos</span>
+    </button>
+    <button type="button" data-vz-view="vendas" aria-label="Vendas">
+      <svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Vendas</span>
+    </button>
+    <button type="button" data-vz-view="produtos" aria-label="Produtos">
+      <svg viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>Produtos</span>
+    </button>
+    <button type="button" data-vz-view="clientes" aria-label="Clientes">
+      <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Clientes</span>
+    </button>
+  </div>
+</div>
 <main>
 <section id="view-novo" class="view active">
 <h1>Novo orçamento</h1>
@@ -941,7 +1214,7 @@ function confirmar(msg){
 }
 window.alert=(msg)=>{mostrarAviso(msg);};
 for(let d=15;d<=180;d+=15){let o=document.createElement('option');o.textContent=d+' dias';o.value=d+' dias';if(d===30)o.selected=true;$('prazo').appendChild(o)}
-function temaAtual(){return localStorage.getItem('cav_theme')==='light'?'light':'dark'}
+function temaAtual(){let t=localStorage.getItem('cav_theme');return t==='dark'?'dark':'light'}
 function atualizarBotoesTema(){
   let t=temaAtual();
   if($('temaEscuroBtn'))$('temaEscuroBtn').classList.toggle('active',t==='dark');
@@ -963,7 +1236,15 @@ window.addEventListener('online',()=>{if(cloudReady)sincronizarComTolerancia(0)}
 function abrirMenu(){let n=$('sideNav'),b=$('menuBackdrop');if(n)n.classList.add('open');if(b)b.classList.add('show');document.body.classList.add('menu-open')}
 function fecharMenu(){let n=$('sideNav'),b=$('menuBackdrop');if(n)n.classList.remove('open');if(b)b.classList.remove('show');document.body.classList.remove('menu-open')}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharMenu()});
-document.querySelectorAll('#sideNav button[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelectorAll('#sideNav button[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('view-'+b.dataset.view).classList.add('active');if(b.dataset.view==='cheques')renderCheques();if(b.dataset.view==='cheques-destinados')renderChequesDestinados();if(b.dataset.view==='cheques-proprios')renderChequesProprios();if(['contrato','contratos-salvos'].includes(b.dataset.view))renderContratos();if(b.dataset.view==='vendas'){renderVendas();renderResumoMensal()}if(b.dataset.view==='reembolsos')renderReembolsos();if(b.dataset.view==='backup')carregarInfoBackup();fecharMenu()});
+document.querySelectorAll('#sideNav button[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelectorAll('#sideNav button[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('view-'+b.dataset.view).classList.add('active');if(b.dataset.view==='cheques')renderCheques();if(b.dataset.view==='cheques-destinados')renderChequesDestinados();if(b.dataset.view==='cheques-proprios')renderChequesProprios();if(['contrato','contratos-salvos'].includes(b.dataset.view))renderContratos();if(b.dataset.view==='vendas'){renderVendas();renderResumoMensal()}if(b.dataset.view==='reembolsos')renderReembolsos();if(b.dataset.view==='backup')carregarInfoBackup();fecharMenu();atualizarBottomNav(b.dataset.view)});
+function atualizarBottomNav(view){
+  document.querySelectorAll('#vzBottomNav button[data-vz-view]').forEach(x=>x.classList.toggle('active',x.dataset.vzView===view));
+}
+document.querySelectorAll('#vzBottomNav button[data-vz-view]').forEach(btn=>btn.addEventListener('click',()=>{
+  let alvo=document.querySelector('#sideNav button[data-view="'+btn.dataset.vzView+'"]');
+  if(alvo)alvo.click();
+}));
+setTimeout(()=>atualizarBottomNav(document.querySelector('#sideNav button[data-view].active')?.dataset.view||'novo'),0);
 function lista(){return JSON.parse(localStorage.getItem('cav_orcs')||'[]')}function guarda(x){localStorage.setItem('cav_orcs',JSON.stringify(x));agendarBackupAutomatico();renderContratos()}
 function prox(){let a=lista().map(x=>parseInt(x.numero)||0);let n=Math.max(Number(localStorage.getItem('cav_seq')||0),a.length?Math.max(...a)+1:0);return String(n).padStart(4,'0')}
 function hoje(){let d=new Date(),off=d.getTimezoneOffset();return new Date(d.getTime()-off*60000).toISOString().slice(0,10)}
