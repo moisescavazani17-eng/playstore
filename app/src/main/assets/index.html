@@ -2114,10 +2114,10 @@ function selecionarFotoProduto(event){
   reader.onload=()=>{
     let img=new Image();
     img.onload=()=>{
-      let max=900,scale=Math.min(1,max/Math.max(img.width,img.height)),w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
+      let max=640,scale=Math.min(1,max/Math.max(img.width,img.height)),w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
       let cv=document.createElement('canvas');cv.width=w;cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      fotoProdutoPendente=cv.toDataURL('image/jpeg',.82);
+      fotoProdutoPendente=cv.toDataURL('image/jpeg',.76);
       renderPreviewFotoProduto();
     };
     img.onerror=()=>alert('Não foi possível ler a imagem.');
