@@ -23,6 +23,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.ValueCallback;
 import android.widget.Toast;
 
 import com.android.billingclient.api.*;
@@ -72,6 +73,8 @@ public class MainActivity extends FragmentActivity {
     private static final int STORAGE_PERMISSION_CODE = 71;
     private static final int BACKUP_CREATE_CODE = 81;
     private static final int BACKUP_OPEN_CODE = 82;
+    private static final int FILE_CHOOSER_CODE = 83;
+    private ValueCallback<Uri[]> fileChooserCallback = null;
     private String pendingBackupJson = null;
 
     private static final String SECURE_PREFS = "orcamentos_gestao_secure_state";
@@ -123,7 +126,38 @@ public class MainActivity extends FragmentActivity {
 
         webView.addJavascriptInterface(new AndroidBridge(this), "AndroidApp");
         webView.setWebViewClient(new WebViewClient());
-        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                if (fileChooserCallback != null) {
+                    fileChooserCallback.onReceiveValue(null);
+                }
+                fileChooserCallback = filePathCallback;
+                try {
+                    Intent intent = fileChooserParams != null
+                            ? fileChooserParams.createIntent()
+                            : new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    if (intent.getType() == null) intent.setType("image/*");
+                    startActivityForResult(intent, FILE_CHOOSER_CODE);
+                    return true;
+                } catch (Exception e) {
+                    try {
+                        Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                        fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                        fallback.setType("image/*");
+                        startActivityForResult(Intent.createChooser(fallback, "Selecionar foto"), FILE_CHOOSER_CODE);
+                        return true;
+                    } catch (Exception ignored) {
+                        if (fileChooserCallback != null) {
+                            fileChooserCallback.onReceiveValue(null);
+                            fileChooserCallback = null;
+                        }
+                        return false;
+                    }
+                }
+            }
+        });
         webView.loadUrl("file:///android_asset/index.html");
 
         initBilling();
@@ -998,6 +1032,19 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == FILE_CHOOSER_CODE) {
+            if (fileChooserCallback != null) {
+                Uri[] result = null;
+                if (resultCode == RESULT_OK) {
+                    result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                }
+                fileChooserCallback.onReceiveValue(result);
+                fileChooserCallback = null;
+            }
+            return;
+        }
+
         if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
 
         Uri uri = data.getData();
@@ -1030,6 +1077,10 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     protected void onDestroy() {
+        if (fileChooserCallback != null) {
+            fileChooserCallback.onReceiveValue(null);
+            fileChooserCallback = null;
+        }
         if (billingClient != null) billingClient.endConnection();
         if (appDb != null) {
             appDb.close();
