@@ -89,7 +89,8 @@
       d: p.d || 'Produto',
       cor: '',
       q: 1,
-      v: valor
+      v: valor,
+      produtoId: p.id || null
     });
 
     renderItens();
