@@ -2203,11 +2203,17 @@ function renderProdutos(){
       '</div></div>';
   }).join(''):'<div class="muted">Nenhum '+(tipoProdutoAtual==='servico'?'serviço':'produto')+' cadastrado.</div>';
 }
+function produtoDoItemEstoque(it,prods){
+  if(it?.produtoId){let p=prods.find(x=>String(x.id)===String(it.produtoId));if(p)return p}
+  let nome=String(it?.d||'').trim().toLowerCase();
+  if(!nome)return null;
+  let iguais=prods.filter(x=>x.tipo==='produto'&&String(x.d||'').trim().toLowerCase()===nome);
+  return iguais.length===1?iguais[0]:null;
+}
 function validarEstoqueVenda(itensVenda){
   let prods=produtosLista(),map=new Map(prods.map(p=>[String(p.id),p])),uso=new Map();
   for(let it of (itensVenda||[])){
-    if(!it.produtoId)continue;
-    let p=map.get(String(it.produtoId));if(!p||p.tipo!=='produto')continue;
+    let p=produtoDoItemEstoque(it,prods);if(!p||p.tipo!=='produto')continue;
     uso.set(String(p.id),(uso.get(String(p.id))||0)+(Number(it.q)||0));
   }
   let faltas=[];
@@ -2219,7 +2225,9 @@ function validarEstoqueVenda(itensVenda){
 }
 async function baixarEstoqueVenda(itensVenda){
   let a=produtosLista(),uso=new Map();
-  for(let it of (itensVenda||[]))if(it.produtoId)uso.set(String(it.produtoId),(uso.get(String(it.produtoId))||0)+(Number(it.q)||0));
+  for(let it of (itensVenda||[])){
+    let p=produtoDoItemEstoque(it,a);if(p&&p.tipo==='produto')uso.set(String(p.id),(uso.get(String(p.id))||0)+(Number(it.q)||0));
+  }
   let alterou=false;
   a=a.map(p=>{
     let q=uso.get(String(p.id))||0;
@@ -2412,27 +2420,21 @@ async function restaurar(){
 }
 async function logoPng(){
   try{
-    const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 105">'+
-      '<rect width="180" height="105" rx="12" fill="#1E2B34"/>'+
-      '<g transform="translate(47,-7) scale(0.80)">'+
-      '<path d="M31.67,25.47 L24.03,34.98 L20.12,46.19 L20.97,60.96 L26.41,71.66 L21.65,81.85 L20.12,89.49 L24.88,89.32 L26.92,81.85 L29.97,76.75 L40.50,83.21 L52.05,85.92 L66.48,83.72 L78.20,76.75 L81.42,82.02 L83.46,89.49 L88.05,89.49 L86.01,80.32 L81.08,71.83 L75.65,66.40 L65.63,60.79 L56.63,58.92 L45.93,59.77 L29.63,67.92 L24.88,55.87 L25.05,46.19 L27.08,39.74 L35.58,28.70 L42.54,24.45 L50.18,22.42 L50.35,21.23 L48.31,18.00 L39.65,20.38 Z M33.88,72.00 L36.93,69.28 L42.37,66.06 L47.97,64.36 L53.58,63.68 L59.52,64.19 L62.92,65.04 L66.82,66.57 L72.08,69.79 L74.29,71.83 L74.46,72.68 L71.41,75.57 L65.29,78.96 L58.84,80.83 L53.41,81.17 L47.12,80.32 L40.67,77.94 L34.56,73.70 L33.88,72.85 Z" fill="#E8EAEC" fill-rule="evenodd"/>'+
-      '</g>'+
-      '<text x="90" y="95" text-anchor="middle" font-family="Georgia,Times New Roman,serif" font-size="12" letter-spacing="1" fill="#E8EAEC">ORÇAMENTOS</text>'+
-      '</svg>';
-    const src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
     return await new Promise(resolve=>{
       const img=new Image();
       img.onload=()=>{
         try{
           const cv=document.createElement('canvas');
-          cv.width=900; cv.height=525;
+          cv.width=900;cv.height=525;
           const ctx=cv.getContext('2d');
-          ctx.drawImage(img,0,0,900,525);
+          ctx.fillStyle='#0b2b45';ctx.fillRect(0,0,cv.width,cv.height);
+          const lado=Math.min(cv.height*0.78,cv.width*0.46),x=(cv.width-lado)/2,y=(cv.height-lado)/2;
+          ctx.drawImage(img,x,y,lado,lado);
           resolve(cv.toDataURL('image/png',1));
         }catch(e){console.error(e);resolve(null)}
       };
       img.onerror=()=>resolve(null);
-      img.src=src;
+      img.src='logo-app.webp';
     });
   }catch(e){console.error(e);return null}
 }
