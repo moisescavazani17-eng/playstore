@@ -531,6 +531,12 @@ header,body.light-theme header{background:linear-gradient(135deg,#092a43 0%,#0d3
 body:not(.light-theme) .cheque-stat{border-color:#244b60!important;background:linear-gradient(145deg,#12384b 0%,#0d2d3d 100%)!important;box-shadow:0 12px 28px rgba(0,0,0,.20)!important}body:not(.light-theme) .cheque-stat .muted{color:#b6cbd5!important}body:not(.light-theme) .cheque-stat b{color:#ecf7f8!important}body:not(.light-theme) .cheque-stat:nth-child(1) b{color:#63d8cf!important}body:not(.light-theme) .cheque-stat:nth-child(2) b{color:#8fd7ed!important}
 @media(max-width:620px){header,body.light-theme header{padding:calc(9px + var(--safe-top)) 13px 10px!important}.brand{gap:10px!important;min-height:50px}.brand img{width:38px!important;height:38px!important;border-radius:11px;flex:0 0 38px!important}.brand b{font-size:19px!important;letter-spacing:.04em!important}.brand small{font-size:10.5px!important;margin-top:4px!important}.menu-toggle{width:44px!important;height:44px!important;flex:0 0 44px!important}#syncTop{font-size:10px!important;padding:6px 9px!important}.cheque-stats{grid-template-columns:1fr!important;gap:10px!important;margin-bottom:14px!important}.cheque-stat{min-height:88px;padding:14px 16px!important;border-radius:18px!important}.cheque-stat b{font-size:25px!important;margin-top:5px!important}}
 
+
+/* Correção do seletor de desconto em telas pequenas */
+.discount{grid-template-columns:94px minmax(0,1fr)!important;gap:10px!important}
+#descontoTipo{min-width:94px!important;width:94px!important;padding-left:16px!important;padding-right:34px!important;text-align:left!important;text-align-last:left!important;appearance:auto!important;-webkit-appearance:menulist!important;background-position:right 10px center!important}
+@media(max-width:620px){.discount{grid-template-columns:94px minmax(0,1fr)!important}#descontoTipo{min-width:94px!important;width:94px!important}}
+
 /* ===== Cabeçalho Vezora 2026 - remodelação estrutural ===== */
 .app-header,body.light-theme .app-header{
   position:sticky;
@@ -980,6 +986,18 @@ body:not(.light-theme) .cheque-stat{border-color:#244b60!important;background:li
 </main>
 <script>
 const $=id=>document.getElementById(id),BRL=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+let backupAutomaticoTimer=null;
+function agendarBackupAutomatico(){
+  try{
+    localStorage.setItem('playstore_local_updated_at',new Date().toISOString());
+    clearTimeout(backupAutomaticoTimer);
+    backupAutomaticoTimer=setTimeout(()=>{
+      try{
+        if(window.PlayStoreFeatures&&typeof window.PlayStoreFeatures.scheduleBackup==='function')window.PlayStoreFeatures.scheduleBackup();
+      }catch(e){console.warn('Backup automático pendente:',e)}
+    },800);
+  }catch(e){console.warn('Falha ao agendar backup automático:',e)}
+}
 let itens=[],itemEditandoIndex=null,itemProdutoSelecionadoId=null,chequesOrcamento=[],editandoNumero=null,vendaRealizadaAtual=false,dataVendaAtual=null,reembolsadaAtual=false,dataReembolsoAtual=null,valorReembolsoAtual=0,motivoReembolsoAtual='',chequeProprioEditandoId=null,usuarioInternoAtual=null,usuariosInternosCache=[],usuarioInternoEditandoId=null,cloud=null,cloudUser=null,cloudReady=false;
 const parse=v=>Number(String(v??0).replace(/\./g,'').replace(',','.'))||0;
 const PERMISSOES_CHAVES=['orcamentos_editar','vendas_lancar','clientes_editar','financeiro_editar','reembolsos_editar','produtos_editar','config_editar','usuarios_gerenciar'];
