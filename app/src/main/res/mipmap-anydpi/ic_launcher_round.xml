@@ -1,12 +1,5 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="515"
-    android:viewportHeight="512">
-    <path android:fillColor="#FFFFFF" android:pathData="M0,0 H515 V512 H0 Z"/>
-    <path android:fillColor="#0B2F91" android:pathData="M79,112 L194,112 L295,336 C305,358 302,380 289,399 L257,448 L230,448 Z"/>
-    <path android:fillColor="#1266EA" android:pathData="M79,112 L194,112 L261,260 C271,283 286,301 307,314 C326,326 344,327 361,316 L287,438 C279,451 263,455 251,445 L230,448 Z"/>
-    <path android:fillColor="#44DDEB" android:pathData="M436,112 L324,112 L244,259 C235,277 236,294 248,307 C263,324 284,333 307,333 C332,333 351,322 363,303 Z"/>
-    <path android:fillColor="#1BAEF2" android:pathData="M244,259 C255,283 274,301 307,314 C330,323 351,315 363,303 C348,329 329,348 307,354 C281,362 256,352 239,333 C226,318 222,300 228,283 Z"/>
-    <path android:fillColor="#2A8CF3" android:pathData="M79,112 L194,112 L244,259 C226,239 204,218 176,198 C143,174 111,145 79,112 Z"/>
-</vector>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap android:src="@drawable/vezora_launcher" android:gravity="fill" />
+    </item>
+</layer-list>
